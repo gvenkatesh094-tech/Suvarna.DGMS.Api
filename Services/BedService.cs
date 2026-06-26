@@ -1,0 +1,54 @@
+﻿using Suvarna.DGMS.Api.Models;
+using Suvarna.DGMS.Api.Repositories;
+
+namespace Suvarna.DGMS.Api.Services
+{
+    public class BedService
+    {
+        private readonly BedRepository _repo;
+
+        public BedService(BedRepository repo)
+        {
+            _repo = repo;
+        }
+
+        public ApiResponse<List<Bed>> GetAll()
+        {
+            var list = _repo.GetAllBeds();
+
+            return ApiResponse<List<Bed>>.Success(
+                "Bed List",
+                list);
+        }
+
+        public ApiResponse<Bed> GetById(int id)
+        {
+            var bed = _repo.GetBedById(id);
+
+            if (bed == null)
+                return ApiResponse<Bed>.Fail("Bed not found.");
+
+            return ApiResponse<Bed>.Success(
+                "Bed Details",
+                bed);
+        }
+
+        public ApiResponse<string> UpdateStatus(Bed bed)
+        {
+            if (bed.bedId <= 0)
+                return ApiResponse<string>.Fail("Bed Id is required.");
+
+            if (string.IsNullOrWhiteSpace(bed.sessionId))
+                return ApiResponse<string>.Fail("Session Id is required.");
+
+            if (string.IsNullOrWhiteSpace(bed.bedStatus))
+                return ApiResponse<string>.Fail("Bed Status is required.");
+
+            _repo.UpdateStatus(bed);
+
+            return ApiResponse<string>.Success(
+                "Bed status updated successfully.",
+                "OK");
+        }
+    }
+}

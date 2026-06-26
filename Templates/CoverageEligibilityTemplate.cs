@@ -1,4 +1,4 @@
-﻿namespace Suvarna.PMJAY.NHCX.Api.Templates
+﻿namespace Suvarna.DGMS.Api.Templates
 {
     public static class CoverageEligibilityTemplate
     {

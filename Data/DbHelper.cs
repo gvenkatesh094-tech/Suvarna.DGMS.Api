@@ -3,7 +3,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 
-namespace Suvarna.PMJAY.NHCX.Api.Data
+namespace Suvarna.DGMS.Api.Data
 {
     public class DbHelper
     {
@@ -11,7 +11,7 @@ namespace Suvarna.PMJAY.NHCX.Api.Data
 
         public DbHelper(IConfiguration config)
         {
-            _connectionString = config.GetConnectionString("Postgres")!;
+            _connectionString = config.GetConnectionString("Server")!;
         }
 
         public NpgsqlConnection GetConnection()
