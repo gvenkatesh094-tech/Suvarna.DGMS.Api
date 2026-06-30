@@ -14,7 +14,7 @@ namespace Suvarna.DGMS.Api.Repositories
         }
 
 
-        #region Save
+      
 
         public void InsertBuilding(Building building)
         {
@@ -24,30 +24,24 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.CommandType = CommandType.StoredProcedure;
 
+            cmd.Parameters.AddWithValue("@PROPERTY_ID", building.propertyId);
+            cmd.Parameters.AddWithValue("@PROPERTY_CD", building.propertyCode);
+            cmd.Parameters.AddWithValue("@PROPERTY_NM", building.propertyName);
+            cmd.Parameters.AddWithValue("@BUILDING_CD", building.buildingCode);
+            cmd.Parameters.AddWithValue("@BUILDING_NM", building.buildingName);
+            cmd.Parameters.AddWithValue("@TOTAL_FLOORS", building.totalFloors);
+            cmd.Parameters.AddWithValue("@REMARKS", (object?)building.remarks ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@CREATE_BY", building.userId);
             cmd.Parameters.AddWithValue("@GRP_ID", building.grpId);
             cmd.Parameters.AddWithValue("@ORG_ID", building.orgId);
             cmd.Parameters.AddWithValue("@LOC_ID", building.locId);
-
-            cmd.Parameters.AddWithValue("@PROPERTY_ID", building.propertyId);
-
-            cmd.Parameters.AddWithValue("@BUILDING_CD", building.buildingCode);
-            cmd.Parameters.AddWithValue("@BUILDING_NM", building.buildingName);
-
-            cmd.Parameters.AddWithValue("@TOTAL_FLOORS", building.totalFloors);
-
-            cmd.Parameters.AddWithValue("@REMARKS",
-                (object?)building.remarks ?? DBNull.Value);
-
-            cmd.Parameters.AddWithValue("@CREATE_BY", building.userId);
 
             conn.Open();
 
             cmd.ExecuteNonQuery();
         }
 
-        #endregion
-
-        #region Update
+     
 
         public void UpdateBuilding(Building building)
         {
@@ -91,8 +85,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.ExecuteNonQuery();
         }
 
-        #endregion
-
+    
         #region Get All
 
         public List<Building> GetAllBuildings()
