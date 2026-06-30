@@ -16,6 +16,7 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
+
         [HttpPost("create")]
         public IActionResult Create([FromBody] Building building)
         {
@@ -27,6 +28,9 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.Update(building));
         }
+        [HttpPost("delete")]
+        public IActionResult Delete([FromBody] Building req)
+           => Ok(_service.Delete(req));
 
         [HttpGet("list")]
         public IActionResult GetAll()
