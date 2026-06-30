@@ -17,9 +17,19 @@
         public string? pinCode { get; set; }
 
         public string? gstin { get; set; }
-        public string? email { get; set; }
         public string? address { get; set; }
-
+        public string? email { get; set; }
+        
+        public string? status { get; set; }
+        public string phone { get; set; }
+        public int buildings { get; set; }
+        public int rooms { get; set; }
+        public int beds { get; set; }
         public int userId { get; set; }
+    }
+    public class GenerateCodeRequest
+    {
+        public string masterName { get; set; }
+        public int sessionId { get; set; }
     }
 }

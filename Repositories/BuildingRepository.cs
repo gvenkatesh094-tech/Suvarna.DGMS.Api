@@ -13,6 +13,7 @@ namespace Suvarna.DGMS.Api.Repositories
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
+
         #region Save
 
         public void InsertBuilding(Building building)
@@ -78,6 +79,17 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.ExecuteNonQuery();
         }
+        public void Deletebuilding(Building building)
+        {
+            using SqlConnection conn = new SqlConnection(_conn);
+
+            using SqlCommand cmd = new SqlCommand("DGMS.pr_del_dgm_property", conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@PROPERTY_CD", (object?)building.buildingCode ?? DBNull.Value);
+            conn.Open();
+            cmd.ExecuteNonQuery();
+        }
 
         #endregion
 
@@ -102,22 +114,16 @@ namespace Suvarna.DGMS.Api.Repositories
                 list.Add(new Building
                 {
                     buildingId = Convert.ToInt32(dr["buildingId"]),
-
+                    buildingCode = dr["buildingCode"].ToString(),
+                    buildingName = dr["buildingName"].ToString(),
+                    propertyId = Convert.ToInt32(dr["propertyId"]),
+                    propertyName = dr["PropertyName"].ToString(), 
+                    totalFloors = Convert.ToInt16(dr["totalFloors"]),
+                    remarks = dr["remarks"] == DBNull.Value ? null : dr["remarks"].ToString(),
+                    status = dr["status"] == DBNull.Value ? null : dr["status"].ToString(),
                     grpId = Convert.ToInt16(dr["grpId"]),
                     orgId = Convert.ToInt16(dr["orgId"]),
                     locId = Convert.ToInt16(dr["locId"]),
-
-                    propertyId = Convert.ToInt32(dr["propertyId"]),
-
-                    buildingCode = dr["buildingCode"].ToString(),
-
-                    buildingName = dr["buildingName"].ToString(),
-
-                    totalFloors = Convert.ToInt16(dr["totalFloors"]),
-
-                    remarks = dr["remarks"] == DBNull.Value
-                        ? null
-                        : dr["remarks"].ToString()
                 });
             }
 

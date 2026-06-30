@@ -14,26 +14,26 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<string> Create(Building building)
         {
-            if (building.grpId <= 0)
-                return ApiResponse<string>.Fail("Group is required.");
+            //if (building.grpId <= 0)
+            //    return ApiResponse<string>.Fail("Group is required.");
 
-            if (building.orgId <= 0)
-                return ApiResponse<string>.Fail("Organization is required.");
+            //if (building.orgId <= 0)
+            //    return ApiResponse<string>.Fail("Organization is required.");
 
-            if (building.locId <= 0)
-                return ApiResponse<string>.Fail("Location is required.");
+            //if (building.locId <= 0)
+            //    return ApiResponse<string>.Fail("Location is required.");
 
-            if (building.propertyId <= 0)
-                return ApiResponse<string>.Fail("Property is required.");
+            //if (building.propertyId <= 0)
+            //    return ApiResponse<string>.Fail("Property is required.");
 
-            if (string.IsNullOrWhiteSpace(building.buildingCode))
-                return ApiResponse<string>.Fail("Building Code is required.");
+            //if (string.IsNullOrWhiteSpace(building.buildingCode))
+            //    return ApiResponse<string>.Fail("Building Code is required.");
 
-            if (string.IsNullOrWhiteSpace(building.buildingName))
-                return ApiResponse<string>.Fail("Building Name is required.");
+            //if (string.IsNullOrWhiteSpace(building.buildingName))
+            //    return ApiResponse<string>.Fail("Building Name is required.");
 
-            if (building.totalFloors <= 0)
-                return ApiResponse<string>.Fail("Total Floors should be greater than zero.");
+            //if (building.totalFloors <= 0)
+            //    return ApiResponse<string>.Fail("Total Floors should be greater than zero.");
 
             _repo.InsertBuilding(building);
 
@@ -42,21 +42,28 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<string> Update(Building building)
         {
-            if (building.buildingId <= 0)
-                return ApiResponse<string>.Fail("Building Id is required.");
+            //if (building.buildingId <= 0)
+            //    return ApiResponse<string>.Fail("Building Id is required.");
 
-            if (building.propertyId <= 0)
-                return ApiResponse<string>.Fail("Property is required.");
+            //if (building.propertyId <= 0)
+            //    return ApiResponse<string>.Fail("Property is required.");
 
-            if (string.IsNullOrWhiteSpace(building.buildingCode))
-                return ApiResponse<string>.Fail("Building Code is required.");
+            //if (string.IsNullOrWhiteSpace(building.buildingCode))
+            //    return ApiResponse<string>.Fail("Building Code is required.");
 
-            if (string.IsNullOrWhiteSpace(building.buildingName))
-                return ApiResponse<string>.Fail("Building Name is required.");
+            //if (string.IsNullOrWhiteSpace(building.buildingName))
+            //    return ApiResponse<string>.Fail("Building Name is required.");
 
             _repo.UpdateBuilding(building);
 
             return ApiResponse<string>.Success("Building updated successfully.", "OK");
+        }
+        public ApiResponse<string> Delete(Building building)
+        {
+
+            _repo.Deletebuilding(building);
+
+            return ApiResponse<string>.Success("Property deleted  successfully.", "OK");
         }
 
         public ApiResponse<List<Building>> GetAll()

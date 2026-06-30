@@ -15,6 +15,14 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             _service = service;
         }
+
+
+        [HttpPost("generatecode")]
+        public IActionResult GenerateCode([FromBody] GenerateCodeRequest request)
+        {
+            return Ok(_service.GenerateCode(request));
+        }
+
         [HttpPost("create")]
         //[Authorize]
         public IActionResult Create([FromBody] Property req)
@@ -24,6 +32,10 @@ namespace Suvarna.DGMS.Api.Controllers
         //[Authorize]
         public IActionResult update([FromBody] Property req)
     => Ok(_service.Update(req));
+
+        [HttpPost("delete")]
+        public IActionResult Delete([FromBody] Property req)
+            => Ok(_service.Delete(req));
 
         [HttpGet("list")]
         //[Authorize]
