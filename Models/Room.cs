@@ -4,6 +4,8 @@
     {
         public int roomId { get; set; }
 
+
+
         public int propertyId { get; set; }
 
         public int buildingId { get; set; }
@@ -38,7 +40,7 @@
 
         public string? remarks { get; set; }
 
-        public string sessionId { get; set; }
+        public INT sessionId { get; set; }
 
         public int userId { get; set; }
     }

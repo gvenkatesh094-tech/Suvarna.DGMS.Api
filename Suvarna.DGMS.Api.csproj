@@ -25,4 +25,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="CryptoWord">
+      <HintPath>..\..\FNB_ANGULAR_API\FNB_API\FNB_ANGULAR_API\bin\Debug\net8.0\CryptoWord.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

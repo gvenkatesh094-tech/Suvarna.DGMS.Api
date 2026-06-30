@@ -9,6 +9,7 @@ using Suvarna.DGMS.Api.Middleware;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Repositories;
 using Suvarna.DGMS.Api.Services;
+using Suvarna.DGMS.Api.Helpers;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,7 +92,11 @@ builder.Services.AddScoped<ErrorRepository>();
 builder.Services.AddScoped<PropertyRepository>();
 builder.Services.AddScoped<BuildingRepository>();
 builder.Services.AddScoped<FloorRepository>();
+builder.Services.AddScoped<AuthRepository>();
 
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<RoomRepository>();
 #endregion
 
 #region Services
@@ -105,6 +110,7 @@ builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<BuildingService>();
 
 builder.Services.AddScoped<FloorService>();
+builder.Services.AddScoped<RoomService>();
 
 #endregion
 
@@ -151,6 +157,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
     options.Events = new CustomAuthFailureHandler();
 });
+builder.Services.Configure<ModuleSettings>(builder.Configuration.GetSection("ModuleSettings"));
+
+builder.Services.Configure<SessionSettings>(builder.Configuration.GetSection("SessionSettings"));
 
 builder.Services.AddAuthorization();
 
