@@ -68,14 +68,14 @@ namespace Suvarna.DGMS.Api.Services
             return ApiResponse<string>.Success(msg, "OK");
         }
 
-        //public ApiResponse<List<Room>> GetAll()
-        //{
-        //    var list = _repo.GetAllRooms();
+        public ApiResponse<List<Room>> GetAll()
+        {
+            var list = _repo.GetAllRooms();
 
-        //    return ApiResponse<List<Room>>.Success(
-        //        "Room List",
-        //        list);
-        //}
+            return ApiResponse<List<Room>>.Success(
+                "Room List",
+                list);
+        }
 
         //public ApiResponse<Room> GetById(int id)
         //{

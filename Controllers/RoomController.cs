@@ -15,6 +15,7 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
+
         [HttpPost("create")]
         public IActionResult Create([FromBody] Room room)
         {
@@ -27,11 +28,11 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.Update(room));
         }
 
-        //[HttpGet("list")]
-        //public IActionResult GetAll()
-        //{
-        //    return Ok(_service.GetAll());
-        //}
+        [HttpGet("list")]
+        public IActionResult GetAll()
+        {
+            return Ok(_service.GetAll());
+        }
 
         //[HttpGet("{id}")]
         //public IActionResult GetById(int id)

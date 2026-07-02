@@ -101,6 +101,65 @@ namespace Suvarna.DGMS.Api.Repositories
 
             return outMsg.Value.ToString();
         }
+        public List<Room> GetAllRooms()
+        {
+            List<Room> rooms = new List<Room>();
+
+            using (SqlConnection con = new SqlConnection(_conn))
+            {
+                using (SqlCommand cmd = new SqlCommand("DGMS.PR_GET_ROOMS", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    con.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    while (dr.Read())
+                    {
+                        rooms.Add(new Room
+                        {
+                            roomId = Convert.ToInt32(dr["roomId"]),
+                            propertyId = Convert.ToInt32(dr["propertyId"]),
+                            buildingId = Convert.ToInt32(dr["buildingId"]),
+                            floorId = Convert.ToInt32(dr["floorId"]),
+                            accmTypeId = Convert.ToInt32(dr["accmTypeId"]),
+
+                            roomNo = dr["roomNo"].ToString(),
+                            roomName = dr["roomName"]?.ToString(),
+
+                            totalBeds = Convert.ToInt16(dr["totalBeds"]),
+
+                            floorAreaSqft = dr["floorAreaSqft"] == DBNull.Value
+         ? null
+         : Convert.ToDecimal(dr["floorAreaSqft"]),
+
+                            isAttachedBath = dr["isAttachedBath"].ToString(),
+                            isAc = dr["isAc"].ToString(),
+                            isTv = dr["isTv"].ToString(),
+                            isWifi = dr["isWifi"].ToString(),
+                            isAccessible = dr["isAccessible"].ToString(),
+
+                            wardProximity = dr["wardProximity"] == DBNull.Value
+         ? null
+         : dr["wardProximity"].ToString(),
+
+                            phoneExtension = dr["phoneExtension"] == DBNull.Value
+         ? null
+         : dr["phoneExtension"].ToString(),
+
+                            lockerCount = Convert.ToInt16(dr["lockerCount"]),
+
+                            remarks = dr["remarks"] == DBNull.Value
+         ? null
+         : dr["remarks"].ToString()
+                        });
+                    }
+                }
+            }
+
+            return rooms;
+        }
     }
 
 }
