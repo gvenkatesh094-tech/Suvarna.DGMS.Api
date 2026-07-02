@@ -26,6 +26,11 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.Update(floor));
         }
+        [HttpPost("delete")]
+        public IActionResult Delete([FromBody] DeleteFloorRequest building)
+        {
+            return Ok(_service.Delete(building));
+        }
 
         [HttpGet("list")]
         public IActionResult GetAll()

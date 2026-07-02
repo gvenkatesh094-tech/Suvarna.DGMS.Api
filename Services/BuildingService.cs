@@ -58,12 +58,13 @@ namespace Suvarna.DGMS.Api.Services
 
             return ApiResponse<string>.Success("Building updated successfully.", "OK");
         }
-        public ApiResponse<string> Delete(Building building)
+        public ApiResponse<string> Delete(DeleteBuildingRequest building)
         {
+            _repo.DeleteBuilding(building);
 
-            _repo.Deletebuilding(building);
-
-            return ApiResponse<string>.Success("Property deleted  successfully.", "OK");
+            return ApiResponse<string>.Success(
+                "Building deleted successfully.",
+                "OK");
         }
 
         public ApiResponse<List<Building>> GetAll()

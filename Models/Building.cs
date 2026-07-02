@@ -17,4 +17,8 @@
         public short orgId { get; set; }
         public short locId { get; set; }
     }
+    public class DeleteBuildingRequest
+    {
+        public int buildingId { get; set; }
+    }
 }

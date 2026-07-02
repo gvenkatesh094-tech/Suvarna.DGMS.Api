@@ -52,40 +52,41 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@DGM_BUILDING_MAST_ID", building.buildingId);
-
+            cmd.Parameters.AddWithValue("@PROPERTY_ID", building.propertyId);
+            cmd.Parameters.AddWithValue("@PROPERTY_CD", building.propertyCode);
+            cmd.Parameters.AddWithValue("@PROPERTY_NM", building.propertyName);
+            cmd.Parameters.AddWithValue("@BUILDING_CD", building.buildingCode);
+            cmd.Parameters.AddWithValue("@BUILDING_NM", building.buildingName);
+            cmd.Parameters.AddWithValue("@TOTAL_FLOORS", building.totalFloors);
+            cmd.Parameters.AddWithValue("@REMARKS", (object?)building.remarks ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@MODIFY_BY", building.userId);
             cmd.Parameters.AddWithValue("@GRP_ID", building.grpId);
             cmd.Parameters.AddWithValue("@ORG_ID", building.orgId);
             cmd.Parameters.AddWithValue("@LOC_ID", building.locId);
-
-            cmd.Parameters.AddWithValue("@PROPERTY_ID", building.propertyId);
-
-            cmd.Parameters.AddWithValue("@BUILDING_CD", building.buildingCode);
-            cmd.Parameters.AddWithValue("@BUILDING_NM", building.buildingName);
-
-            cmd.Parameters.AddWithValue("@TOTAL_FLOORS", building.totalFloors);
-
-            cmd.Parameters.AddWithValue("@REMARKS",
-                (object?)building.remarks ?? DBNull.Value);
-
-            cmd.Parameters.AddWithValue("@MODIFY_BY", building.userId);
-
+            cmd.Parameters.AddWithValue("@status", building.status);
             conn.Open();
 
             cmd.ExecuteNonQuery();
         }
-        public void Deletebuilding(Building building)
+        public void DeleteBuilding(DeleteBuildingRequest building)
         {
             using SqlConnection conn = new SqlConnection(_conn);
 
-            using SqlCommand cmd = new SqlCommand("DGMS.pr_del_dgm_property", conn);
+            using SqlCommand cmd =
+                new SqlCommand("DGMS.pr_del_dgm_building", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@PROPERTY_CD", (object?)building.buildingCode ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue(
+                "@DGM_BUILDING_MAST_ID",
+                building.buildingId);
+
             conn.Open();
+
             cmd.ExecuteNonQuery();
         }
 
-    
+
         #region Get All
 
         public List<Building> GetAllBuildings()
@@ -110,7 +111,8 @@ namespace Suvarna.DGMS.Api.Repositories
                     buildingCode = dr["buildingCode"].ToString(),
                     buildingName = dr["buildingName"].ToString(),
                     propertyId = Convert.ToInt32(dr["propertyId"]),
-                    propertyName = dr["PropertyName"].ToString(), 
+                    propertyName = dr["PropertyName"].ToString(),
+                    propertyCode= dr["propertyCode"].ToString(),
                     totalFloors = Convert.ToInt16(dr["totalFloors"]),
                     remarks = dr["remarks"] == DBNull.Value ? null : dr["remarks"].ToString(),
                     status = dr["status"] == DBNull.Value ? null : dr["status"].ToString(),
