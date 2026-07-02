@@ -33,6 +33,11 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.GetAll());
         }
+        [HttpPost("genroomcode")]
+        public IActionResult GenroomCode([FromBody] GenerateCodeRequest request)
+        {
+            return Ok(_service.GenroomCode(request));
+        }
 
         //[HttpGet("{id}")]
         //public IActionResult GetById(int id)

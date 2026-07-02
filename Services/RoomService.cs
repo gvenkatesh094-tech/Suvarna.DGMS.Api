@@ -14,9 +14,6 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<string> Create(Room room)
         {
-            if (string.IsNullOrWhiteSpace(room.sessionId))
-                return ApiResponse<string>.Fail("Session Id is required.");
-
             if (room.propertyId <= 0)
                 return ApiResponse<string>.Fail("Property is required.");
 
@@ -35,7 +32,8 @@ namespace Suvarna.DGMS.Api.Services
             if (room.totalBeds <= 0)
                 return ApiResponse<string>.Fail("Total Beds should be greater than zero.");
 
-            string msg = _repo.Save(room, "I");
+            // Use the mode sent from Angular
+            string msg = _repo.Save(room, room.mode);
 
             return ApiResponse<string>.Success(msg, "OK");
         }
@@ -45,8 +43,6 @@ namespace Suvarna.DGMS.Api.Services
             if (room.roomId <= 0)
                 return ApiResponse<string>.Fail("Room Id is required.");
 
-            if (string.IsNullOrWhiteSpace(room.sessionId))
-                return ApiResponse<string>.Fail("Session Id is required.");
 
             if (room.propertyId <= 0)
                 return ApiResponse<string>.Fail("Property is required.");
@@ -76,7 +72,15 @@ namespace Suvarna.DGMS.Api.Services
                 "Room List",
                 list);
         }
+        public ApiResponse<string> GenroomCode(GenerateCodeRequest request)
+        {
+            string propertyCode = _repo.GenroomCode(request);
 
+            return ApiResponse<string>.Success(
+                "Room Code generated successfully.",
+                propertyCode
+            );
+        }
         //public ApiResponse<Room> GetById(int id)
         //{
         //    var room = _repo.GetRoomById(id);

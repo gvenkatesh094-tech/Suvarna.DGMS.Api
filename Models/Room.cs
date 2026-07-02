@@ -4,7 +4,7 @@
     {
         public int roomId { get; set; }
 
-
+        public string? mode { get; set; }
 
         public int propertyId { get; set; }
 
@@ -40,8 +40,18 @@
 
         public string? remarks { get; set; }
 
-        public INT sessionId { get; set; }
+        public int sessionId { get; set; }
 
         public int userId { get; set; }
+
+        public string? roomType { get; set; }
+
+        public decimal? roomPrice { get; set; }
+
+        public decimal? gst { get; set; }
+
+        public int? maxOccupants { get; set; }
+
+        public string? roomStatus { get; set; }
     }
 }

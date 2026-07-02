@@ -97,6 +97,7 @@ builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<RoomRepository>();
+builder.Services.AddScoped<RoomService>(); builder.Services.AddScoped<AccomidationTypeRepository>();
 #endregion
 
 #region Services
@@ -110,7 +111,8 @@ builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<BuildingService>();
 
 builder.Services.AddScoped<FloorService>();
-builder.Services.AddScoped<RoomService>();
+
+builder.Services.AddScoped<AccomidationTypeService>();
 
 #endregion
 

@@ -73,6 +73,12 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.Parameters.AddWithValue("@IP_REMARKS",
                 (object?)room.remarks ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_PRICE",
+             (object?)room.roomPrice ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_GST_PER",
+           (object?)room.gst ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_ROOM_STATUS",
+           (object?)room.roomStatus ?? DBNull.Value);
 
             SqlParameter outId =
                 new SqlParameter("@OUT_ROOM_ID", SqlDbType.Int);
@@ -152,13 +158,57 @@ namespace Suvarna.DGMS.Api.Repositories
 
                             remarks = dr["remarks"] == DBNull.Value
          ? null
-         : dr["remarks"].ToString()
+         : dr["remarks"].ToString(),
+                            roomType = dr["roomType"].ToString(),
+
+                            roomPrice = dr["roomPrice"] == DBNull.Value
+    ? 0
+    : Convert.ToDecimal(dr["roomPrice"]),
+
+                            gst = dr["gst"] == DBNull.Value
+    ? 0
+    : Convert.ToDecimal(dr["gst"]),
+
+                            maxOccupants = dr["maxOccupants"] == DBNull.Value
+    ? 0
+    : Convert.ToInt32(dr["maxOccupants"]),
+
+                            roomStatus = dr["roomStatus"].ToString(),
                         });
                     }
                 }
             }
 
             return rooms;
+        }
+
+        public string GenroomCode(GenerateCodeRequest request)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("PR_GET_PAGELOAD_TABKEY", conn);
+
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_TABLE_NAME", request.masterName);
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", request.sessionId);
+
+                SqlParameter code = new SqlParameter("@OP_TABKEY_CD", SqlDbType.VarChar, 20);
+                code.Direction = ParameterDirection.Output;
+
+                cmd.Parameters.Add(code);
+
+                conn.Open();
+
+                cmd.ExecuteNonQuery();
+
+                return Convert.ToString(code.Value);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error generating GenroomCode .", ex);
+            }
         }
     }
 
