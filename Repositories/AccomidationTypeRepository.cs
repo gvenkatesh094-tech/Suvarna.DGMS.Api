@@ -35,7 +35,8 @@ namespace Suvarna.DGMS.Api.Repositories
                             accmTypeId = Convert.ToInt32(dr["DGM_ACCM_TYPE_MAST_ID"]),
                             accmTypeCode = dr["ACCM_TYPE_CD"].ToString(),
                             accmTypeName = dr["ACCM_TYPE_NM"].ToString(),
-                            gst = Convert.ToDecimal(dr["GST_SLAB_PCT"])
+                            gst = Convert.ToDecimal(dr["GST_SLAB_PCT"]),
+                            roomPrice = Convert.ToDecimal(dr["ROOM_PRICE"])
                         });
                     }
                 }

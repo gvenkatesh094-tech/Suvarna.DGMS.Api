@@ -14,10 +14,10 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
-        [HttpGet("getAccommodationTypes")]
-        public IActionResult GetAccommodationTypes()
+        [HttpGet("list")]
+        public IActionResult GetAll()
         {
-            return Ok(_service.GetAccommodationTypes());
+            return Ok(_service.Getall());
         }
     }
 }

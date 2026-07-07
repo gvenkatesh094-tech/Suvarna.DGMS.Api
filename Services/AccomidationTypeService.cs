@@ -12,7 +12,7 @@ namespace Suvarna.DGMS.Api.Services
             _repo = repo;
         }
 
-        public ApiResponse<List<AccommodationType>> GetAccommodationTypes()
+        public ApiResponse<List<AccommodationType>> Getall()
         {
             var list = _repo.GetAccommodationTypes();
 

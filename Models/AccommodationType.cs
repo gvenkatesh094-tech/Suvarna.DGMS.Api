@@ -8,5 +8,7 @@
 
         public string? accmTypeName { get; set; }
         public decimal? gst { get; set; }
+
+        public decimal? roomPrice { get; set; }
     }
 }

@@ -22,5 +22,6 @@
         public int userId { get; set; }
 
         public string sessionId { get; set; }
+        public string roomNo { get; set; }
     }
 }

@@ -15,6 +15,18 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
+        [HttpPost("create")]
+        public IActionResult Create([FromBody] Bed bed)
+        {
+            return Ok(_service.Create(bed));
+        }
+
+        [HttpPut("update")]
+        public IActionResult Update([FromBody] Bed bed)
+        {
+            return Ok(_service.Update(bed));
+        }
+
         [HttpGet("list")]
         public IActionResult GetAll()
         {
@@ -32,5 +44,6 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.UpdateStatus(bed));
         }
+ 
     }
 }

@@ -11,7 +11,35 @@ namespace Suvarna.DGMS.Api.Services
         {
             _repo = repo;
         }
+        public ApiResponse<string> Create(Bed bed)
+        {
+           
+            if (string.IsNullOrWhiteSpace(bed.bedNo))
+                return ApiResponse<string>.Fail("bedNo Number is required.");
 
+            if (string.IsNullOrWhiteSpace(bed.bedType))
+                return ApiResponse<string>.Fail("bedType is required.");
+
+            // Use the mode sent from Angular
+            string msg = _repo.Save(bed, "I");
+
+            return ApiResponse<string>.Success(msg, "OK");
+        }
+
+        public ApiResponse<string> Update(Bed bed)
+        {
+
+            if (string.IsNullOrWhiteSpace(bed.bedNo))
+                return ApiResponse<string>.Fail("bedNo Number is required.");
+
+            if (string.IsNullOrWhiteSpace(bed.bedType))
+                return ApiResponse<string>.Fail("bedType is required.");
+
+            // Use the mode sent from Angular
+            string msg = _repo.Save(bed, "U");
+
+            return ApiResponse<string>.Success(msg, "OK");
+        }
         public ApiResponse<List<Bed>> GetAll()
         {
             var list = _repo.GetAllBeds();
