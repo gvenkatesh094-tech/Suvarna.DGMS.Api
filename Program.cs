@@ -98,6 +98,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<RoomRepository>();
 builder.Services.AddScoped<BedRepository>();
+builder.Services.AddScoped<CorpAgreementRepository>();
+builder.Services.AddScoped<GstConfigRepository>();
 
 builder.Services.AddScoped<AccomidationTypeRepository>();
 #endregion
@@ -117,6 +119,10 @@ builder.Services.AddScoped<FloorService>();
 builder.Services.AddScoped<AccomidationTypeService>();
 builder.Services.AddScoped<BedService>();
 builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<CorpAgreementService>();
+builder.Services.AddScoped<GstConfigService>();
+
+builder.Services.AddScoped<IDepartmentMappingRepository, DepartmentMappingRepository>();
 
 #endregion
 
