@@ -15,33 +15,16 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] Floor floor)
+        [HttpPost("save")]
+        public IActionResult Insupd([FromBody] Floor floor)
         {
-            return Ok(_service.Create(floor));
-        }
-
-        [HttpPut("update")]
-        public IActionResult Update([FromBody] Floor floor)
-        {
-            return Ok(_service.Update(floor));
-        }
-        [HttpPost("delete")]
-        public IActionResult Delete([FromBody] DeleteFloorRequest building)
-        {
-            return Ok(_service.Delete(building));
-        }
-
+            return Ok(_service.inUpdService(floor));
+        }       
         [HttpGet("list")]
         public IActionResult GetAll()
         {
             return Ok(_service.GetAll());
         }
-
-        [HttpGet("{id}")]
-        public IActionResult GetById(int id)
-        {
-            return Ok(_service.GetById(id));
-        }
+       
     }
 }

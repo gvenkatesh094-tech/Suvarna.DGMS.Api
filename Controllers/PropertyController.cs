@@ -22,6 +22,10 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.GenerateCode(request));
         }
+        [HttpPost("save")]
+        //[Authorize]
+        public IActionResult Insupd([FromBody] Property req)
+           => Ok(_service.inUpdService(req));
 
         [HttpPost("create")]
         //[Authorize]

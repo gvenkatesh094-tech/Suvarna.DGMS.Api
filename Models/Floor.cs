@@ -2,6 +2,7 @@
 {
     public class Floor
     {
+        public string? mode { get; set; }   // I / U / D
         public int floorId { get; set; }    
         public int buildingId { get; set; }
         public int propertyId { get; set; }
@@ -20,6 +21,8 @@
         public short grpId { get; set; }
         public short orgId { get; set; }
         public short locId { get; set; }
+        public int sessionId { get; set; }
+        
     }
     public class DeleteFloorRequest
     {

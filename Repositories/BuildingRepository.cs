@@ -14,8 +14,41 @@ namespace Suvarna.DGMS.Api.Repositories
         }
 
 
-      
 
+        public void SaveBuilding(Building building)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.pr_insupd_dgm_building", conn);
+
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@MODE", building.mode);
+                cmd.Parameters.AddWithValue("@DGM_BUILDING_MAST_ID", building.buildingId == 0 ? DBNull.Value : (object)building.buildingId);
+                cmd.Parameters.AddWithValue("@PROPERTY_ID", building.propertyId == 0 ? DBNull.Value : (object)building.propertyId);
+                cmd.Parameters.AddWithValue("@PROPERTY_CD", (object?)building.propertyCode ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@PROPERTY_NM", (object?)building.propertyName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@BUILDING_CD", (object?)building.buildingCode ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@BUILDING_NM", (object?)building.buildingName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@TOTAL_FLOORS", building.totalFloors);
+                cmd.Parameters.AddWithValue("@REMARKS", (object?)building.remarks ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CREATE_BY", building.userId);
+                cmd.Parameters.AddWithValue("@MODIFY_BY", building.userId);
+                cmd.Parameters.AddWithValue("@GRP_ID", building.grpId);
+                cmd.Parameters.AddWithValue("@ORG_ID", building.orgId);
+                cmd.Parameters.AddWithValue("@LOC_ID", building.locId);
+                cmd.Parameters.AddWithValue("@STATUS",  (object?)building.status ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", building.sessionId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while saving building.", ex);
+            }
+        }
         public void InsertBuilding(Building building)
         {
             using SqlConnection conn = new SqlConnection(_conn);
@@ -41,7 +74,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.ExecuteNonQuery();
         }
 
-     
+
 
         public void UpdateBuilding(Building building)
         {
@@ -112,7 +145,7 @@ namespace Suvarna.DGMS.Api.Repositories
                     buildingName = dr["buildingName"].ToString(),
                     propertyId = Convert.ToInt32(dr["propertyId"]),
                     propertyName = dr["PropertyName"].ToString(),
-                    propertyCode= dr["propertyCode"].ToString(),
+                    propertyCode = dr["propertyCode"].ToString(),
                     totalFloors = Convert.ToInt16(dr["totalFloors"]),
                     remarks = dr["remarks"] == DBNull.Value ? null : dr["remarks"].ToString(),
                     status = dr["status"] == DBNull.Value ? null : dr["status"].ToString(),

@@ -11,12 +11,28 @@ namespace Suvarna.DGMS.Api.Services
         {
             _repo = repo;
         }
+        public ApiResponse<string> inUpdService(AccomidationType accomidation)
+        {
 
-        public ApiResponse<List<AccommodationType>> Getall()
+
+
+            _repo.SaveAccommodation(accomidation);
+
+            string message = accomidation.mode switch
+            {
+                "I" => "Accomidation created successfully.",
+                "U" => "Accomidation updated successfully.",
+                "D" => "Accomidation deleted successfully.",
+                _ => "Operation completed successfully."
+            };
+
+            return ApiResponse<string>.Success(message, "OK");
+        }
+        public ApiResponse<List<AccomidationType>> Getall()
         {
             var list = _repo.GetAccommodationTypes();
 
-            return ApiResponse<List<AccommodationType>>.Success(
+            return ApiResponse<List<AccomidationType>>.Success(
                 "Accommodation Type List",
                 list);
         }

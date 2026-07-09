@@ -21,6 +21,22 @@ namespace Suvarna.DGMS.Api.Services
             );
         }
 
+        public ApiResponse<string> inUpdService(Property _pr)
+        {
+           
+            _repo.SaveProperty(_pr);
+           
+            string message = _pr.mode switch
+            {
+                "I" => "Floor created successfully.",
+                "U" => "Floor updated successfully.",
+                "D" => "Floor deleted successfully.",
+                _ => "Operation completed successfully."
+            };
+
+            return ApiResponse<string>.Success(message, "OK");
+            //return ApiResponse<string>.Success("Property created successfully.", "OK");
+        }
         public ApiResponse<string> Create(Property _pr)
         {
             //if (string.IsNullOrWhiteSpace(_pr.propertyCode))

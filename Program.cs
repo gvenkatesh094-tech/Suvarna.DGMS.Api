@@ -92,16 +92,19 @@ builder.Services.AddScoped<ErrorRepository>();
 builder.Services.AddScoped<PropertyRepository>();
 builder.Services.AddScoped<BuildingRepository>();
 builder.Services.AddScoped<FloorRepository>();
+builder.Services.AddScoped<RoomRepository>();
+builder.Services.AddScoped<BedRepository>();
+builder.Services.AddScoped<AccomidationTypeRepository>();
+builder.Services.AddScoped<ServicesCatalogueRepository>();
+builder.Services.AddScoped<RoomAmenitiesRepository>();
+builder.Services.AddScoped<OccupantGuestRepository>();
 builder.Services.AddScoped<AuthRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtHelper>();
-builder.Services.AddScoped<RoomRepository>();
-builder.Services.AddScoped<BedRepository>();
-builder.Services.AddScoped<CorpAgreementRepository>();
-builder.Services.AddScoped<GstConfigRepository>();
 
-builder.Services.AddScoped<AccomidationTypeRepository>();
+
+
 #endregion
 
 #region Services
@@ -111,18 +114,16 @@ builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<PropertyService>();
-
 builder.Services.AddScoped<BuildingService>();
-
 builder.Services.AddScoped<FloorService>();
-
-builder.Services.AddScoped<AccomidationTypeService>();
-builder.Services.AddScoped<BedService>();
 builder.Services.AddScoped<RoomService>();
-builder.Services.AddScoped<CorpAgreementService>();
-builder.Services.AddScoped<GstConfigService>();
+builder.Services.AddScoped<BedService>();
+builder.Services.AddScoped<AccomidationTypeService>();
+builder.Services.AddScoped<ServicesCatalogueService>();
+builder.Services.AddScoped<RoomAmenitiesService>();
+builder.Services.AddScoped<OccupantGuestService>();
 
-builder.Services.AddScoped<IDepartmentMappingRepository, DepartmentMappingRepository>();
+
 
 #endregion
 

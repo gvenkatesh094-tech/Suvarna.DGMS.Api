@@ -2,6 +2,7 @@
 {
     public class Building
     {
+        public string? mode { get; set; }
         public int buildingId { get; set; }
         public string buildingCode { get; set; }
         public string buildingName { get; set; }
@@ -16,6 +17,7 @@
         public short grpId { get; set; }
         public short orgId { get; set; }
         public short locId { get; set; }
+        public int sessionId { get; set; }
     }
     public class DeleteBuildingRequest
     {

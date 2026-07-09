@@ -15,24 +15,12 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             _service = service;
         }
+        [HttpPost("save")]
+        //[Authorize]
+        public IActionResult Insupd([FromBody] Building req)
+           => Ok(_service.inUpdService(req));
 
-
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] Building building)
-        {
-            return Ok(_service.Create(building));
-        }
-
-        [HttpPost("update")]
-        public IActionResult Update([FromBody] Building building)
-        {
-            return Ok(_service.Update(building));
-        }
-        [HttpPost("delete")]
-        public IActionResult Delete([FromBody] DeleteBuildingRequest building)
-        {
-            return Ok(_service.Delete(building));
-        }
+        
 
         [HttpGet("list")]
         public IActionResult GetAll()

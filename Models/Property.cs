@@ -2,6 +2,7 @@
 {
     public class Property
     {
+        public string mode { get; set; }
         public int propertyId { get; set; }
 
         public short grpId { get; set; }
@@ -26,6 +27,7 @@
         public int rooms { get; set; }
         public int beds { get; set; }
         public int userId { get; set; }
+        public int sessionId { get; set; }
     }
     public class GenerateCodeRequest
     {
