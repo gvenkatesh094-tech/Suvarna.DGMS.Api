@@ -102,6 +102,7 @@ builder.Services.AddScoped<AuthRepository>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<DepartmentMappingRepository>();
 
 
 
@@ -122,6 +123,8 @@ builder.Services.AddScoped<AccomidationTypeService>();
 builder.Services.AddScoped<ServicesCatalogueService>();
 builder.Services.AddScoped<RoomAmenitiesService>();
 builder.Services.AddScoped<OccupantGuestService>();
+builder.Services.AddScoped<DepartmentMappingService>();
+
 
 
 

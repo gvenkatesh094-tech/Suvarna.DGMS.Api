@@ -1,27 +1,17 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
+using System.Data;
 
 namespace Suvarna.DGMS.Api.Repositories
 {
-    public interface IDepartmentMappingRepository
-    {
-        List<DepartmentCostMapping> GetAll();
-
-        (bool Success, string Message, int NewId) Save(DepartmentCostMapping model);
-
-        (bool Success, string Message) Update(DepartmentCostMapping model);
-
-        (bool Success, string Message) Delete(int id, int userId);
-    }
-
-    public class DepartmentMappingRepository : IDepartmentMappingRepository
+    public class DepartmentMappingRepository
     {
         private readonly string _conn;
 
         public DepartmentMappingRepository(IConfiguration configuration)
         {
-            _conn = configuration.GetConnectionString("DefaultConnection");
+            _conn = configuration.GetConnectionString("SqlServer");
         }
 
         public List<DepartmentCostMapping> GetAll()
@@ -42,18 +32,20 @@ namespace Suvarna.DGMS.Api.Repositories
                 list.Add(new DepartmentCostMapping
                 {
                     deptMappingId = Convert.ToInt32(dr["DGM_DEPT_MAPPING_ID"]),
-                    grpId = Convert.ToInt16(dr["GRP_ID"]),
-                    orgId = Convert.ToInt16(dr["ORG_ID"]),
-                    locId = Convert.ToInt16(dr["LOC_ID"]),
                     propertyId = Convert.ToInt32(dr["PROPERTY_ID"]),
+                    propertyName = dr["PROPERTY_NAME"].ToString(),
                     accmTypeId = Convert.ToInt32(dr["ACCM_TYPE_ID"]),
+                    accmTypeName = dr["OCC_CAT_NM"].ToString(),
                     occCatId = Convert.ToInt32(dr["OCC_CAT_ID"]),
+                    occCatName = dr["ACCM_TYPE_NM"].ToString(),
                     deptId = Convert.ToInt32(dr["DEPT_ID"]),
                     deptCd = dr["DEPT_CD"].ToString(),
+                    deptName = dr["DEPT_NAME"].ToString(),
                     costCenterCd = dr["COST_CENTER_CD"].ToString(),
                     glAccountCd = dr["GL_ACCOUNT_CD"].ToString(),
                     remarks = dr["REMARKS"].ToString(),
-                    recordStatus = dr["RECORD_STATUS"].ToString()
+                    recordStatus = dr["RECORD_STATUS"].ToString(),
+                    revCat= dr["REVENUE_CATEGORY"].ToString()
                 });
             }
 
@@ -71,16 +63,21 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_GRP_ID", model.grpId);
             cmd.Parameters.AddWithValue("@IP_ORG_ID", model.orgId);
             cmd.Parameters.AddWithValue("@IP_LOC_ID", model.locId);
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", model.sessionId);
             cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", model.propertyId);
             cmd.Parameters.AddWithValue("@IP_ACCM_TYPE_ID", model.accmTypeId);
             cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", model.occCatId);
             cmd.Parameters.AddWithValue("@IP_DEPT_ID", model.deptId);
             cmd.Parameters.AddWithValue("@IP_DEPT_CD", model.deptCd);
+            cmd.Parameters.AddWithValue("@IP_DEPT_NAME", model.deptName);
             cmd.Parameters.AddWithValue("@IP_COST_CENTER_CD", model.costCenterCd);
             cmd.Parameters.AddWithValue("@IP_GL_ACCOUNT_CD", model.glAccountCd);
             cmd.Parameters.AddWithValue("@IP_REMARKS", (object?)model.remarks ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@IP_RECORD_STATUS", model.recordStatus);
             cmd.Parameters.AddWithValue("@IP_USER_ID", model.createBy);
+            cmd.Parameters.AddWithValue("@IP_REVCAT", model.revCat);
+
+            
 
             SqlParameter outId = new("@OUT_DEPT_MAPPING_ID", SqlDbType.Int)
             {

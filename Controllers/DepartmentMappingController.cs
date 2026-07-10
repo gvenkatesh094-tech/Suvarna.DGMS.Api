@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Repositories;
+using Suvarna.DGMS.Api.Services;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
@@ -9,54 +11,31 @@ namespace Suvarna.DGMS.Api.Controllers
     [ApiController]
     public class DepartmentMappingController : ControllerBase
     {
-        private readonly IDepartmentMappingRepository _repo;
+        private readonly DepartmentMappingService _Service;
 
-        public DepartmentMappingController(IDepartmentMappingRepository repo)
+        public DepartmentMappingController(DepartmentMappingService Service)
         {
-            _repo = repo;
+            _Service = Service;
         }
 
-        [HttpGet]
+        [HttpGet("list")]
         public IActionResult Get()
         {
-            return Ok(_repo.GetAll());
+            return Ok(_Service.GetAll());
         }
 
-        [HttpPost]
-        public IActionResult Save([FromBody] DepartmentCostMapping model)
+        [HttpPost("create")]
+        public IActionResult Create([FromBody] DepartmentCostMapping model)
         {
-            var result = _repo.Save(model);
-
-            return Ok(new
-            {
-                success = result.Success,
-                message = result.Message,
-                id = result.NewId
-            });
+            return Ok(_Service.Create(model));
         }
 
-        [HttpPut]
+        [HttpPost("update")]
         public IActionResult Update([FromBody] DepartmentCostMapping model)
         {
-            var result = _repo.Update(model);
 
-            return Ok(new
-            {
-                success = result.Success,
-                message = result.Message
-            });
+            return Ok(_Service.Update(model));
         }
 
-        [HttpDelete("{id}/{userId}")]
-        public IActionResult Delete(int id, int userId)
-        {
-            var result = _repo.Delete(id, userId);
-
-            return Ok(new
-            {
-                success = result.Success,
-                message = result.Message
-            });
-        }
     }
 }
