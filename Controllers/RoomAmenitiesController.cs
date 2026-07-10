@@ -31,5 +31,10 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(
                 _service.GetAll());
         }
+        [HttpGet("categories")]
+        public IActionResult GetCategories()
+        {
+            return Ok(_service.GetCategories());
+        }
     }
 }

@@ -37,5 +37,13 @@ namespace Suvarna.DGMS.Api.Services
                     "Room Amenities List",
                     list);
         }
+        public ApiResponse<List<string>> GetCategories()
+        {
+            var list = _repo.GetAmenityCategories();
+
+            return ApiResponse<List<string>>.Success(
+                "Amenity Categories",
+                list);
+        }
     }
 }

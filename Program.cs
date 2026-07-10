@@ -98,6 +98,7 @@ builder.Services.AddScoped<AccomidationTypeRepository>();
 builder.Services.AddScoped<ServicesCatalogueRepository>();
 builder.Services.AddScoped<RoomAmenitiesRepository>();
 builder.Services.AddScoped<OccupantGuestRepository>();
+builder.Services.AddScoped<SystemParametersRepository>();
 builder.Services.AddScoped<AuthRepository>();
 
 builder.Services.AddScoped<AuthService>();
@@ -125,6 +126,7 @@ builder.Services.AddScoped<RoomAmenitiesService>();
 builder.Services.AddScoped<OccupantGuestService>();
 builder.Services.AddScoped<DepartmentMappingService>();
 
+builder.Services.AddScoped<SystemParametersService>();
 
 
 

@@ -39,5 +39,6 @@
         public int modifyBy { get; set; }
 
         public DateTime? modifyDt { get; set; }
+        public string? isMandatory { get; set; }
     }
 }

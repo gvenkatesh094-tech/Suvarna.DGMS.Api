@@ -89,6 +89,9 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue(
                     "@IP_SESSION_ID",
                     amenity.sessionId);
+                cmd.Parameters.AddWithValue(
+    "@IS_MANDATORY",
+    (object?)amenity.isMandatory ?? DBNull.Value);
 
                 conn.Open();
 
@@ -170,8 +173,32 @@ namespace Suvarna.DGMS.Api.Repositories
                         reader.SafeGetInt("MODIFY_BY"),
 
                     modifyDt =
-                        reader.SafeGetDateTime("MODIFY_DT")
+                        reader.SafeGetDateTime("MODIFY_DT"),
+                    isMandatory = reader.SafeGetString("IS_MANDATORY"),
                 });
+            }
+
+            return list;
+        }
+        public List<string> GetAmenityCategories()
+        {
+            List<string> list = new();
+
+            using SqlConnection conn = new SqlConnection(_conn);
+
+            using SqlCommand cmd = new SqlCommand(
+                "DGMS.PR_GET_AMENITY_CATEGORIES",
+                conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            conn.Open();
+
+            using SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                list.Add(reader.SafeGetString("AMENITY_CATEGORY"));
             }
 
             return list;
