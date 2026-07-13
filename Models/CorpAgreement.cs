@@ -9,6 +9,13 @@
         public short OrgId { get; set; }
 
         public short LocId { get; set; }
+        public int sessionId { get; set; }
+
+        public int propertyId { get; set; }
+
+        public string propertyName { get; set; }
+
+        public int roomAllocate { get; set; }
 
         public string AgreementNo { get; set; }
 

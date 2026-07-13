@@ -21,7 +21,7 @@ namespace Suvarna.DGMS.Api.Services
                 return ApiResponse<string>.Fail("bedType is required.");
 
             // Use the mode sent from Angular
-            string msg = _repo.Save(bed, "I");
+            string msg = _repo.Save(bed);
 
             return ApiResponse<string>.Success(msg, "OK");
         }
@@ -36,7 +36,7 @@ namespace Suvarna.DGMS.Api.Services
                 return ApiResponse<string>.Fail("bedType is required.");
 
             // Use the mode sent from Angular
-            string msg = _repo.Save(bed, "U");
+            string msg = _repo.Save(bed);
 
             return ApiResponse<string>.Success(msg, "OK");
         }

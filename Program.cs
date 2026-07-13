@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Suvarna.DGMS.Api.Controllers;
 using Suvarna.DGMS.Api.Data;
 using Suvarna.DGMS.Api.Filters;
+using Suvarna.DGMS.Api.Helpers;
 using Suvarna.DGMS.Api.Middleware;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Repositories;
 using Suvarna.DGMS.Api.Services;
-using Suvarna.DGMS.Api.Helpers;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -104,7 +105,8 @@ builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<DepartmentMappingRepository>();
-
+builder.Services.AddScoped<CorpAgreementRepository>();
+builder.Services.AddScoped<GstConfigRepository>();
 
 
 #endregion
@@ -127,6 +129,8 @@ builder.Services.AddScoped<OccupantGuestService>();
 builder.Services.AddScoped<DepartmentMappingService>();
 
 builder.Services.AddScoped<SystemParametersService>();
+builder.Services.AddScoped<CorpAgreementService>();
+builder.Services.AddScoped<GstConfigService>();
 
 
 

@@ -30,13 +30,21 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.CommandType = CommandType.StoredProcedure;
 
-            cmd.Parameters.AddWithValue("@IP_SESSION_ID", agreement.CreateBy);
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", agreement.sessionId);
             cmd.Parameters.AddWithValue("@IP_MODE", mode);
-
-            cmd.Parameters.AddWithValue("@IP_DGM_CORP_AGREEMENT_MAST_ID", DBNull.Value);
+            if(mode=="U")
+            {
+                cmd.Parameters.AddWithValue("@IP_DGM_CORP_AGREEMENT_MAST_ID", agreement.CorpAgreementMastId);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@IP_DGM_CORP_AGREEMENT_MAST_ID", DBNull.Value);
+            }
+                
             cmd.Parameters.AddWithValue("@IP_GRP_ID", agreement.GrpId);
             cmd.Parameters.AddWithValue("@IP_ORG_ID", agreement.OrgId);
             cmd.Parameters.AddWithValue("@IP_LOC_ID", agreement.LocId);
+            cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", agreement.propertyId);            
             cmd.Parameters.AddWithValue("@IP_AGREEMENT_NO", agreement.AgreementNo);
             cmd.Parameters.AddWithValue("@IP_CORP_NM", agreement.CorpNm);
             cmd.Parameters.AddWithValue("@IP_CORP_GSTIN", agreement.CorpGstin);

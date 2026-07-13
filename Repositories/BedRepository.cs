@@ -12,7 +12,7 @@ namespace Suvarna.DGMS.Api.Repositories
         {
             _conn = configuration.GetConnectionString("SqlServer");
         }
-        public string Save(Bed bed, string mode)
+        public string Save(Bed bed)
         {
             using SqlConnection conn = new SqlConnection(_conn);
 
@@ -21,7 +21,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", bed.sessionId);
-            cmd.Parameters.AddWithValue("@IP_MODE", mode);
+            cmd.Parameters.AddWithValue("@IP_MODE", bed.mode);
 
             cmd.Parameters.AddWithValue("@IP_BED_ID",
                 bed.bedId == 0 ? DBNull.Value : bed.bedId);
@@ -95,7 +95,7 @@ namespace Suvarna.DGMS.Api.Repositories
                     bedStatus = dr["BED_STATUS_CD"]?.ToString(),
 
                     sortOrder = Convert.ToInt16(dr["SORT_ORDER"]),
-                    roomNo = (dr["ROOM_NO"].ToString())
+                    roomName = (dr["ROOM_NM"].ToString())
                 });
             }
 
