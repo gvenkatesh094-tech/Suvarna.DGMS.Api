@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <Reference Include="CryptoWord">
-      <HintPath>..\..\FNB_ANGULAR_API\FNB_API\FNB_ANGULAR_API\bin\Debug\net8.0\CryptoWord.dll</HintPath>
+      <HintPath>..\..\..\..\Workfiles\XLUpload2FTP\XLUpload2FTP\bin\Debug\CryptoWord.dll</HintPath>
     </Reference>
   </ItemGroup>
 
