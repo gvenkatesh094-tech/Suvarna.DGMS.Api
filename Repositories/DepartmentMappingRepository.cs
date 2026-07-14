@@ -126,11 +126,13 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", model.occCatId);
             cmd.Parameters.AddWithValue("@IP_DEPT_ID", model.deptId);
             cmd.Parameters.AddWithValue("@IP_DEPT_CD", model.deptCd);
+            cmd.Parameters.AddWithValue("@IP_DEPT_NAME", model.deptName);
             cmd.Parameters.AddWithValue("@IP_COST_CENTER_CD", model.costCenterCd);
             cmd.Parameters.AddWithValue("@IP_GL_ACCOUNT_CD", model.glAccountCd);
             cmd.Parameters.AddWithValue("@IP_REMARKS", (object?)model.remarks ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@IP_RECORD_STATUS", model.recordStatus);
             cmd.Parameters.AddWithValue("@IP_USER_ID", model.createBy);
+            cmd.Parameters.AddWithValue("@IP_REVCAT", model.revCat);
 
             SqlParameter outId = new("@OUT_DEPT_MAPPING_ID", SqlDbType.Int)
             {

@@ -3,7 +3,7 @@
     public class Bed
     {
         public int bedId { get; set; }
-
+        public string mode { get; set; }
         public short grpId { get; set; }
         public short orgId { get; set; }
         public short locId { get; set; }
@@ -22,6 +22,6 @@
         public int userId { get; set; }
 
         public string sessionId { get; set; }
-        public string roomNo { get; set; }
+        public string roomName { get; set; }
     }
 }

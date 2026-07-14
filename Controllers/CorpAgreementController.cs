@@ -22,7 +22,7 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.Create(_Corp));
         }
 
-        [HttpPut("update")]
+        [HttpPost("update")]
         public IActionResult Update([FromBody] CorpAgreement _Corp)
         {
             return Ok(_service.Update(_Corp));

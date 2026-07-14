@@ -31,7 +31,7 @@ namespace Suvarna.DGMS.Api.Services
                 return ApiResponse<string>.Fail("AgreementNo Number is required.");
 
             // Use the mode sent from Angular
-            string msg = _repo.Save(_corp);
+            string msg = _repo.Update(_corp);
 
             return ApiResponse<string>.Success(msg, "OK");
         }
@@ -56,7 +56,12 @@ namespace Suvarna.DGMS.Api.Services
                     CreditLimitAmt = Convert.ToDecimal(row["CREDIT_LIMIT_AMT"]),
                     EffectiveFromDt = Convert.ToDateTime(row["EFFECTIVE_FROM_DT"]),
                     EffectiveToDt = Convert.ToDateTime(row["EFFECTIVE_TO_DT"]),
-                    RecordStatus = row["RECORD_STATUS"].ToString()
+                    RecordStatus = row["RECORD_STATUS"].ToString(),
+                    CorpAddress = row["CORP_ADDRESS"].ToString(),
+                    ContactNm = row["CONTACT_NM"].ToString(),
+                    ContactPhone = row["CONTACT_PHONE"].ToString(),
+                    propertyName = row["PROPERTY_NM"].ToString(),
+                    roomAllocate = Convert.ToInt32(row["ROOM_ALLOCATE"] == DBNull.Value ? 0 : row["ROOM_ALLOCATE"])
                 });
             }
 
