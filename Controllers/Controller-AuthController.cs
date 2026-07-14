@@ -44,6 +44,8 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(
                 await _service.GetUserDetails(userId));
         }
+
+        [AllowAnonymous]
         [HttpGet("get-user-facilities")]
         public async Task<IActionResult> GetUserFacilities([FromQuery] long userId)
         {
