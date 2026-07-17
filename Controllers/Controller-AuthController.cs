@@ -6,7 +6,7 @@ using Suvarna.DGMS.Api.Services;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
-    [Authorize]
+   // [Authorize]
     [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -38,6 +38,7 @@ namespace Suvarna.DGMS.Api.Controllers
 
             return Ok(response);
         }
+        [AllowAnonymous]
         [HttpGet("user-details")]
         public async Task<IActionResult> GetUserDetails([FromQuery] long userId)
         {
@@ -52,6 +53,7 @@ namespace Suvarna.DGMS.Api.Controllers
             var response = await _service.GetUserFacilities(userId);
             return Ok(response);
         }
+        [AllowAnonymous]
         [HttpPost("create-session")]
         public async Task<IActionResult> CreateSession([FromBody] UserSessionRequest request)
         {
@@ -138,7 +140,7 @@ namespace Suvarna.DGMS.Api.Controllers
 
             return Ok(response);
         }
-
+        [AllowAnonymous]
         [HttpPost("get-modules")]
         public async Task<IActionResult> GetModules([FromBody] ModuleRequest request)
         {
@@ -146,6 +148,7 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpPost("get-user-module-docs")]
         public async Task<IActionResult> GetUserModuleDocs([FromBody] ModuleDocRequest request)
         {
