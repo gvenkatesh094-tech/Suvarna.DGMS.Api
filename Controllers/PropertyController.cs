@@ -26,20 +26,7 @@ namespace Suvarna.DGMS.Api.Controllers
         //[Authorize]
         public IActionResult Insupd([FromBody] Property req)
            => Ok(_service.inUpdService(req));
-
-        [HttpPost("create")]
-        //[Authorize]
-        public IActionResult Create([FromBody] Property req)
-            => Ok(_service.Create(req));
-
-        [HttpPost("update")]
-        //[Authorize]
-        public IActionResult update([FromBody] Property req)
-    => Ok(_service.Update(req));
-
-        [HttpPost("delete")]
-        public IActionResult Delete([FromBody] Property req)
-            => Ok(_service.Delete(req));
+        
 
         [HttpGet("list")]
         //[Authorize]

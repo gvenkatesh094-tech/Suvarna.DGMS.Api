@@ -108,6 +108,10 @@ builder.Services.AddScoped<DepartmentMappingRepository>();
 builder.Services.AddScoped<CorpAgreementRepository>();
 builder.Services.AddScoped<GstConfigRepository>();
 
+builder.Services.AddScoped<TariffRepository>();
+
+builder.Services.AddScoped<CheckinRepository>();
+
 
 #endregion
 
@@ -132,7 +136,9 @@ builder.Services.AddScoped<SystemParametersService>();
 builder.Services.AddScoped<CorpAgreementService>();
 builder.Services.AddScoped<GstConfigService>();
 
+builder.Services.AddScoped<TariffService>();
 
+builder.Services.AddScoped<CheckinService>();
 
 #endregion
 
