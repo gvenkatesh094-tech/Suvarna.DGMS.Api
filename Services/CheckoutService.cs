@@ -19,20 +19,9 @@ namespace Suvarna.DGMS.Api.Services
         //====================================================
 
         public ApiResponse<List<CheckoutBooking>> GetCheckoutBookings(
-            string sessionId,
-            int? propertyId,
-            string? bookingNo,
-            string? guestName,
-            string? mobileNo,
-            string? roomNo)
+    string sessionId)
         {
-            var data = _repo.GetCheckoutBookings(
-                sessionId,
-                propertyId,
-                bookingNo,
-                guestName,
-                mobileNo,
-                roomNo);
+            var data = _repo.GetCheckoutBookings(sessionId);
 
             return ApiResponse<List<CheckoutBooking>>.Success(
                 "Checkout bookings fetched successfully.",

@@ -113,6 +113,13 @@ builder.Services.AddScoped<TariffRepository>();
 builder.Services.AddScoped<CheckinRepository>();
 
 
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<TariffService>();
+builder.Services.AddScoped<CheckinService>();
+builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<CheckoutRepository>();
+
+
 #endregion
 
 #region Services
