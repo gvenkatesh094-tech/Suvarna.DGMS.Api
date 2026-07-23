@@ -11,8 +11,7 @@ namespace Suvarna.DGMS.Api.Repositories
         public CheckinRepository(
             IConfiguration configuration)
         {
-            _conn = configuration
-                .GetConnectionString("SqlServer");
+            _conn = configuration.GetConnectionString("SqlServer");
         }
 
         // ==========================================
@@ -40,7 +39,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_CHECKIN_LOOKUP", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
-                cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", propertyId.HasValue ? propertyId.Value : DBNull.Value);
+                //cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", propertyId.HasValue ? propertyId.Value : DBNull.Value);
                 cmd.Parameters.AddWithValue("@IP_ROOM_STATUS_CD", (object?)roomStatus ?? DBNull.Value);
                 conn.Open();
 
@@ -229,8 +228,7 @@ namespace Suvarna.DGMS.Api.Repositories
         {
             try
             {
-                using SqlConnection conn =
-                    new SqlConnection(_conn);
+                using SqlConnection conn = new SqlConnection(_conn);
 
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CHECKIN", conn);
 

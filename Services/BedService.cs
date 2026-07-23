@@ -66,7 +66,7 @@ namespace Suvarna.DGMS.Api.Services
             if (bed.bedId <= 0)
                 return ApiResponse<string>.Fail("Bed Id is required.");
 
-            if (string.IsNullOrWhiteSpace(bed.sessionId))
+            if (bed.sessionId<=0)
                 return ApiResponse<string>.Fail("Session Id is required.");
 
             if (string.IsNullOrWhiteSpace(bed.bedStatus))

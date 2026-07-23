@@ -4,7 +4,7 @@ namespace Suvarna.DGMS.Api.Models
 {
     public class CheckoutRequest
     {
-        public string sessionId { get; set; } = string.Empty;
+        public int sessionId { get; set; } 
 
         public int bookingId { get; set; }
 

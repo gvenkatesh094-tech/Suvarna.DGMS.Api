@@ -37,7 +37,7 @@
 
         public int userId { get; set; }
 
-        public string sessionId { get; set; }
+        public int sessionId { get; set; }
 
         // Optional (if you want to display current occupant)
         public string? occupant { get; set; }

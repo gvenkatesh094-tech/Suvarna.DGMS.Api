@@ -20,7 +20,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET CHECKOUT BOOKINGS
         //=========================================================
 
-        public List<CheckoutBooking> GetCheckoutBookings(string sessionId)
+        public List<CheckoutBooking> GetCheckoutBookings(int sessionId)
         {
             List<CheckoutBooking> list =
                 new List<CheckoutBooking>();
@@ -73,7 +73,7 @@ namespace Suvarna.DGMS.Api.Repositories
         //=========================================================
 
         public CheckoutDetails? GetCheckoutDetails(
-            string sessionId,
+            int sessionId,
             int bookingId)
         {
             CheckoutDetails? details = null;

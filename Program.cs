@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -118,6 +119,11 @@ builder.Services.AddScoped<TariffService>();
 builder.Services.AddScoped<CheckinService>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<CheckoutRepository>();
+
+
+builder.Services.AddScoped<HkDashboardRepository>();
+
+builder.Services.AddScoped<HkDashboardService>();
 
 
 #endregion

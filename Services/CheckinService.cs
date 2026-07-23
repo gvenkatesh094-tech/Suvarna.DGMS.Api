@@ -77,7 +77,7 @@ namespace Suvarna.DGMS.Api.Services
         // CONFIRM CHECK-IN
         // ==========================================
 
-        public ApiResponse<CheckinResult> ConfirmCheckin(           Checkin request)
+        public ApiResponse<CheckinResult> ConfirmCheckin(Checkin request)
         {
             //ValidateCheckin(request);
 
@@ -98,130 +98,6 @@ namespace Suvarna.DGMS.Api.Services
             );
         }
 
-        // ==========================================
-        // SERVER VALIDATION
-        // ==========================================
-
-        private static void ValidateCheckin(
-            Checkin request)
-        {
-            if (request == null)
-                throw new Exception(
-                    "Check-in request is required."
-                );
-
-            if (string.IsNullOrWhiteSpace(
-                request.sessionId))
-            {
-                throw new Exception(
-                    "Session Id is required."
-                );
-            }
-
-            if (request.propertyId <= 0)
-                throw new Exception(
-                    "Property is required."
-                );
-
-            if (request.roomId <= 0)
-                throw new Exception(
-                    "Room is required."
-                );
-
-            if (request.tariffId <= 0)
-                throw new Exception(
-                    "Tariff is required."
-                );
-
-            if (request.occCatId <= 0)
-                throw new Exception(
-                    "Occupant category is required."
-                );
-
-            if (string.IsNullOrWhiteSpace(
-                request.guestName))
-            {
-                throw new Exception(
-                    "Guest name is required."
-                );
-            }
-
-            if (request.guestName.Trim().Length < 2)
-            {
-                throw new Exception(
-                    "Guest name must contain at least 2 characters."
-                );
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                request.mobileNo))
-            {
-                throw new Exception(
-                    "Mobile number is required."
-                );
-            }
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(
-                request.mobileNo,
-                @"^[6-9][0-9]{9}$"))
-            {
-                throw new Exception(
-                    "Enter valid 10 digit mobile number."
-                );
-            }
-
-            if (!string.IsNullOrWhiteSpace(
-                    request.emailId)
-                &&
-                !System.Text.RegularExpressions.Regex.IsMatch(
-                    request.emailId,
-                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-            {
-                throw new Exception(
-                    "Enter valid email address."
-                );
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                request.idTypeCd))
-            {
-                throw new Exception(
-                    "ID type is required."
-                );
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                request.idNumberMasked))
-            {
-                throw new Exception(
-                    "ID number is required."
-                );
-            }
-
-            if (request.expectedCheckoutDt
-                <= DateTime.UtcNow)
-            {
-                throw new Exception(
-                    "Expected checkout must be greater than check-in date."
-                );
-            }
-
-            if (request.depositAmount < 0)
-            {
-                throw new Exception(
-                    "Deposit amount cannot be negative."
-                );
-            }
-
-            if (request.depositAmount > 0
-                &&
-                string.IsNullOrWhiteSpace(
-                    request.depositPaymentMode))
-            {
-                throw new Exception(
-                    "Deposit payment mode is required."
-                );
-            }
-        }
+       
     }
 }

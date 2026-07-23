@@ -75,8 +75,7 @@ namespace Suvarna.DGMS.Api.Controllers
         // ==========================================
 
         [HttpPost("confirm")]
-        public IActionResult Confirm(
-            [FromBody] Checkin request)
+        public IActionResult Confirm([FromBody] Checkin request)
         {
             return Ok(
                 _service.ConfirmCheckin(request)

@@ -18,8 +18,7 @@ namespace Suvarna.DGMS.Api.Services
         // GET CHECKOUT BOOKINGS
         //====================================================
 
-        public ApiResponse<List<CheckoutBooking>> GetCheckoutBookings(
-    string sessionId)
+        public ApiResponse<List<CheckoutBooking>> GetCheckoutBookings(int sessionId)
         {
             var data = _repo.GetCheckoutBookings(sessionId);
 
@@ -33,7 +32,7 @@ namespace Suvarna.DGMS.Api.Services
         //====================================================
 
         public ApiResponse<CheckoutDetails> GetCheckoutDetails(
-            string sessionId,
+            int sessionId,
             int bookingId)
         {
             var data =
@@ -82,8 +81,7 @@ namespace Suvarna.DGMS.Api.Services
         // SERVER VALIDATION
         //====================================================
 
-        private static void ValidateCheckout(
-            CheckoutRequest request)
+        private static void ValidateCheckout(CheckoutRequest request)
         {
             if (request == null)
             {
@@ -91,8 +89,7 @@ namespace Suvarna.DGMS.Api.Services
                     "Checkout request is required.");
             }
 
-            if (string.IsNullOrWhiteSpace(
-                request.sessionId))
+            if (request.sessionId <= 0)
             {
                 throw new Exception(
                     "Session Id is required.");
