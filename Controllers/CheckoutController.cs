@@ -21,24 +21,10 @@ namespace Suvarna.DGMS.Api.Controllers
         //=========================================================
 
         [HttpGet("bookings")]
-        public IActionResult GetCheckoutBookings(
-            [FromQuery] string sessionId,
-            [FromQuery] int? propertyId = null,
-            [FromQuery] string? bookingNo = null,
-            [FromQuery] string? guestName = null,
-            [FromQuery] string? mobileNo = null,
-            [FromQuery] string? roomNo = null)
+        public IActionResult GetCheckoutBookings([FromQuery] int sessionId)
         {
             return Ok(
-                _service.GetCheckoutBookings(
-                    sessionId,
-                    propertyId,
-                    bookingNo,
-                    guestName,
-                    mobileNo,
-                    roomNo
-                )
-            );
+                _service.GetCheckoutBookings(sessionId));
         }
 
         //=========================================================
@@ -46,9 +32,7 @@ namespace Suvarna.DGMS.Api.Controllers
         //=========================================================
 
         [HttpGet("details")]
-        public IActionResult GetCheckoutDetails(
-            [FromQuery] string sessionId,
-            [FromQuery] int bookingId)
+        public IActionResult GetCheckoutDetails([FromQuery] int sessionId, [FromQuery] int bookingId)
         {
             return Ok(
                 _service.GetCheckoutDetails(

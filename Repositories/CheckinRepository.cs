@@ -11,8 +11,7 @@ namespace Suvarna.DGMS.Api.Repositories
         public CheckinRepository(
             IConfiguration configuration)
         {
-            _conn = configuration
-                .GetConnectionString("SqlServer");
+            _conn = configuration.GetConnectionString("SqlServer");
         }
 
         // ==========================================
@@ -37,210 +36,46 @@ namespace Suvarna.DGMS.Api.Repositories
                 using SqlConnection conn =
                     new SqlConnection(_conn);
 
-                using SqlCommand cmd =
-                    new SqlCommand(
-                        "DGMS.PR_DGMS_GET_ROOM_LOOKUP",
-                        conn
-                    );
-
-                cmd.CommandType =
-                    CommandType.StoredProcedure;
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_SESSION_ID",
-                    sessionId
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_PROPERTY_ID",
-                    propertyId.HasValue
-                        ? propertyId.Value
-                        : DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_BUILDING_ID",
-                    buildingId.HasValue
-                        ? buildingId.Value
-                        : DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_FLOOR_ID",
-                    floorId.HasValue
-                        ? floorId.Value
-                        : DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_ACCM_TYPE_ID",
-                    accmTypeId.HasValue
-                        ? accmTypeId.Value
-                        : DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_ROOM_STATUS_CD",
-                    (object?)roomStatus
-                    ?? DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_IS_AC",
-                    (object?)isAc
-                    ?? DBNull.Value
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_IS_ACCESSIBLE",
-                    (object?)isAccessible
-                    ?? DBNull.Value
-                );
-
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_CHECKIN_LOOKUP", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                //cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", propertyId.HasValue ? propertyId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@IP_ROOM_STATUS_CD", (object?)roomStatus ?? DBNull.Value);
                 conn.Open();
 
-                using SqlDataReader dr =
-                    cmd.ExecuteReader();
-
+                using SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
                     list.Add(
                         new CheckinRoom
                         {
-                            roomId = GetInt(
-                                dr,
-                                "ROOM_ID"
-                            ),
-
-                            roomNo = GetString(
-                                dr,
-                                "ROOM_NO"
-                            ),
-
-                            roomName = GetString(
-                                dr,
-                                "ROOM_NM"
-                            ),
-
-                            roomStatus = GetString(
-                                dr,
-                                "ROOM_STATUS_CD"
-                            ),
-
-                            propertyId = GetInt(
-                                dr,
-                                "PROPERTY_ID"
-                            ),
-
-                            propertyName = GetString(
-                                dr,
-                                "PROPERTY_NM"
-                            ),
-
-                            propertyCode = GetString(
-                                dr,
-                                "PROPERTY_CD"
-                            ),
-
-                            buildingId = GetNullableInt(
-                                dr,
-                                "BUILDING_ID"
-                            ),
-
-                            buildingName = GetString(
-                                dr,
-                                "BUILDING_NM"
-                            ),
-
-                            floorId = GetNullableInt(
-                                dr,
-                                "FLOOR_ID"
-                            ),
-
-                            floorName = GetString(
-                                dr,
-                                "FLOOR_NM"
-                            ),
-
-                            floorSeq = GetInt(
-                                dr,
-                                "FLOOR_SEQ"
-                            ),
-
-                            accmTypeId = GetInt(
-                                dr,
-                                "ACCM_TYPE_ID"
-                            ),
-
-                            accmTypeName = GetString(
-                                dr,
-                                "ACCM_TYPE_NM"
-                            ),
-
-                            accmCategory = GetString(
-                                dr,
-                                "ACCM_CATEGORY"
-                            ),
-
-                            maxOccupants = GetInt(
-                                dr,
-                                "MAX_OCCUPANTS"
-                            ),
-
-                            totalBeds = GetInt(
-                                dr,
-                                "TOTAL_BEDS"
-                            ),
-
-                            availableBeds = GetInt(
-                                dr,
-                                "AVAILABLE_BEDS"
-                            ),
-
-                            isAc = GetString(
-                                dr,
-                                "IS_AC"
-                            ),
-
-                            isAttachedBath = GetString(
-                                dr,
-                                "IS_ATTACHED_BATH"
-                            ),
-
-                            isWifi = GetString(
-                                dr,
-                                "IS_WIFI"
-                            ),
-
-                            isTv = GetString(
-                                dr,
-                                "IS_TV"
-                            ),
-
-                            isAccessible = GetString(
-                                dr,
-                                "IS_ACCESSIBLE"
-                            ),
-
-                            wardProximity = GetString(
-                                dr,
-                                "WARD_PROXIMITY"
-                            ),
-
-                            blockedReason = GetString(
-                                dr,
-                                "BLOCKED_REASON"
-                            ),
-
-                            blockedFromDt = GetNullableDateTime(
-                                dr,
-                                "BLOCKED_FROM_DT"
-                            ),
-
-                            blockedToDt = GetNullableDateTime(
-                                dr,
-                                "BLOCKED_TO_DT"
-                            )
+                            roomId = GetInt(dr, "ROOM_ID"),
+                            roomNo = GetString(dr, "ROOM_NO"),
+                            roomName = GetString(dr, "ROOM_NM"),
+                            roomStatus = GetString(dr, "ROOM_STATUS_CD"),
+                            propertyId = GetInt(dr, "PROPERTY_ID"),
+                            propertyName = GetString(dr, "PROPERTY_NM"),
+                            propertyCode = GetString(dr, "PROPERTY_CD"),
+                            buildingId = GetNullableInt(dr, "BUILDING_ID"),
+                            buildingName = GetString(dr, "BUILDING_NM"),
+                            floorId = GetNullableInt(dr, "FLOOR_ID"),
+                            floorName = GetString(dr, "FLOOR_NM"),
+                            floorSeq = GetInt(dr, "FLOOR_SEQ"),
+                            accmTypeId = GetInt(dr, "ACCM_TYPE_ID"),
+                            accmTypeName = GetString(dr, "ACCM_TYPE_NM"),
+                            accmCategory = GetString(dr, "ACCM_CATEGORY"),
+                            maxOccupants = GetInt(dr, "MAX_OCCUPANTS"),
+                            totalBeds = GetInt(dr, "TOTAL_BEDS"),
+                            availableBeds = GetInt(dr, "AVAILABLE_BEDS"),
+                            isAc = GetString(dr, "IS_AC"),
+                            isAttachedBath = GetString(dr, "IS_ATTACHED_BATH"),
+                            isWifi = GetString(dr, "IS_WIFI"),
+                            isTv = GetString(dr, "IS_TV"),
+                            isAccessible = GetString(dr, "IS_ACCESSIBLE"),
+                            wardProximity = GetString(dr, "WARD_PROXIMITY"),
+                            blockedReason = GetString(dr, "BLOCKED_REASON"),
+                            blockedFromDt = GetNullableDateTime(dr, "BLOCKED_FROM_DT"),
+                            blockedToDt = GetNullableDateTime(dr, "BLOCKED_TO_DT")
                         }
                     );
                 }
@@ -393,8 +228,7 @@ namespace Suvarna.DGMS.Api.Repositories
         {
             try
             {
-                using SqlConnection conn =
-                    new SqlConnection(_conn);
+                using SqlConnection conn = new SqlConnection(_conn);
 
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CHECKIN", conn);
 

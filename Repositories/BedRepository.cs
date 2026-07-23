@@ -21,17 +21,24 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", bed.sessionId);
+
             cmd.Parameters.AddWithValue("@IP_MODE", bed.mode);
 
-            cmd.Parameters.AddWithValue("@IP_BED_ID",
-                bed.bedId == 0 ? DBNull.Value : bed.bedId);
-
-            cmd.Parameters.AddWithValue("@IP_ROOM_ID", bed.roomId);
+            cmd.Parameters.AddWithValue(
+                "@IP_BED_ID",
+                bed.bedId == 0 ? DBNull.Value : bed.bedId
+            );
 
             cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", bed.propertyId);
             cmd.Parameters.AddWithValue("@IP_BUILDING_ID", bed.buildingId);
 
             cmd.Parameters.AddWithValue("@IP_FLOOR_ID", bed.floorId);
+
+            cmd.Parameters.AddWithValue("@IP_BUILDING_ID", bed.buildingId);
+
+            cmd.Parameters.AddWithValue("@IP_FLOOR_ID", bed.floorId);
+
+            cmd.Parameters.AddWithValue("@IP_ROOM_ID", bed.roomId);
 
             cmd.Parameters.AddWithValue("@IP_BED_NO", bed.bedNo);
 
@@ -66,7 +73,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.ExecuteNonQuery();
 
-            return outMsg.Value.ToString();
+            return outMsg.Value?.ToString() ?? string.Empty;
         }
         #region Get All Beds
 

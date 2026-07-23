@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -111,6 +112,18 @@ builder.Services.AddScoped<GstConfigRepository>();
 builder.Services.AddScoped<TariffRepository>();
 
 builder.Services.AddScoped<CheckinRepository>();
+
+
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<TariffService>();
+builder.Services.AddScoped<CheckinService>();
+builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<CheckoutRepository>();
+
+
+builder.Services.AddScoped<HkDashboardRepository>();
+
+builder.Services.AddScoped<HkDashboardService>();
 
 
 #endregion

@@ -2,7 +2,7 @@
 {
     public class Checkin
     {
-        public string sessionId { get; set; } = "";
+        public int sessionId { get; set; } 
 
         public int? existingBookingId { get; set; }
 
