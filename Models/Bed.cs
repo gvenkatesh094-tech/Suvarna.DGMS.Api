@@ -11,6 +11,10 @@
         public int roomId { get; set; }
         public int propertyId { get; set; }
 
+        public int buildingId { get; set; }
+
+        public int floorId { get; set; }
+
         public string bedNo { get; set; }
 
         public string bedType { get; set; }

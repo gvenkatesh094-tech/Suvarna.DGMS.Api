@@ -29,6 +29,9 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_ROOM_ID", bed.roomId);
 
             cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", bed.propertyId);
+            cmd.Parameters.AddWithValue("@IP_BUILDING_ID", bed.buildingId);
+
+            cmd.Parameters.AddWithValue("@IP_FLOOR_ID", bed.floorId);
 
             cmd.Parameters.AddWithValue("@IP_BED_NO", bed.bedNo);
 
