@@ -49,6 +49,27 @@
         public decimal depositAmount { get; set; }
         public string? depositPaymentMode { get; set; }
         public string? depositRef { get; set; }
+        public decimal BaseAmount { get; set; }
+
+        public decimal CgstAmount { get; set; }
+
+        public decimal SgstAmount { get; set; }
+
+        public decimal IgstAmount { get; set; }
+
+        public decimal GstAmount { get; set; }
+
+        public decimal GrossAmount { get; set; }
+
+        public decimal SecurityDepositAmount { get; set; }
+
+        public decimal DailyRate { get; set; }
+
+        public decimal HourlyRate { get; set; }
+
+        public decimal MonthlyRate { get; set; }
+
+        public string BillingModel { get; set; }
     }
 
     public class CheckinResult

@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Helpers;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
@@ -24,6 +25,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", room.sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", room.locationId);
 
             cmd.Parameters.AddWithValue("@IP_MODE", mode);
 
@@ -108,7 +110,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
             return outMsg.Value.ToString();
         }
-        public List<Room> GetAllRooms()
+        public List<Room> GetAllRooms(int sessionId,int locationId)
         {
             List<Room> rooms = new List<Room>();
 
@@ -117,6 +119,8 @@ namespace Suvarna.DGMS.Api.Repositories
                 using (SqlCommand cmd = new SqlCommand("DGMS.PR_GET_ROOMS", con))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                    cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
 
                     con.Open();
 

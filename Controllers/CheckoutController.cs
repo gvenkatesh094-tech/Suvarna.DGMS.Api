@@ -41,6 +41,13 @@ namespace Suvarna.DGMS.Api.Controllers
                 )
             );
         }
+        [HttpPost("prepare")]
+        public IActionResult PrepareCheckout([FromQuery] int sessionId, [FromQuery] int bookingId)
+        {
+            return Ok(_service.PrepareCheckout(sessionId, bookingId)
+            );
+        }
+
 
         //=========================================================
         // CONFIRM CHECKOUT

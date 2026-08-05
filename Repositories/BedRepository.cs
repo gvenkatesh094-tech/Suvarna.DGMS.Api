@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -21,6 +22,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", bed.sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", bed.locationId);
 
             cmd.Parameters.AddWithValue("@IP_MODE", bed.mode);
 
@@ -74,7 +76,7 @@ namespace Suvarna.DGMS.Api.Repositories
         }
         #region Get All Beds
 
-        public List<Bed> GetAllBeds()
+        public List<Bed> GetAllBeds(int sessionId,int locationId)
         {
             List<Bed> list = new();
 
@@ -83,6 +85,8 @@ namespace Suvarna.DGMS.Api.Repositories
 
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
 
             conn.Open();
 
@@ -96,6 +100,8 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     roomId = Convert.ToInt32(dr["ROOM_ID"]),
                     propertyId = Convert.ToInt32(dr["PROPERTY_ID"]),
+                    buildingId = Convert.ToInt32(dr["BUILDING_ID"]),
+                    floorId = Convert.ToInt32(dr["FLOOR_ID"]),
 
                     bedNo = dr["BED_NO"]?.ToString(),
                     bedType = dr["BED_TYPE_CD"]?.ToString(),

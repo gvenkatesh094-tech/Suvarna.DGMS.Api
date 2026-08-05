@@ -27,6 +27,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@DGM_ACCM_TYPE_MAST_ID", accommodation.accmTypeId == 0 ? DBNull.Value : (object)accommodation.accmTypeId);
                 cmd.Parameters.AddWithValue("@ACCM_TYPE_CD", (object?)accommodation.accmTypeCode ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ACCM_TYPE_NM", (object?)accommodation.accmTypeName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ACCM_CATEGORY_ID", accommodation.accmCategoryId);
                 cmd.Parameters.AddWithValue("@ACCM_CATEGORY", (object?)accommodation.accmCategory ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@MAX_OCCUPANTS", accommodation.maxOccupants);
                 cmd.Parameters.AddWithValue("@AMENITIES", (object?)accommodation.amenities ?? DBNull.Value);
@@ -44,7 +45,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@MODIFY_BY", accommodation.userId);
                 cmd.Parameters.AddWithValue("@GRP_ID", accommodation.grpId);
                 cmd.Parameters.AddWithValue("@ORG_ID", accommodation.orgId);
-                cmd.Parameters.AddWithValue("@LOC_ID", accommodation.locId);
+                cmd.Parameters.AddWithValue("@LOC_ID", accommodation.locationId);
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", accommodation.sessionId);
 
                 conn.Open();
@@ -57,7 +58,7 @@ namespace Suvarna.DGMS.Api.Repositories
         }
         
 
-        public List<AccomidationType> GetAccommodationTypes()
+        public List<AccomidationType> GetAccommodationTypes(int sessionId, int locationId)
         {
             List<AccomidationType> list = new();
 
@@ -66,6 +67,9 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_ACCOMMODATION_TYPES", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
 
             conn.Open();
 
@@ -78,10 +82,11 @@ namespace Suvarna.DGMS.Api.Repositories
                     accmTypeId = reader.SafeGetInt("DGM_ACCM_TYPE_MAST_ID"),
                     grpId = reader.SafeGetInt("GRP_ID"),
                     orgId = reader.SafeGetInt("ORG_ID"),
-                    locId = reader.SafeGetInt("LOC_ID"),
+                    locationId = reader.SafeGetInt("LOC_ID"),
 
                     accmTypeCode = reader.SafeGetString("ACCM_TYPE_CD"),
                     accmTypeName = reader.SafeGetString("ACCM_TYPE_NM"),
+                    accmCategoryId = reader.SafeGetInt("ACCM_CATEGORY_ID"),
                     accmCategory = reader.SafeGetString("ACCM_CATEGORY"),
 
                     maxOccupants = reader.SafeGetInt("MAX_OCCUPANTS"),
@@ -106,6 +111,51 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     status = reader.SafeGetString("RECORD_STATUS"),
                     defaultRate = reader.SafeGetDecimal("ROOM_PRICE") ?? 0,
+                });
+            }
+
+            return list;
+        }
+        public List<AccommodationCategory> GetAccommodationCategories(int sessionId,int locationId)
+        {
+            List<AccommodationCategory> list = new();
+
+            using SqlConnection conn = new SqlConnection(_conn);
+
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_ACCOMMODATION_CATEGORY_MAST", conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
+
+            conn.Open();
+
+            using SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                list.Add(new AccommodationCategory
+                {
+                    categoryId = reader.SafeGetInt("CATEGORY_ID"),
+
+                    categoryCode = reader.SafeGetString("CATEGORY_CODE"),
+
+                    categoryName = reader.SafeGetString("CATEGORY_NAME"),
+
+                    description = reader.SafeGetString("DESCRIPTION"),
+
+                    displayOrder = reader.SafeGetInt("DISPLAY_ORDER"),
+
+                    status = reader.SafeGetString("STATUS"),
+
+                    createdBy = reader.SafeGetInt("CREATED_BY"),
+
+                    createdDate = reader.SafeGetDateTime("CREATED_DATE"),
+
+                    modifiedBy = reader.SafeGetInt("MODIFIED_BY"),
+
+                    modifiedDate = reader.SafeGetDateTime("MODIFIED_DATE")
                 });
             }
 

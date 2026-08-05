@@ -13,20 +13,9 @@ namespace Suvarna.DGMS.Api.Services
             _repo = repo;
         }
 
-        public ApiResponse<string> GenerateCode(
-            GenerateCodeRequest request)
-        {
-            string tariffCode =
-                _repo.GenerateCodeTariff(request);
+        
 
-            return ApiResponse<string>.Success(
-                "Tariff Code generated successfully.",
-                tariffCode
-            );
-        }
-
-        public ApiResponse<string> SaveTariff(
-            Tariff tariff)
+        public ApiResponse<string> SaveTariff(TariffSaveRequest tariff)
         {
             _repo.SaveTariff(tariff);
 
@@ -44,12 +33,22 @@ namespace Suvarna.DGMS.Api.Services
             );
         }
 
-        public ApiResponse<List<Tariff>> GetAll()
+        public ApiResponse<List<Tariff>> GetAll(int sessionId, int locationId)
         {
             var data =
-                _repo.GetAllTariffs();
+                _repo.GetAllTariffs(sessionId, locationId);
 
             return ApiResponse<List<Tariff>>.Success(
+                "Tariff list fetched successfully.",
+                data
+            );
+        }
+        public ApiResponse<List<BillingModelMaster>> GetBillingmodelAll(int sessionId, int locationId)
+        {
+            var data =
+                _repo.GetAllBillingModels(sessionId, locationId);
+
+            return ApiResponse<List<BillingModelMaster>>.Success(
                 "Tariff list fetched successfully.",
                 data
             );

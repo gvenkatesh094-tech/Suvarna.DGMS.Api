@@ -29,9 +29,9 @@ namespace Suvarna.DGMS.Api.Controllers
         }
 
         [HttpGet("list")]
-        public IActionResult GetAll()
+        public IActionResult GetAll(int sessionId,int locationId)
         {
-            return Ok(_service.GetAll());
+            return Ok(_service.GetAll(sessionId, locationId));
         }
         [HttpPost("genroomcode")]
         public IActionResult GenroomCode([FromBody] GenerateCodeRequest request)

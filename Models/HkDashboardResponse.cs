@@ -10,4 +10,5 @@
 
         public int Critical { get; set; }
     }
+    
 }

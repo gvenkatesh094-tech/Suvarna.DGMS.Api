@@ -40,9 +40,9 @@ namespace Suvarna.DGMS.Api.Services
 
             return ApiResponse<string>.Success(msg, "OK");
         }
-        public ApiResponse<List<Bed>> GetAll()
+        public ApiResponse<List<Bed>> GetAll(int sessionId, int locationId)
         {
-            var list = _repo.GetAllBeds();
+            var list = _repo.GetAllBeds( sessionId,  locationId);
 
             return ApiResponse<List<Bed>>.Success(
                 "Bed List",

@@ -28,11 +28,19 @@ namespace Suvarna.DGMS.Api.Services
 
             return ApiResponse<string>.Success(message, "OK");
         }
-        public ApiResponse<List<AccomidationType>> Getall()
+        public ApiResponse<List<AccomidationType>> Getall(int sessionId, int locationId)
         {
-            var list = _repo.GetAccommodationTypes();
+            var list = _repo.GetAccommodationTypes(sessionId, locationId);
 
             return ApiResponse<List<AccomidationType>>.Success(
+                "Accommodation Type List",
+                list);
+        }
+        public ApiResponse<List<AccommodationCategory>> Getcaterigyall(int sessionId, int locationId)
+        {
+            var list = _repo.GetAccommodationCategories(sessionId, locationId);
+
+            return ApiResponse<List<AccommodationCategory>>.Success(
                 "Accommodation Type List",
                 list);
         }

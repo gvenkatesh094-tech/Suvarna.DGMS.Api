@@ -17,12 +17,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET TASKS
         // ==========================================
 
-        public List<HkTask> GetTasks(
-            string sessionId,
-            int? propertyId,
-            string? priority,
-            string? status,
-            bool slaBreachOnly)
+        public List<HkTask> GetTasks(string sessionId, int? propertyId, string? priority, string? status, bool slaBreachOnly)
         {
             List<HkTask> list = new List<HkTask>();
 
@@ -48,6 +43,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         taskNo = GetString(dr, "taskNo") ?? "",
                         roomId = GetInt(dr, "roomId"),
                         roomNo = GetString(dr, "roomNo") ?? "",
+                        roomName = GetString(dr, "roomName") ?? "",
                         bookingId = GetNullableInt(dr, "bookingId"),
                         taskType = GetString(dr, "taskType") ?? "",
                         priority = GetString(dr, "priority") ?? "",
@@ -64,7 +60,10 @@ namespace Suvarna.DGMS.Api.Repositories
                         failCount = GetInt(dr, "failCount"),
                         remarks = GetString(dr, "remarks"),
                         checklistTotal = GetInt(dr, "checklistTotal"),
-                        checklistDone = GetInt(dr, "checklistDone")
+                        checklistDone = GetInt(dr, "checklistDone"),
+                        photoUrl = GetString(dr, "photoUrl"),
+
+                        photoNotes = GetString(dr, "photoNotes")
                     });
                 }
                 return list;
@@ -137,6 +136,7 @@ namespace Suvarna.DGMS.Api.Repositories
                     {
                         roomId = GetInt(dr, "roomId"),
                         roomNo = GetString(dr, "roomNo") ?? "",
+                        roomName = GetString(dr, "roomName") ?? "",
                         roomStatus = GetString(dr, "roomStatus") ?? "",
                         floorSeq = GetInt(dr, "floorSeq"),
                         floorName = GetString(dr, "floorName") ?? "",
@@ -288,6 +288,185 @@ namespace Suvarna.DGMS.Api.Repositories
             }
         }
 
+
+
+        // ==========================================
+        // GET MY TASKS
+        // ==========================================
+
+        public List<HkTask> GetMyTasks(string sessionId)
+        {
+            List<HkTask> list = new List<HkTask>();
+
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+
+                using SqlCommand cmd =
+                    new SqlCommand("DGMS.PR_DGMS_GET_MY_HK_TASKS", conn);
+
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    list.Add(new HkTask
+                    {
+                        taskId = GetInt(dr, "taskId"),
+                        taskNo = GetString(dr, "taskNo") ?? "",
+                        roomId = GetInt(dr, "roomId"),
+                        roomNo = GetString(dr, "roomNo") ?? "",
+                        roomName = GetString(dr, "roomName") ?? "",
+                        bookingId = GetNullableInt(dr, "bookingId"),
+                        taskType = GetString(dr, "taskType") ?? "",
+                        priority = GetString(dr, "priority") ?? "",
+                        status = GetString(dr, "status") ?? "",
+                        assignedUserId = GetNullableInt(dr, "assignedUserId"),
+                        assignedStaffName = GetString(dr, "assignedStaffName"),
+                        slaMinutes = GetInt(dr, "slaMinutes"),
+                        triggeredDt = Convert.ToDateTime(dr["triggeredDt"]),
+                        startedAt = GetNullableDateTime(dr, "startedAt"),
+                        completedAt = GetNullableDateTime(dr, "completedAt"),
+                        inspectedAt = GetNullableDateTime(dr, "inspectedAt"),
+                        slaBreachFlag = GetString(dr, "slaBreachFlag") ?? "N",
+                        inspectionRequired = GetString(dr, "inspectionRequired") ?? "Y",
+                        failCount = GetInt(dr, "failCount"),
+                        remarks = GetString(dr, "remarks"),
+                        checklistTotal = GetInt(dr, "checklistTotal"),
+                        checklistDone = GetInt(dr, "checklistDone"),
+                        photoUrl = GetString(dr, "photoUrl"),
+
+                        photoNotes = GetString(dr, "photoNotes")
+                    });
+                }
+
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching my housekeeping tasks.", ex);
+            }
+        }
+
+
+
+
+        // ==========================================
+        // UPLOAD PHOTO
+        // ==========================================
+
+        public HkOperationResult UploadPhoto(string sessionId, int taskId, string? notes, IFormFile photo)
+        {
+            try
+            {
+                // Image folder
+                string uploadFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "uploads",
+                    "housekeeping");
+
+                // Folder create if not exists
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                // File name
+                string extension = Path.GetExtension(photo.FileName);
+
+                string fileName =
+                    $"HK_{taskId}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+
+                // Physical path
+                string filePath =
+                    Path.Combine(uploadFolder, fileName);
+
+                // Save image
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    photo.CopyTo(stream);
+                }
+
+                // Database path
+                string photoUrl =
+                    "/uploads/housekeeping/" + fileName;
+
+                using SqlConnection conn =
+                    new SqlConnection(_conn);
+
+                using SqlCommand cmd =
+                    new SqlCommand(
+                        "DGMS.PR_DGMS_UPLOAD_HK_PHOTO",
+                        conn);
+
+                cmd.CommandType =
+                    CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue(
+                    "@IP_SESSION_ID",
+                    sessionId);
+
+                cmd.Parameters.AddWithValue(
+                    "@IP_HK_TASK_ID",
+                    taskId);
+
+                cmd.Parameters.AddWithValue(
+                    "@IP_PHOTO_URL",
+                    photoUrl);
+
+                cmd.Parameters.AddWithValue(
+                    "@IP_NOTES",
+                    (object?)notes ?? DBNull.Value);
+
+                var result = RunWithOutputParams(cmd, conn);
+
+                result.photoUrl = photoUrl;
+
+                result.photoNotes = notes;
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "Error while uploading photo.",
+                    ex);
+            }
+        }
+        public HkQuickStats GetQuickStats(int sessionId,int locationId)
+        {
+            HkQuickStats stats = new HkQuickStats();
+
+            using SqlConnection conn = new SqlConnection(_conn);
+
+            using SqlCommand cmd =
+                new SqlCommand("DGMS.PR_DGMS_GET_HK_QUICK_STATS", conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
+
+            conn.Open();
+
+            using SqlDataReader dr = cmd.ExecuteReader();
+
+            if (dr.Read())
+            {
+                stats.avgTaskCompletionTime = GetString(dr, "avgTaskCompletionTime") ?? "0 min";
+                stats.roomsCleanedToday = GetInt(dr, "roomsCleanedToday");
+                stats.vipCleanings = GetInt(dr, "vipCleanings");
+                stats.complaints = GetInt(dr, "complaints");
+            }
+
+            return stats;
+        }
+
         // ==========================================
         // COMMON HELPERS
         // ==========================================
@@ -309,6 +488,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 message = Convert.ToString(message.Value) ?? ""
             };
         }
+
 
         private static string? GetString(SqlDataReader dr, string column)
         {

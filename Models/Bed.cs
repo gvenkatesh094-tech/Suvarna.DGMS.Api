@@ -37,7 +37,10 @@
 
         public int userId { get; set; }
 
+
         public int sessionId { get; set; }
+        public int locationId { get; set; }
+
 
         // Optional (if you want to display current occupant)
         public string? occupant { get; set; }

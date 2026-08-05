@@ -27,6 +27,7 @@ namespace Suvarna.DGMS.Api.Repositories
             string? roomStatus,
             string? isAc,
             string? isAccessible)
+        
         {
             List<CheckinRoom> list =
                 new List<CheckinRoom>();
@@ -166,7 +167,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
                         tariffType = GetString(dr, "TARIFF_TYPE_CD"),
 
-                        billingModel = GetString(dr, "BILLING_MODEL_CD"),
+                        billingModel = GetString(dr, "BILLING_MODEL_NAME"),
 
                         dailyRate = GetDecimal(dr, "DAILY_RATE_AMT"),
 
@@ -268,6 +269,17 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_DEPOSIT_AMT", request.depositAmount);
                 AddParameter(cmd, "@IP_DEPOSIT_PAYMENT_MODE", request.depositPaymentMode);
                 AddParameter(cmd, "@IP_DEPOSIT_REF", request.depositRef);
+                AddParameter(cmd, "@IP_BASE_AMT", request.BaseAmount);
+                AddParameter(cmd, "@IP_CGST_AMT", request.CgstAmount);
+                AddParameter(cmd, "@IP_SGST_AMT", request.SgstAmount);
+                AddParameter(cmd, "@IP_IGST_AMT", request.IgstAmount);
+                AddParameter(cmd, "@IP_TOTAL_GST_AMT", request.GstAmount);
+                AddParameter(cmd, "@IP_GROSS_AMT", request.GrossAmount);
+                AddParameter(cmd, "@IP_SECURITY_DEPOSIT_AMT", request.SecurityDepositAmount);
+                AddParameter(cmd, "@IP_DAILY_RATE", request.DailyRate);
+                AddParameter(cmd, "@IP_HOURLY_RATE", request.HourlyRate);
+                AddParameter(cmd, "@IP_MONTHLY_RATE", request.MonthlyRate);
+                AddParameter(cmd, "@IP_BILLING_MODEL", request.BillingModel);
 
                 SqlParameter bookingId = new SqlParameter("@OUT_BOOKING_ID", SqlDbType.Int);
                 bookingId.Direction = ParameterDirection.Output;

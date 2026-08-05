@@ -1,4 +1,6 @@
-﻿using Suvarna.DGMS.Api.Models;
+﻿using DGMS.API.Models.HouseKeeping;
+using Microsoft.AspNetCore.Http;
+using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Repositories;
 
 namespace Suvarna.DGMS.Api.Services
@@ -135,6 +137,47 @@ namespace Suvarna.DGMS.Api.Services
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
+        }
+        // ==========================================
+        // GET MY TASKS
+        // ==========================================
+
+        public ApiResponse<List<HkTask>> GetMyTasks(string sessionId)
+        {
+            var data = _repo.GetMyTasks(sessionId);
+
+            return ApiResponse<List<HkTask>>.Success(
+                $"{data.Count} task(s) fetched successfully.",
+                data
+            );
+        }
+        public ApiResponse<HkOperationResult> UploadPhoto(string sessionId, int taskId, string? notes, IFormFile photo)
+        {
+            var data = _repo.UploadPhoto(
+                sessionId,
+                taskId,
+                notes,
+                photo
+            );
+
+            if (data.status != "S")
+            {
+                throw new Exception(data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(
+                data.message,
+                data
+            );
+        }
+        public ApiResponse<HkQuickStats> GetQuickStats(int sessionId,int locationId)
+        {
+            var data = _repo.GetQuickStats(sessionId, locationId);
+
+            return ApiResponse<HkQuickStats>.Success(
+                "Quick stats fetched successfully.",
+                data
+            );
         }
     }
 }

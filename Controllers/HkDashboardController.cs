@@ -104,5 +104,41 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.InspectTask(request));
         }
+        // ==========================================
+        // GET MY TASKS
+        // ==========================================
+
+        [HttpGet("mytasks/{sessionId}")]
+        public IActionResult GetMyTasks(string sessionId)
+        {
+            return Ok(
+                _service.GetMyTasks(sessionId)
+            );
+        }
+        // ==========================================
+        // UPLOAD PHOTO
+        // ==========================================
+
+        [HttpPost("tasks/upload-photo")]
+        public IActionResult UploadPhoto(
+            [FromForm] string sessionId,
+            [FromForm] int taskId,
+            [FromForm] string? notes,
+            IFormFile photo)
+        {
+            return Ok(
+                _service.UploadPhoto(
+                    sessionId,
+                    taskId,
+                    notes,
+                    photo
+                )
+            );
+        }
+        [HttpGet("quickstats")]
+        public IActionResult GetQuickStats([FromQuery] int  sessionId,int locationId)
+        {
+            return Ok(_service.GetQuickStats(sessionId, locationId));
+        }
     }
 }

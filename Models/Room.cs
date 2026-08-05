@@ -42,6 +42,7 @@
 
         public int sessionId { get; set; }
 
+        public int locationId { get; set; }
         public int userId { get; set; }
 
         public string? roomType { get; set; }

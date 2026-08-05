@@ -31,6 +31,8 @@ namespace Suvarna.DGMS.Api.Models
 
         public string roomNo { get; set; } = string.Empty;
 
+        public string roomName { get; set; } = string.Empty;
+
         public int? bedId { get; set; }
 
         public string? bedNo { get; set; }

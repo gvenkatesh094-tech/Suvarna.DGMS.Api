@@ -64,9 +64,9 @@ namespace Suvarna.DGMS.Api.Services
             return ApiResponse<string>.Success(msg, "OK");
         }
 
-        public ApiResponse<List<Room>> GetAll()
+        public ApiResponse<List<Room>> GetAll(int sessionId,int locationId)
         {
-            var list = _repo.GetAllRooms();
+            var list = _repo.GetAllRooms(sessionId, locationId);
 
             return ApiResponse<List<Room>>.Success(
                 "Room List",

@@ -13,6 +13,7 @@ using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Repositories;
 using Suvarna.DGMS.Api.Services;
 using System.Text;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -216,14 +217,34 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 
 
 
+//app.UseHttpsRedirection();
+
+//app.UseCors("AllowAll");
+
+//app.UseAuthentication();
+
+//app.UseAuthorization();
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
+// Default static files (wwwroot)
+app.UseStaticFiles();
+
+// Uploads folder static files
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "Uploads")),
+    RequestPath = "/Uploads"
+});
+
 app.UseAuthentication();
 
 app.UseAuthorization();
-
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>

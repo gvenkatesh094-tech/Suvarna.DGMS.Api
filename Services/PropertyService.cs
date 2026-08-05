@@ -38,9 +38,9 @@ namespace Suvarna.DGMS.Api.Services
             //return ApiResponse<string>.Success("Property created successfully.", "OK");
         }
        
-        public ApiResponse<List<Property>> GetAll()
+        public ApiResponse<List<Property>> GetAll(int sessionId, int locationId)
         {
-            var data = _repo.GetAllProperties();
+            var data = _repo.GetAllProperties( sessionId,  locationId);
 
             return ApiResponse<List<Property>>.Success(
                 "Property list fetched successfully.",

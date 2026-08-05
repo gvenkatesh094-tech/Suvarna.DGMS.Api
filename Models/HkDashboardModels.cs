@@ -10,6 +10,8 @@
         public string taskNo { get; set; } = "";
         public int roomId { get; set; }
         public string roomNo { get; set; } = "";
+        public string roomName { get; set; } = "";
+        
         public int? bookingId { get; set; }
         public string taskType { get; set; } = "";
         public string priority { get; set; } = "";
@@ -27,6 +29,8 @@
         public string? remarks { get; set; }
         public int checklistTotal { get; set; }
         public int checklistDone { get; set; }
+        public string? photoUrl { get; set; }
+        public string? photoNotes { get; set; }
     }
 
     public class HkChecklistItem
@@ -44,6 +48,7 @@
     {
         public int roomId { get; set; }
         public string roomNo { get; set; } = "";
+        public string roomName { get; set; } = "";
         public string roomStatus { get; set; } = "";
         public int floorSeq { get; set; }
         public string floorName { get; set; } = "";
@@ -66,7 +71,7 @@
 
     public class AssignHkTaskRequest
     {
-        public string sessionId { get; set; } = "";
+        public int sessionId { get; set; } 
         public int taskId { get; set; }
         public int staffUserId { get; set; }
         public string? priority { get; set; }
@@ -75,7 +80,7 @@
 
     public class ToggleHkChecklistItemRequest
     {
-        public string sessionId { get; set; } = "";
+        public int sessionId { get; set; }  
         public int taskId { get; set; }
         public string itemCd { get; set; } = "";
         public bool isComplete { get; set; }
@@ -83,13 +88,13 @@
 
     public class CompleteHkTaskRequest
     {
-        public string sessionId { get; set; } = "";
+        public int sessionId { get; set; }  
         public int taskId { get; set; }
     }
 
     public class InspectHkTaskRequest
     {
-        public string sessionId { get; set; } = "";
+        public int sessionId { get; set; }  
         public int taskId { get; set; }
         public string result { get; set; } = "P"; // P = Pass, F = Fail
         public string? failRemarks { get; set; }
@@ -100,5 +105,12 @@
     {
         public string status { get; set; } = "";
         public string message { get; set; } = "";
+        public string? photoUrl { get; set; }
+
+        public string? photoNotes { get; set; }
+    }
+    public class GetMyHkTasksRequest
+    {
+        public int sessionId { get; set; } 
     }
 }

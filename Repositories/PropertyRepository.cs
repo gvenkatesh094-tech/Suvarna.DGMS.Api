@@ -87,7 +87,7 @@ namespace Suvarna.DGMS.Api.Repositories
             }
         }
         
-        public List<Property> GetAllProperties()
+        public List<Property> GetAllProperties(int sessionId, int locationId)
         {
             List<Property> list = new List<Property>();
 

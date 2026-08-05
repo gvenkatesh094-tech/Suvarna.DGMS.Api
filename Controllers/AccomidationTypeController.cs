@@ -20,33 +20,18 @@ namespace Suvarna.DGMS.Api.Controllers
         {
             return Ok(_service.inUpdService(accomidation));
         }
-        //        [HttpPost("create")]
-        //        public IActionResult Create([FromBody] AccomidationType accomidation)
-        //        {
-        //            return Ok(_service.Create(accomidation));
-        //        }
-
-        //<<<<<<< HEAD
-        //        [HttpPost("update")]
-        //        public IActionResult Update([FromBody] AccomidationType accomidation)
-        //        {
-        //            return Ok(_service.Update(accomidation));
-        //        }
-        //        [HttpPost("delete")]
-        //        public IActionResult Delete([FromBody] deleteAccomidationType accomidation)
-        //        {
-        //            return Ok(_service.Delete(accomidation));
-        //        }
+        
         [HttpGet("list")]
-        public IActionResult GetAccommodationTypes()
+        public IActionResult GetAccommodationTypes(int sessionId, int locationId)
         {
-            return Ok(_service.Getall());
-            //=======
-            //        [HttpGet("list")]
-            //        public IActionResult GetAll()
-            //        {
-            //            return Ok(_service.Getall());
-            //>>>>>>> 42f3f470f5e862c98cb3c8c8ef76e187668b4ad6
+            return Ok(_service.Getall( sessionId,  locationId));
+           
+        }
+        [HttpGet("categorylist")]
+        public IActionResult GetcaterigyAccommodationTypes(int sessionId, int locationId)
+        {
+            return Ok(_service.Getcaterigyall(sessionId, locationId));
+
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Suvarna.DGMS.Api.Controllers
 
         [HttpGet("list")]
         //[Authorize]
-        public IActionResult List()
-               => Ok(_service.GetAll());
+        public IActionResult List(int sessionId, int locationId)
+               => Ok(_service.GetAll( sessionId,  locationId));
     }
 }

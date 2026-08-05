@@ -26,24 +26,31 @@ namespace Suvarna.DGMS.Api.Services
                 "Checkout bookings fetched successfully.",
                 data);
         }
+        public ApiResponse<CheckoutDetails> PrepareCheckout(int sessionId, int bookingId)
+        {
+            var data = _repo.PrepareCheckout(sessionId, bookingId);
+
+            if (data == null)
+            {
+                throw new Exception("Checkout details not found.");
+            }
+
+            return ApiResponse<CheckoutDetails>.Success(
+                "Checkout details fetched successfully.",
+                data);
+        }
 
         //====================================================
         // GET CHECKOUT DETAILS
         //====================================================
 
-        public ApiResponse<CheckoutDetails> GetCheckoutDetails(
-            int sessionId,
-            int bookingId)
+        public ApiResponse<CheckoutDetails> GetCheckoutDetails(int sessionId, int bookingId)
         {
-            var data =
-                _repo.GetCheckoutDetails(
-                    sessionId,
-                    bookingId);
+            var data = _repo.GetCheckoutDetails(sessionId, bookingId);
 
             if (data == null)
             {
-                throw new Exception(
-                    "Checkout details not found.");
+                throw new Exception("Checkout details not found.");
             }
 
             return ApiResponse<CheckoutDetails>.Success(

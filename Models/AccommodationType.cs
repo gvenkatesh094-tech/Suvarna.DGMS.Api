@@ -6,10 +6,12 @@
         public int accmTypeId { get; set; }
         public int grpId { get; set; }
         public int orgId { get; set; }
-        public int locId { get; set; }
+        public int locationId { get; set; }
 
         public string accmTypeCode { get; set; }
         public string accmTypeName { get; set; }
+        public int accmCategoryId { get; set; }
+        
         public string accmCategory { get; set; }
 
         public int maxOccupants { get; set; }
@@ -41,20 +43,27 @@
 
 
     }
-//    public class deleteAccomidationType
-//    {
-//        public int accmTypeId { get; set; }
-//<<<<<<< HEAD
-//        public int userId { get; set; }
-//=======
+    public class AccommodationCategory
+    {
+        public int categoryId { get; set; }
 
-//        public string? accmTypeCode { get; set; }
+        public string categoryCode { get; set; } = string.Empty;
 
-//        public string? accmTypeName { get; set; }
-//        public decimal? gst { get; set; }
+        public string categoryName { get; set; } = string.Empty;
 
-//        public decimal? roomPrice { get; set; }
-//>>>>>>> 42f3f470f5e862c98cb3c8c8ef76e187668b4ad6
-//    }
-  
+        public string description { get; set; } = string.Empty;
+
+        public int displayOrder { get; set; }
+
+        public string status { get; set; } = string.Empty;
+
+        public int createdBy { get; set; }
+
+        public DateTime? createdDate { get; set; }
+
+        public int modifiedBy { get; set; }
+
+        public DateTime? modifiedDate { get; set; }
+    }
+
 }

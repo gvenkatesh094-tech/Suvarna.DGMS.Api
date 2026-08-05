@@ -68,6 +68,123 @@ namespace Suvarna.DGMS.Api.Repositories
 
             return list;
         }
+
+        public void GenerateAccommodationCharges(int sessionId, int bookingId)
+        {
+            using SqlConnection con = new SqlConnection(_conn);
+
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GENERATE_ACCOMMODATION_CHARGES", con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+            cmd.Parameters.AddWithValue("@IP_BOOKING_ID", bookingId);
+
+            SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1);
+
+            outStatus.Direction =
+                ParameterDirection.Output;
+
+            cmd.Parameters.Add(outStatus);
+
+            SqlParameter outMessage =
+                new SqlParameter(
+                    "@OUT_MESSAGE",
+                    SqlDbType.VarChar,
+                    500);
+
+            outMessage.Direction =
+                ParameterDirection.Output;
+
+            cmd.Parameters.Add(outMessage);
+
+            con.Open();
+
+            cmd.ExecuteNonQuery();
+
+            string status =
+                Convert.ToString(outStatus.Value) ?? "";
+
+            string message =
+                Convert.ToString(outMessage.Value) ?? "";
+
+            if (status != "S")
+            {
+                throw new Exception(message);
+            }
+        }
+        public void CalculateBill(
+    int sessionId,
+    int bookingId)
+        {
+            using SqlConnection con =
+                new SqlConnection(_conn);
+
+            using SqlCommand cmd =
+                new SqlCommand(
+                    "DGMS.PR_DGMS_CALCULATE_BILL",
+                    con);
+
+            cmd.CommandType =
+                CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue(
+                "@IP_SESSION_ID",
+                sessionId);
+
+            cmd.Parameters.AddWithValue(
+                "@IP_BOOKING_ID",
+                bookingId);
+
+            SqlParameter outStatus =
+                new SqlParameter(
+                    "@OUT_STATUS",
+                    SqlDbType.Char,
+                    1);
+
+            outStatus.Direction =
+                ParameterDirection.Output;
+
+            cmd.Parameters.Add(outStatus);
+
+            SqlParameter outMessage =
+                new SqlParameter(
+                    "@OUT_MESSAGE",
+                    SqlDbType.VarChar,
+                    500);
+
+            outMessage.Direction =
+                ParameterDirection.Output;
+
+            cmd.Parameters.Add(outMessage);
+
+            con.Open();
+
+            cmd.ExecuteNonQuery();
+
+            string status =
+                Convert.ToString(outStatus.Value) ?? "";
+
+            string message =
+                Convert.ToString(outMessage.Value) ?? "";
+
+            if (status != "S")
+            {
+                throw new Exception(message);
+            }
+        }
+        public CheckoutDetails? PrepareCheckout(int sessionId, int bookingId)
+        {
+            // Step-1
+            GenerateAccommodationCharges(sessionId, bookingId);
+
+            // Step-2
+            CalculateBill(sessionId, bookingId);
+
+            // Step-3
+            return GetCheckoutDetails(sessionId, bookingId);
+        }
         //=========================================================
         // GET CHECKOUT DETAILS
         //=========================================================
@@ -142,6 +259,8 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     roomNo =
                         Convert.ToString(reader["ROOM_NO"]) ?? "",
+                    roomName =
+                        Convert.ToString(reader["ROOM_NAME"]) ?? "",
 
                     bedId =
                         reader["BED_ID"] == DBNull.Value

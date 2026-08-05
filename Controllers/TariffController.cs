@@ -16,18 +16,10 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
-        [HttpPost("generatecode")]
-        public IActionResult GenerateCode(
-            [FromBody] GenerateCodeRequest request)
-        {
-            return Ok(
-                _service.GenerateCode(request)
-            );
-        }
+
 
         [HttpPost("save")]
-        public IActionResult Save(
-            [FromBody] Tariff req)
+        public IActionResult Save(            [FromBody] TariffSaveRequest req)
         {
             return Ok(
                 _service.SaveTariff(req)
@@ -35,10 +27,17 @@ namespace Suvarna.DGMS.Api.Controllers
         }
 
         [HttpGet("list")]
-        public IActionResult List()
+        public IActionResult List(int sessionId, int locationId)
         {
             return Ok(
-                _service.GetAll()
+                _service.GetAll(sessionId, locationId)
+            );
+        }
+        [HttpGet("billingmodellist")]
+        public IActionResult BillingmodelList(int sessionId, int locationId)
+        {
+            return Ok(
+                _service.GetBillingmodelAll(sessionId, locationId)
             );
         }
     }
