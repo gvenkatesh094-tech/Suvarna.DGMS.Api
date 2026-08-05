@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <Reference Include="CryptoWord">
-      <HintPath>..\..\..\..\Workfiles\XLUpload2FTP\XLUpload2FTP\bin\Debug\CryptoWord.dll</HintPath>
+      <HintPath>..\..\..\APEX\APex_Lab_Pdfs\APex_Lab_PdfS\bin\CryptoWord.dll</HintPath>
     </Reference>
   </ItemGroup>
 

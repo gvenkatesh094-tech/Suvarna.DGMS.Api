@@ -26,10 +26,6 @@
 
         public string roomName { get; set; }
 
-        public int buildingId { get; set; }
-
-        public int floorId { get; set; }
-
         // Bed
         public string bedNo { get; set; }
 
