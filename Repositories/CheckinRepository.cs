@@ -8,8 +8,7 @@ namespace Suvarna.DGMS.Api.Repositories
     {
         private readonly string _conn;
 
-        public CheckinRepository(
-            IConfiguration configuration)
+        public CheckinRepository(IConfiguration configuration)
         {
             _conn = configuration.GetConnectionString("SqlServer");
         }
@@ -18,30 +17,92 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET AVAILABLE ROOMS
         // ==========================================
 
-        public List<CheckinRoom> GetRooms(
-            string sessionId,
-            int? propertyId,
-            int? buildingId,
-            int? floorId,
-            int? accmTypeId,
-            string? roomStatus,
-            string? isAc,
-            string? isAccessible)
-        
+        //public List<CheckinRoom> GetRooms(int sessionId, int? locationId, int? occCatId, string? roomStatus)    
+
+        //{
+        //    List<CheckinRoom> list = new List<CheckinRoom>();
+
+        //    try
+        //    {
+        //        using SqlConnection conn = new SqlConnection(_conn);
+
+        //        //using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_CHECKIN_LOOKUP", conn);
+        //        using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_CHECKIN_ROOMS", conn);
+        //        cmd.CommandType = CommandType.StoredProcedure;
+        //        cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+        //        cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
+        //        cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", occCatId);
+        //        cmd.Parameters.AddWithValue("@IP_ROOM_STATUS_CD", (object?)roomStatus ?? DBNull.Value);
+        //        conn.Open();
+
+        //        using SqlDataReader dr = cmd.ExecuteReader();
+        //        while (dr.Read())
+        //        {
+        //            list.Add(
+        //                new CheckinRoom
+        //                {
+        //                    roomId = GetInt(dr, "ROOM_ID"),
+        //                    roomNo = GetString(dr, "ROOM_NO"),
+        //                    roomName = GetString(dr, "ROOM_NM"),
+        //                    roomStatus = GetString(dr, "ROOM_STATUS_CD"),
+        //                    propertyId = GetInt(dr, "PROPERTY_ID"),
+        //                    propertyName = GetString(dr, "PROPERTY_NM"),
+        //                    propertyCode = GetString(dr, "PROPERTY_CD"),
+        //                    buildingId = GetNullableInt(dr, "BUILDING_ID"),
+        //                    buildingName = GetString(dr, "BUILDING_NM"),
+        //                    floorId = GetNullableInt(dr, "FLOOR_ID"),
+        //                    floorName = GetString(dr, "FLOOR_NM"),
+        //                    floorSeq = GetInt(dr, "FLOOR_SEQ"),
+        //                    accmTypeId = GetInt(dr, "ACCM_TYPE_ID"),
+        //                    accmTypeName = GetString(dr, "ACCM_TYPE_NM"),
+        //                    accmCategory = GetString(dr, "ACCM_CATEGORY"),
+        //                    maxOccupants = GetInt(dr, "MAX_OCCUPANTS"),
+        //                    totalBeds = GetInt(dr, "TOTAL_BEDS"),
+        //                    availableBeds = GetInt(dr, "AVAILABLE_BEDS"),
+        //                    isAc = GetString(dr, "IS_AC"),
+        //                    isAttachedBath = GetString(dr, "IS_ATTACHED_BATH"),
+        //                    isWifi = GetString(dr, "IS_WIFI"),
+        //                    isTv = GetString(dr, "IS_TV"),
+        //                    isAccessible = GetString(dr, "IS_ACCESSIBLE"),
+        //                    wardProximity = GetString(dr, "WARD_PROXIMITY"),
+        //                    blockedReason = GetString(dr, "BLOCKED_REASON"),
+        //                    blockedFromDt = GetNullableDateTime(dr, "BLOCKED_FROM_DT"),
+        //                    blockedToDt = GetNullableDateTime(dr, "BLOCKED_TO_DT")
+        //                }
+        //            );
+        //        }
+
+        //        return list;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception(
+        //            "Error while fetching available rooms.",
+        //            ex
+        //        );
+        //    }
+        //}
+
+        public List<CheckinRoom> GetRooms(int sessionId, int? locationId, int? occCatId, DateTime checkinDt  , DateTime checkOutDt, int? bookinId, int? accmTypeId = null)
+
         {
-            List<CheckinRoom> list =
-                new List<CheckinRoom>();
+            List<CheckinRoom> list = new List<CheckinRoom>();
 
             try
             {
-                using SqlConnection conn =
-                    new SqlConnection(_conn);
+                using SqlConnection conn = new SqlConnection(_conn);
 
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_CHECKIN_LOOKUP", conn);
+                //using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_CHECKIN_LOOKUP", conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_CHECKIN_ROOMS", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
-                //cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", propertyId.HasValue ? propertyId.Value : DBNull.Value);
-                cmd.Parameters.AddWithValue("@IP_ROOM_STATUS_CD", (object?)roomStatus ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IP_LOCATION_ID", locationId);
+                cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", occCatId);
+                cmd.Parameters.AddWithValue("@IP_CHECKIN_DT", checkinDt);
+                cmd.Parameters.AddWithValue("@IP_CHECKOUT_DT", checkOutDt);
+                cmd.Parameters.AddWithValue("@IP_BOOKING_ID", bookinId);
+                cmd.Parameters.AddWithValue("@IP_ACCM_TYPE_ID", accmTypeId);
+
                 conn.Open();
 
                 using SqlDataReader dr = cmd.ExecuteReader();
@@ -96,47 +157,17 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET TARIFF
         // ==========================================
 
-        public List<CheckinTariff> GetTariff(
-     string sessionId,
-     int propertyId,
-     int accmTypeId,
-     int occCatId,
-     DateTime checkinDt,
-     string? billingModel)
+        public List<CheckinTariff> GetTariff(int sessionId, int propertyId, int accmTypeId, int occCatId, DateTime checkinDt, string? billingModel)
         {
             try
             {
-                using SqlConnection conn =
-                    new SqlConnection(_conn);
-
-                using SqlCommand cmd =
-                    new SqlCommand(
-                        "DGMS.PR_DGMS_GET_TARIFF",
-                        conn
-                    );
-
-                cmd.CommandType =
-                    CommandType.StoredProcedure;
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_SESSION_ID",
-                    sessionId
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_PROPERTY_ID",
-                    propertyId
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_ACCM_TYPE_ID",
-                    accmTypeId
-                );
-
-                cmd.Parameters.AddWithValue(
-                    "@IP_OCC_CAT_ID",
-                    occCatId
-                );
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_TARIFF", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", propertyId);
+                cmd.Parameters.AddWithValue("@IP_ACCM_TYPE_ID", accmTypeId);
+                cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", occCatId);
 
                 cmd.Parameters.AddWithValue(
                     "@IP_CHECKIN_DT",
@@ -224,12 +255,76 @@ namespace Suvarna.DGMS.Api.Repositories
         // CONFIRM CHECK-IN
         // ==========================================
 
-        public CheckinResult ConfirmCheckin(
-            Checkin request)
+        public CheckinResult ConfirmCheckin(Checkin request, IFormFile? idFile, IFormFile? photoFile)
         {
+
             try
             {
+
+                string idDocumentPath = "";
+                string photoPath = "";
                 using SqlConnection conn = new SqlConnection(_conn);
+                //=========================================
+                // SAVE ID DOCUMENT
+                //=========================================
+
+                if (idFile != null && idFile.Length > 0)
+                {
+                    string folder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "uploads",
+                        "id");
+
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
+
+                    string fileName =
+                        Guid.NewGuid().ToString() +
+                        Path.GetExtension(idFile.FileName);
+
+                    string fullPath =
+                        Path.Combine(folder, fileName);
+
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        idFile.CopyTo(stream);
+                    }
+
+                    idDocumentPath =
+                        "/uploads/id/" + fileName;
+                }
+
+                //=========================================
+                // SAVE GUEST PHOTO
+                //=========================================
+
+                if (photoFile != null && photoFile.Length > 0)
+                {
+                    string folder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "uploads",
+                        "guestphoto");
+
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
+
+                    string fileName =
+                        Guid.NewGuid().ToString() +
+                        Path.GetExtension(photoFile.FileName);
+
+                    string fullPath =
+                        Path.Combine(folder, fileName);
+
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    {
+                        photoFile.CopyTo(stream);
+                    }
+
+                    photoPath =
+                        "/uploads/guestphoto/" + fileName;
+                }
 
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CHECKIN", conn);
 
@@ -248,7 +343,9 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_EMAIL_ID", request.emailId?.Trim());
                 AddParameter(cmd, "@IP_ID_TYPE_CD", request.idTypeCd);
                 AddParameter(cmd, "@IP_ID_NUMBER_MASKED", request.idNumberMasked?.Trim());
-                AddParameter(cmd, "@IP_PHOTO_PATH", request.photoPath);
+                AddParameter(cmd, "@IP_ID_DOCUMENT_PATH", idDocumentPath);
+                //AddParameter(cmd, "@IP_PHOTO_PATH", request.photoPath);
+                AddParameter(cmd, "@IP_PHOTO_PATH", photoPath);
                 AddParameter(cmd, "@IP_GUEST_GSTIN", request.guestGstin);
                 AddParameter(cmd, "@IP_GUEST_STATE_CD", request.guestStateCd);
                 AddParameter(cmd, "@IP_VEHICLE_NO", request.vehicleNo);
@@ -269,17 +366,22 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_DEPOSIT_AMT", request.depositAmount);
                 AddParameter(cmd, "@IP_DEPOSIT_PAYMENT_MODE", request.depositPaymentMode);
                 AddParameter(cmd, "@IP_DEPOSIT_REF", request.depositRef);
-                AddParameter(cmd, "@IP_BASE_AMT", request.BaseAmount);
-                AddParameter(cmd, "@IP_CGST_AMT", request.CgstAmount);
-                AddParameter(cmd, "@IP_SGST_AMT", request.SgstAmount);
-                AddParameter(cmd, "@IP_IGST_AMT", request.IgstAmount);
-                AddParameter(cmd, "@IP_TOTAL_GST_AMT", request.GstAmount);
-                AddParameter(cmd, "@IP_GROSS_AMT", request.GrossAmount);
-                AddParameter(cmd, "@IP_SECURITY_DEPOSIT_AMT", request.SecurityDepositAmount);
-                AddParameter(cmd, "@IP_DAILY_RATE", request.DailyRate);
-                AddParameter(cmd, "@IP_HOURLY_RATE", request.HourlyRate);
-                AddParameter(cmd, "@IP_MONTHLY_RATE", request.MonthlyRate);
-                AddParameter(cmd, "@IP_BILLING_MODEL", request.BillingModel);
+                AddParameter(cmd, "@IP_BASE_AMT", request.baseAmount);
+                AddParameter(cmd, "@IP_CGST_AMT", request.cgstAmount);
+                AddParameter(cmd, "@IP_SGST_AMT", request.sgstAmount);
+                AddParameter(cmd, "@IP_IGST_AMT", request.igstAmount);
+                AddParameter(cmd, "@IP_TOTAL_GST_AMT", request.gstAmount);
+                AddParameter(cmd, "@IP_GROSS_AMT", request.grossAmount);
+                AddParameter(cmd, "@IP_SECURITY_DEPOSIT_AMT", request.securityDepositAmount);
+                AddParameter(cmd, "@IP_DAILY_RATE", request.dailyRate);
+                AddParameter(cmd, "@IP_HOURLY_RATE", request.hourlyRate);
+                AddParameter(cmd, "@IP_MONTHLY_RATE", request.monthlyRate);
+                AddParameter(cmd, "@IP_BILLING_MODEL", request.billingModel);
+
+                AddParameter(cmd, "@IP_OCC_CAT_CD", request.occCatCd);
+                AddParameter(cmd, "@IP_GENDER_ID", request.genderId);
+                AddParameter(cmd, "@IP_ID_TYPE_ID", request.idTypeId);
+                AddParameter(cmd, "@IP_RELATIONSHIP_ID", request.relationshipId);
 
                 SqlParameter bookingId = new SqlParameter("@OUT_BOOKING_ID", SqlDbType.Int);
                 bookingId.Direction = ParameterDirection.Output;
@@ -362,6 +464,27 @@ namespace Suvarna.DGMS.Api.Repositories
                     ex
                 );
             }
+        }
+        public PatientInfo? GetPatientInfo(string umrNo)
+        {
+            using SqlConnection conn = new SqlConnection(_conn);
+
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGMS_PAT_INFO", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            AddParameter(cmd, "@IP_UMR_NO", umrNo?.Trim());
+            conn.Open();
+            using SqlDataReader dr = cmd.ExecuteReader();
+            if (!dr.Read())
+                return null;
+
+            return new PatientInfo
+            {
+                patientId = dr["PATIENT_ID"] == DBNull.Value ? 0 : Convert.ToInt32(dr["PATIENT_ID"]),
+                umrNo = dr["UMR_NO"]?.ToString() ?? "",
+                gender = dr["GENDER"]?.ToString() ?? "",
+                admnNo = dr["ADMN_NO"]?.ToString() ?? "",
+                displayName = dr["DISPLAY_NAME"]?.ToString() ?? ""
+            };
         }
 
         // ==========================================

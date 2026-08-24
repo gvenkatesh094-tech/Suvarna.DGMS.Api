@@ -438,7 +438,7 @@ namespace Suvarna.DGMS.Api.Repositories
                     ex);
             }
         }
-        public HkQuickStats GetQuickStats(int sessionId,int locationId)
+        public HkQuickStats GetQuickStats(int sessionId, int locationId)
         {
             HkQuickStats stats = new HkQuickStats();
 
@@ -488,6 +488,107 @@ namespace Suvarna.DGMS.Api.Repositories
                 message = Convert.ToString(message.Value) ?? ""
             };
         }
+
+
+        // ==========================================
+        // GET ESCALATIONS
+        // ==========================================
+
+        public List<HkEscalation> GetEscalations(int sessionId)
+        {
+            List<HkEscalation> list = new List<HkEscalation>();
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_HK_ESCALATIONS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new HkEscalation
+                    {
+                        taskId = GetInt(dr, "taskId"),
+                        taskNo = GetString(dr, "taskNo") ?? "",
+                        roomNo = GetString(dr, "roomNo") ?? "",
+                        roomName = GetString(dr, "roomName") ?? "",
+                        taskType = GetString(dr, "taskType") ?? "",
+                        status = GetString(dr, "status") ?? "",
+                        assignedUserId = GetNullableInt(dr, "assignedUserId"),
+                        assignedStaffName = GetString(dr, "assignedStaffName"),
+                        slaMinutes = GetInt(dr, "slaMinutes"),
+                        triggeredDt = Convert.ToDateTime(dr["triggeredDt"]),
+                        escalatedDt = GetNullableDateTime(dr, "escalatedDt")
+                    });
+                }
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching HK escalations.", ex);
+            }
+        }
+
+        // ==========================================
+        // GET MY NOTIFICATIONS
+        // ==========================================
+
+        public List<HkNotification> GetMyNotifications(int sessionId)
+        {
+            List<HkNotification> list = new List<HkNotification>();
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_MY_HK_NOTIFICATIONS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new HkNotification
+                    {
+                        notificationId = GetInt(dr, "notificationId"),
+                        taskId = GetNullableInt(dr, "taskId"),
+                        notificationType = GetString(dr, "notificationType") ?? "",
+                        message = GetString(dr, "message") ?? "",
+                        isRead = GetString(dr, "isRead") ?? "N",
+                        createdDt = Convert.ToDateTime(dr["createdDt"])
+                    });
+                }
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching notifications.", ex);
+            }
+        }
+
+        // ==========================================
+        // MARK NOTIFICATION READ (pass null notificationId to mark ALL read)
+        // ==========================================
+
+        public HkOperationResult MarkNotificationRead(int sessionId, int? notificationId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_MARK_HK_NOTIFICATION_READ", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_NOTIFICATION_ID", (object?)notificationId ?? DBNull.Value);
+
+                return RunWithOutputParams(cmd, conn);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while marking notification read.", ex);
+            }
+        }
+
 
 
         private static string? GetString(SqlDataReader dr, string column)

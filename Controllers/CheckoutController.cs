@@ -10,58 +10,65 @@ namespace Suvarna.DGMS.Api.Controllers
     {
         private readonly CheckoutService _service;
 
-        public CheckoutController(
-            CheckoutService service)
+        public CheckoutController(CheckoutService service)
         {
             _service = service;
         }
 
         //=========================================================
         // GET CHECKOUT BOOKINGS
+        // FIX: added optional search filters
         //=========================================================
 
         [HttpGet("bookings")]
-        public IActionResult GetCheckoutBookings([FromQuery] int sessionId)
+        public IActionResult GetCheckoutBookings(
+            [FromQuery] int sessionId,
+            [FromQuery] string? bookingNo = null,
+            [FromQuery] string? guestName = null,
+            [FromQuery] string? mobileNo = null,
+            [FromQuery] string? roomNo = null)
         {
-            return Ok(
-                _service.GetCheckoutBookings(sessionId));
+            return Ok(_service.GetCheckoutBookings(sessionId, bookingNo, guestName, mobileNo, roomNo));
         }
 
         //=========================================================
         // GET CHECKOUT DETAILS
+        // FIX: checkoutDt is now optional. Previously required with no
+        // default, but the frontend never sent it — every call to this
+        // endpoint would 400. The SP itself defaults to "now" if omitted.
         //=========================================================
 
         [HttpGet("details")]
-        public IActionResult GetCheckoutDetails([FromQuery] int sessionId, [FromQuery] int bookingId)
+        public IActionResult GetCheckoutDetails(
+            [FromQuery] int sessionId,
+            [FromQuery] int bookingId,
+            [FromQuery] DateTime? checkoutDt = null)
         {
-            return Ok(
-                _service.GetCheckoutDetails(
-                    sessionId,
-                    bookingId
-                )
-            );
-        }
-        [HttpPost("prepare")]
-        public IActionResult PrepareCheckout([FromQuery] int sessionId, [FromQuery] int bookingId)
-        {
-            return Ok(_service.PrepareCheckout(sessionId, bookingId)
-            );
+            return Ok(_service.GetCheckoutDetails(sessionId, bookingId, checkoutDt));
         }
 
+        //=========================================================
+        // PREPARE CHECKOUT
+        // FIX: no longer mutates state — safe to call repeatedly.
+        //=========================================================
+
+        [HttpPost("prepare")]
+        public IActionResult PrepareCheckout(
+            [FromQuery] int sessionId,
+            [FromQuery] int bookingId,
+            [FromQuery] DateTime checkoutDt)
+        {
+            return Ok(_service.PrepareCheckout(sessionId, bookingId, checkoutDt));
+        }
 
         //=========================================================
         // CONFIRM CHECKOUT
         //=========================================================
 
         [HttpPost("confirm")]
-        public IActionResult ConfirmCheckout(
-            [FromBody] CheckoutRequest request)
+        public IActionResult ConfirmCheckout([FromBody] CheckoutRequest request)
         {
-            return Ok(
-                _service.ConfirmCheckout(
-                    request
-                )
-            );
+            return Ok(_service.ConfirmCheckout(request));
         }
     }
 }

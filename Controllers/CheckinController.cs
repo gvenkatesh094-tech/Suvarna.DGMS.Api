@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Services;
+using System.Text.Json;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
@@ -21,28 +22,9 @@ namespace Suvarna.DGMS.Api.Controllers
         // ==========================================
 
         [HttpGet("rooms")]
-        public IActionResult GetRooms(
-            [FromQuery] string sessionId,
-            [FromQuery] int? propertyId = null,
-            [FromQuery] int? buildingId = null,
-            [FromQuery] int? floorId = null,
-            [FromQuery] int? accmTypeId = null,
-            [FromQuery] string? roomStatus = "AVAILABLE",
-            [FromQuery] string? isAc = null,
-            [FromQuery] string? isAccessible = null)
+        public IActionResult GetRooms([FromQuery] int sessionId, [FromQuery] int? locationId , [FromQuery] int? occCatId , [FromQuery] DateTime checkinDt , [FromQuery] DateTime checkOutDt, [FromQuery] int? bookinId, int? accmTypeId = null)
         {
-            return Ok(
-                _service.GetRooms(
-                    sessionId,
-                    propertyId,
-                    buildingId,
-                    floorId,
-                    accmTypeId,
-                    roomStatus,
-                    isAc,
-                    isAccessible
-                )
-            );
+            return Ok(_service.GetRooms(sessionId, locationId, occCatId,  checkinDt,  checkOutDt,   bookinId, accmTypeId ));
         }
 
         // ==========================================
@@ -50,35 +32,44 @@ namespace Suvarna.DGMS.Api.Controllers
         // ==========================================
 
         [HttpGet("tariff")]
-        public IActionResult GetTariff(
-            [FromQuery] string sessionId,
-            [FromQuery] int propertyId,
-            [FromQuery] int accmTypeId,
-            [FromQuery] int occCatId,
-            [FromQuery] DateTime checkinDt,
-            [FromQuery] string? billingModel = null)
+        public IActionResult GetTariff([FromQuery] int sessionId, [FromQuery] int propertyId, [FromQuery] int accmTypeId, [FromQuery] int occCatId, [FromQuery] DateTime checkinDt, [FromQuery] string? billingModel = null)
         {
-            return Ok(
-                _service.GetTariff(
-                    sessionId,
-                    propertyId,
-                    accmTypeId,
-                    occCatId,
-                    checkinDt,
-                    billingModel
-                )
-            );
+            return Ok(_service.GetTariff(sessionId, propertyId, accmTypeId, occCatId, checkinDt, billingModel));
         }
 
         // ==========================================
         // CONFIRM CHECK-IN
         // ==========================================
 
+        // ==========================================
+        // CONFIRM CHECK-IN
+        // ==========================================
+
         [HttpPost("confirm")]
-        public IActionResult Confirm([FromBody] Checkin request)
+        public IActionResult Confirm([FromForm] string request, IFormFile? idFile, IFormFile? photoFile)
         {
+            var model = JsonSerializer.Deserialize<Checkin>(request);
+
+            if (model == null)
+            {
+                throw new Exception("Invalid Check-In request.");
+            }
+
+            return Ok(_service.ConfirmCheckin(model, idFile, photoFile)
+            );
+        }
+        [HttpGet("patient")]
+        public IActionResult GetPatientInfo([FromQuery] string umrNo)
+        {
+            if (string.IsNullOrWhiteSpace(umrNo))
+            {
+                return BadRequest(
+                    "UHID / admn number is required."
+                );
+            }
+
             return Ok(
-                _service.ConfirmCheckin(request)
+                _service.GetPatientInfo(umrNo)
             );
         }
     }

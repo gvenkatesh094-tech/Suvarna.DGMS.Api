@@ -126,6 +126,34 @@ builder.Services.AddScoped<HkDashboardRepository>();
 
 builder.Services.AddScoped<HkDashboardService>();
 
+builder.Services.AddScoped<LookupRepository>();
+builder.Services.AddScoped<LookupService>();
+
+builder.Services.AddScoped<ReservationsRepository>();
+builder.Services.AddScoped<ReservationsService>();
+
+
+builder.Services.AddScoped<GuestFolioBillingRepository>();
+builder.Services.AddScoped<GuestFolioBillingService>();
+
+builder.Services.AddScoped<ActiveGuestsRepository>();
+builder.Services.AddScoped<ActiveGuestsService>();
+
+builder.Services.AddScoped<RoomTransferRepository>();
+builder.Services.AddScoped<RoomTransferService>();
+
+builder.Services.AddScoped<CorporateInvoicesRepository>();
+builder.Services.AddScoped<CorporateInvoicesService>();
+
+builder.Services.AddScoped<WaitingListRepository>();
+builder.Services.AddScoped<WaitingListService>();
+
+builder.Services.AddScoped<LaundryLogRepository>();
+builder.Services.AddScoped<LaundryLogService>();
+
+builder.Services.AddScoped<DepositLedgerRepository>();
+builder.Services.AddScoped<DepositLedgerService>();
+
 
 #endregion
 

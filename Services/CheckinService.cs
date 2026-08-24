@@ -17,25 +17,13 @@ namespace Suvarna.DGMS.Api.Services
         // GET ROOMS
         // ==========================================
 
-        public ApiResponse<List<CheckinRoom>> GetRooms(
-            string sessionId,
-            int? propertyId,
-            int? buildingId,
-            int? floorId,
-            int? accmTypeId,
-            string? roomStatus,
-            string? isAc,
-            string? isAccessible)
+        public ApiResponse<List<CheckinRoom>> GetRooms(int sessionId, int? locationId, int? occCatId,DateTime checkinDt  , DateTime checkOutDt, int? bookinId, int? accmTypeId = null)
         {
             var data = _repo.GetRooms(
                 sessionId,
-                propertyId,
-                buildingId,
-                floorId,
-                accmTypeId,
-                roomStatus,
-                isAc,
-                isAccessible
+                locationId,
+                occCatId,
+                checkinDt,  checkOutDt, bookinId, accmTypeId
             );
 
             return ApiResponse<List<CheckinRoom>>.Success(
@@ -49,7 +37,7 @@ namespace Suvarna.DGMS.Api.Services
         // ==========================================
 
         public ApiResponse<List<CheckinTariff>> GetTariff(
-        string sessionId,
+        int sessionId,
         int propertyId,
         int accmTypeId,
         int occCatId,
@@ -77,11 +65,11 @@ namespace Suvarna.DGMS.Api.Services
         // CONFIRM CHECK-IN
         // ==========================================
 
-        public ApiResponse<CheckinResult> ConfirmCheckin(Checkin request)
+        public ApiResponse<CheckinResult> ConfirmCheckin(Checkin request, IFormFile? idFile, IFormFile? photoFile)
         {
             //ValidateCheckin(request);
 
-            var data = _repo.ConfirmCheckin(request);
+            var data = _repo.ConfirmCheckin(request, idFile, photoFile);
 
             if (data.status != "S")
             {
@@ -92,12 +80,27 @@ namespace Suvarna.DGMS.Api.Services
                 );
             }
 
-            return ApiResponse<CheckinResult>.Success(
-                data.message,
+            return ApiResponse<CheckinResult>.Success(data.message, data);
+        }
+        public ApiResponse<PatientInfo?> GetPatientInfo(string umrNo)
+        {
+            var data =
+                _repo.GetPatientInfo(umrNo);
+
+            if (data == null)
+            {
+                return ApiResponse<PatientInfo?>.Success(
+                    "Patient not found.",
+                    null
+                );
+            }
+
+            return ApiResponse<PatientInfo?>.Success(
+                "Patient information fetched successfully.",
                 data
             );
         }
 
-       
+
     }
 }

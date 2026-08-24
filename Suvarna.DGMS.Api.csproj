@@ -26,13 +26,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CryptoWord">
-      <HintPath>..\..\..\APEX\APex_Lab_Pdfs\APex_Lab_PdfS\bin\CryptoWord.dll</HintPath>
-    </Reference>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <Reference Include="CryptoWord">
+      <HintPath>..\..\..\..\Workfiles\XLUpload2FTP\XLUpload2FTP\bin\Debug\CryptoWord.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

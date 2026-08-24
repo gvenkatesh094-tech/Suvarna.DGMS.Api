@@ -81,6 +81,7 @@
         public string? remarks { get; set; }
         public string? accommodationName { get; set; }
         public string? propertyName { get; set; }
+        public int? accCatId { get; set; }
 
 
 
@@ -168,6 +169,7 @@
         public int userId { get; set; }
 
         public int sessionId { get; set; }
+        public int? accCatId { get; set; }
     }
     public class BillingModelMaster
     {

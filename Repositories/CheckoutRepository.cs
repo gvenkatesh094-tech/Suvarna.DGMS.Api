@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -9,38 +8,38 @@ namespace Suvarna.DGMS.Api.Repositories
     {
         private readonly string _conn;
 
-        public CheckoutRepository(
-            IConfiguration configuration)
+        public CheckoutRepository(IConfiguration configuration)
         {
-            _conn = configuration
-                .GetConnectionString("SqlServer");
+            _conn = configuration.GetConnectionString("SqlServer");
         }
 
         //=========================================================
         // GET CHECKOUT BOOKINGS
+        // FIX: added optional search filters (booking no / guest name /
+        // mobile / room no), matching the new SP signature.
         //=========================================================
 
-        public List<CheckoutBooking> GetCheckoutBookings(int sessionId)
+        public List<CheckoutBooking> GetCheckoutBookings(
+            int sessionId,
+            string? bookingNo = null,
+            string? guestName = null,
+            string? mobileNo = null,
+            string? roomNo = null)
         {
-            List<CheckoutBooking> list =
-                new List<CheckoutBooking>();
+            List<CheckoutBooking> list = new List<CheckoutBooking>();
 
-            using SqlConnection con =
-                new SqlConnection(_conn);
-
-            using SqlCommand cmd =
-                new SqlCommand(
-                    "DGMS.PR_DGMS_GET_CHECKOUT_BOOKINGS",
-                    con);
-
-            cmd.CommandType =
-                CommandType.StoredProcedure;
+            using SqlConnection con = new SqlConnection(_conn);
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_CHECKOUT_BOOKINGS", con);
+            cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
-            con.Open();
+            cmd.Parameters.AddWithValue("@IP_BOOKING_NO", (object?)bookingNo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_GUEST_NAME", (object?)guestName ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_MOBILE_NO", (object?)mobileNo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_ROOM_NO", (object?)roomNo ?? DBNull.Value);
 
-            using SqlDataReader reader =
-                cmd.ExecuteReader();
+            con.Open();
+            using SqlDataReader reader = cmd.ExecuteReader();
 
             while (reader.Read())
             {
@@ -65,159 +64,38 @@ namespace Suvarna.DGMS.Api.Repositories
                 });
             }
 
-
             return list;
         }
 
-        public void GenerateAccommodationCharges(int sessionId, int bookingId)
-        {
-            using SqlConnection con = new SqlConnection(_conn);
-
-            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GENERATE_ACCOMMODATION_CHARGES", con);
-
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
-
-            cmd.Parameters.AddWithValue("@IP_BOOKING_ID", bookingId);
-
-            SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1);
-
-            outStatus.Direction =
-                ParameterDirection.Output;
-
-            cmd.Parameters.Add(outStatus);
-
-            SqlParameter outMessage =
-                new SqlParameter(
-                    "@OUT_MESSAGE",
-                    SqlDbType.VarChar,
-                    500);
-
-            outMessage.Direction =
-                ParameterDirection.Output;
-
-            cmd.Parameters.Add(outMessage);
-
-            con.Open();
-
-            cmd.ExecuteNonQuery();
-
-            string status =
-                Convert.ToString(outStatus.Value) ?? "";
-
-            string message =
-                Convert.ToString(outMessage.Value) ?? "";
-
-            if (status != "S")
-            {
-                throw new Exception(message);
-            }
-        }
-        public void CalculateBill(
-    int sessionId,
-    int bookingId)
-        {
-            using SqlConnection con =
-                new SqlConnection(_conn);
-
-            using SqlCommand cmd =
-                new SqlCommand(
-                    "DGMS.PR_DGMS_CALCULATE_BILL",
-                    con);
-
-            cmd.CommandType =
-                CommandType.StoredProcedure;
-
-            cmd.Parameters.AddWithValue(
-                "@IP_SESSION_ID",
-                sessionId);
-
-            cmd.Parameters.AddWithValue(
-                "@IP_BOOKING_ID",
-                bookingId);
-
-            SqlParameter outStatus =
-                new SqlParameter(
-                    "@OUT_STATUS",
-                    SqlDbType.Char,
-                    1);
-
-            outStatus.Direction =
-                ParameterDirection.Output;
-
-            cmd.Parameters.Add(outStatus);
-
-            SqlParameter outMessage =
-                new SqlParameter(
-                    "@OUT_MESSAGE",
-                    SqlDbType.VarChar,
-                    500);
-
-            outMessage.Direction =
-                ParameterDirection.Output;
-
-            cmd.Parameters.Add(outMessage);
-
-            con.Open();
-
-            cmd.ExecuteNonQuery();
-
-            string status =
-                Convert.ToString(outStatus.Value) ?? "";
-
-            string message =
-                Convert.ToString(outMessage.Value) ?? "";
-
-            if (status != "S")
-            {
-                throw new Exception(message);
-            }
-        }
-        public CheckoutDetails? PrepareCheckout(int sessionId, int bookingId)
-        {
-            // Step-1
-            GenerateAccommodationCharges(sessionId, bookingId);
-
-            // Step-2
-            CalculateBill(sessionId, bookingId);
-
-            // Step-3
-            return GetCheckoutDetails(sessionId, bookingId);
-        }
         //=========================================================
-        // GET CHECKOUT DETAILS
+        // PREPARE / GET CHECKOUT DETAILS
+        // FIX: PrepareCheckout no longer calls
+        // GenerateAccommodationCharges() / CalculateBill() — those wrote
+        // ACTUAL_CHECKOUT_DT and zeroed the deposit balance on EVERY
+        // preview, permanently, even if the drawer was then cancelled.
+        // Those two SPs are now DROPPED. PR_DGMS_GET_CHECKOUT_DETAILS is
+        // 100% read-only and safe to call any number of times — so
+        // "Prepare" now simply IS "Get Details".
         //=========================================================
 
-        public CheckoutDetails? GetCheckoutDetails(
-            int sessionId,
-            int bookingId)
+        public CheckoutDetails? PrepareCheckout(int sessionId, int bookingId, DateTime checkoutDt)
+        {
+            return GetCheckoutDetails(sessionId, bookingId, checkoutDt);
+        }
+
+        public CheckoutDetails? GetCheckoutDetails(int sessionId, int bookingId, DateTime? checkoutDt)
         {
             CheckoutDetails? details = null;
 
-            using SqlConnection con =
-                new SqlConnection(_conn);
-
-            using SqlCommand cmd =
-                new SqlCommand(
-                    "DGMS.PR_DGMS_GET_CHECKOUT_DETAILS",
-                    con);
-
-            cmd.CommandType =
-                CommandType.StoredProcedure;
-
-            cmd.Parameters.AddWithValue(
-                "@IP_SESSION_ID",
-                sessionId);
-
-            cmd.Parameters.AddWithValue(
-                "@IP_BOOKING_ID",
-                bookingId);
+            using SqlConnection con = new SqlConnection(_conn);
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_CHECKOUT_DETAILS", con);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_BOOKING_ID", bookingId);
+            cmd.Parameters.AddWithValue("@IP_CHECKOUT_DT", (object?)checkoutDt ?? DBNull.Value);
 
             con.Open();
-
-            using SqlDataReader reader =
-                cmd.ExecuteReader();
+            using SqlDataReader reader = cmd.ExecuteReader();
 
             //=========================================
             // Result Set - 1 (Header Details)
@@ -227,165 +105,55 @@ namespace Suvarna.DGMS.Api.Repositories
             {
                 details = new CheckoutDetails
                 {
-                    bookingId =
-                        Convert.ToInt32(reader["BOOKING_ID"]),
-
-                    bookingNo =
-                        Convert.ToString(reader["BOOKING_NO"]) ?? "",
-
-                    bookingStatus =
-                        Convert.ToString(reader["BOOKING_STATUS"]) ?? "",
-
-                    propertyId =
-                        Convert.ToInt32(reader["PROPERTY_ID"]),
-
-                    propertyName =
-                        Convert.ToString(reader["PROPERTY_NAME"]) ?? "",
-
-                    buildingId =
-                        Convert.ToInt32(reader["BUILDING_ID"]),
-
-                    buildingName =
-                        Convert.ToString(reader["BUILDING_NAME"]) ?? "",
-
-                    floorId =
-                        Convert.ToInt32(reader["FLOOR_ID"]),
-
-                    floorName =
-                        Convert.ToString(reader["FLOOR_NAME"]) ?? "",
-
-                    roomId =
-                        Convert.ToInt32(reader["ROOM_ID"]),
-
-                    roomNo =
-                        Convert.ToString(reader["ROOM_NO"]) ?? "",
-                    roomName =
-                        Convert.ToString(reader["ROOM_NAME"]) ?? "",
-
-                    bedId =
-                        reader["BED_ID"] == DBNull.Value
-                            ? null
-                            : Convert.ToInt32(reader["BED_ID"]),
-
-                    bedNo =
-                        reader["BED_NO"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["BED_NO"]),
-
-                    guestName =
-                        Convert.ToString(reader["GUEST_NAME"]) ?? "",
-
-                    mobileNo =
-                        Convert.ToString(reader["MOBILE_NO"]) ?? "",
-
-                    emailId =
-                        reader["EMAIL_ID"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["EMAIL_ID"]),
-
-                    occCatId =
-                        Convert.ToInt32(reader["OCC_CAT_ID"]),
-
-                    occCatName =
-                        Convert.ToString(reader["OCC_CAT_NAME"]) ?? "",
-
-                    patientName =
-                        reader["PATIENT_NAME"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["PATIENT_NAME"]),
-
-                    uhid =
-                        reader["UHID"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["UHID"]),
-
-                    wardName =
-                        reader["WARD_NAME"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["WARD_NAME"]),
-
-                    corporateName =
-                        reader["CORPORATE_NAME"] == DBNull.Value
-                            ? null
-                            : Convert.ToString(reader["CORPORATE_NAME"]),
-
-                    checkinDate =
-                        Convert.ToDateTime(reader["CHECKIN_DT"]),
-
-                    expectedCheckoutDate =
-                        Convert.ToDateTime(reader["EXPECTED_CHECKOUT_DT"]),
-
-                    checkoutDate =
-                        Convert.ToDateTime(reader["CHECKOUT_DT"]),
-
-                    totalNights =
-                        Convert.ToInt32(reader["TOTAL_NIGHTS"]),
-
-                    tariffId =
-                        Convert.ToInt32(reader["TARIFF_ID"]),
-
-                    tariffCode =
-                        Convert.ToString(reader["TARIFF_CODE"]) ?? "",
-
-                    tariffName =
-                        Convert.ToString(reader["TARIFF_NAME"]) ?? "",
-
-                    dailyRate =
-                        Convert.ToDecimal(reader["DAILY_RATE"]),
-
-                    hourlyRate =
-                        Convert.ToDecimal(reader["HOURLY_RATE"]),
-
-                    roomCharges =
-                        Convert.ToDecimal(reader["ROOM_CHARGES"]),
-
-                    serviceCharges =
-                        Convert.ToDecimal(reader["SERVICE_CHARGES"]),
-
-                    damageCharges =
-                        Convert.ToDecimal(reader["DAMAGE_CHARGES"]),
-
-                    discountAmount =
-                        Convert.ToDecimal(reader["DISCOUNT_AMOUNT"]),
-
-                    taxableAmount =
-                        Convert.ToDecimal(reader["TAXABLE_AMOUNT"]),
-
-                    gstPercentage =
-                        Convert.ToDecimal(reader["GST_PERCENTAGE"]),
-
-                    gstAmount =
-                        Convert.ToDecimal(reader["GST_AMOUNT"]),
-
-                    grossAmount =
-                        Convert.ToDecimal(reader["GROSS_AMOUNT"]),
-
-                    depositCollected =
-                        Convert.ToDecimal(reader["DEPOSIT_COLLECTED"]),
-
-                    depositAdjusted =
-                        Convert.ToDecimal(reader["DEPOSIT_ADJUSTED"]),
-
-                    refundAmount =
-                        Convert.ToDecimal(reader["REFUND_AMOUNT"]),
-
-                    netPayable =
-                        Convert.ToDecimal(reader["NET_PAYABLE"]),
-
-                    amountPaid =
-                        Convert.ToDecimal(reader["AMOUNT_PAID"]),
-
-                    balanceAmount =
-                        Convert.ToDecimal(reader["BALANCE_AMOUNT"]),
-
-                    billId =
-                        Convert.ToInt32(reader["BILL_ID"]),
-
-                    billNo =
-                        Convert.ToString(reader["BILL_NO"]) ?? "",
-
-                    billStatus =
-                        Convert.ToString(reader["BILL_STATUS"]) ?? ""
+                    bookingId = Convert.ToInt32(reader["BOOKING_ID"]),
+                    bookingNo = Convert.ToString(reader["BOOKING_NO"]) ?? "",
+                    bookingStatus = Convert.ToString(reader["BOOKING_STATUS"]) ?? "",
+                    propertyId = Convert.ToInt32(reader["PROPERTY_ID"]),
+                    propertyName = Convert.ToString(reader["PROPERTY_NAME"]) ?? "",
+                    buildingId = Convert.ToInt32(reader["BUILDING_ID"]),
+                    buildingName = Convert.ToString(reader["BUILDING_NAME"]) ?? "",
+                    floorId = Convert.ToInt32(reader["FLOOR_ID"]),
+                    floorName = Convert.ToString(reader["FLOOR_NAME"]) ?? "",
+                    roomId = Convert.ToInt32(reader["ROOM_ID"]),
+                    roomNo = Convert.ToString(reader["ROOM_NO"]) ?? "",
+                    roomName = Convert.ToString(reader["ROOM_NAME"]) ?? "",
+                    bedId = reader["BED_ID"] == DBNull.Value ? null : Convert.ToInt32(reader["BED_ID"]),
+                    bedNo = reader["BED_NO"] == DBNull.Value ? null : Convert.ToString(reader["BED_NO"]),
+                    guestName = Convert.ToString(reader["GUEST_NAME"]) ?? "",
+                    mobileNo = Convert.ToString(reader["MOBILE_NO"]) ?? "",
+                    emailId = reader["EMAIL_ID"] == DBNull.Value ? null : Convert.ToString(reader["EMAIL_ID"]),
+                    occCatId = Convert.ToInt32(reader["OCC_CAT_ID"]),
+                    occCatName = Convert.ToString(reader["OCC_CAT_NAME"]) ?? "",
+                    patientName = reader["PATIENT_NAME"] == DBNull.Value ? null : Convert.ToString(reader["PATIENT_NAME"]),
+                    uhid = reader["UHID"] == DBNull.Value ? null : Convert.ToString(reader["UHID"]),
+                    wardName = reader["WARD_NAME"] == DBNull.Value ? null : Convert.ToString(reader["WARD_NAME"]),
+                    corporateName = reader["CORPORATE_NAME"] == DBNull.Value ? null : Convert.ToString(reader["CORPORATE_NAME"]),
+                    checkinDate = Convert.ToDateTime(reader["CHECKIN_DT"]),
+                    expectedCheckoutDate = Convert.ToDateTime(reader["EXPECTED_CHECKOUT_DT"]),
+                    checkoutDate = Convert.ToDateTime(reader["CHECKOUT_DT"]),
+                    totalNights = Convert.ToInt32(reader["TOTAL_NIGHTS"]),
+                    tariffId = Convert.ToInt32(reader["TARIFF_ID"]),
+                    tariffCode = Convert.ToString(reader["TARIFF_CODE"]) ?? "",
+                    tariffName = Convert.ToString(reader["TARIFF_NAME"]) ?? "",
+                    dailyRate = Convert.ToDecimal(reader["DAILY_RATE"]),
+                    hourlyRate = Convert.ToDecimal(reader["HOURLY_RATE"]),
+                    roomCharges = Convert.ToDecimal(reader["ROOM_CHARGES"]),
+                    serviceCharges = Convert.ToDecimal(reader["SERVICE_CHARGES"]),
+                    damageCharges = Convert.ToDecimal(reader["DAMAGE_CHARGES"]),
+                    discountAmount = Convert.ToDecimal(reader["DISCOUNT_AMOUNT"]),
+                    taxableAmount = Convert.ToDecimal(reader["TAXABLE_AMOUNT"]),
+                    gstPercentage = Convert.ToDecimal(reader["GST_PERCENTAGE"]),
+                    gstAmount = Convert.ToDecimal(reader["GST_AMOUNT"]),
+                    grossAmount = Convert.ToDecimal(reader["GROSS_AMOUNT"]),
+                    depositCollected = Convert.ToDecimal(reader["DEPOSIT_COLLECTED"]),
+                    depositAdjusted = Convert.ToDecimal(reader["DEPOSIT_ADJUSTED"]),
+                    refundAmount = Convert.ToDecimal(reader["REFUND_AMOUNT"]),
+                    netPayable = Convert.ToDecimal(reader["NET_PAYABLE"]),
+                    amountPaid = Convert.ToDecimal(reader["AMOUNT_PAID"]),
+                    balanceAmount = Convert.ToDecimal(reader["BALANCE_AMOUNT"]),
+                    billId = Convert.ToInt32(reader["BILL_ID"]),
+                    billNo = Convert.ToString(reader["BILL_NO"]) ?? "",
+                    billStatus = Convert.ToString(reader["BILL_STATUS"]) ?? ""
                 };
             }
 
@@ -397,32 +165,21 @@ namespace Suvarna.DGMS.Api.Repositories
             {
                 while (reader.Read())
                 {
-                    details.services.Add(
-                        new CheckoutServiceItem
-                        {
-                            serviceId =
-                                Convert.ToInt32(reader["SERVICE_ID"]),
-
-                            serviceCode =
-                                Convert.ToString(reader["SERVICE_CODE"]) ?? "",
-
-                            serviceName =
-                                Convert.ToString(reader["SERVICE_NAME"]) ?? "",
-
-                            quantity =
-                                Convert.ToDecimal(reader["QTY"]),
-
-                            rate =
-                                Convert.ToDecimal(reader["RATE"]),
-
-                            amount =
-                                Convert.ToDecimal(reader["AMOUNT"])
-                        });
+                    details.services.Add(new CheckoutServiceItem
+                    {
+                        serviceId = Convert.ToInt32(reader["SERVICE_ID"]),
+                        serviceCode = Convert.ToString(reader["SERVICE_CODE"]) ?? "",
+                        serviceName = Convert.ToString(reader["SERVICE_NAME"]) ?? "",
+                        quantity = Convert.ToDecimal(reader["QTY"]),
+                        rate = Convert.ToDecimal(reader["RATE"]),
+                        amount = Convert.ToDecimal(reader["AMOUNT"])
+                    });
                 }
             }
 
             return details;
         }
+
         //=========================================================
         // CONFIRM CHECKOUT
         //=========================================================
@@ -432,14 +189,8 @@ namespace Suvarna.DGMS.Api.Repositories
             CheckoutResult result = new CheckoutResult();
 
             using SqlConnection con = new SqlConnection(_conn);
-
             using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CHECKOUT", con);
-
             cmd.CommandType = CommandType.StoredProcedure;
-
-            //--------------------------------------------------
-            // INPUT PARAMETERS
-            //--------------------------------------------------
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", request.sessionId);
             cmd.Parameters.AddWithValue("@IP_BOOKING_ID", request.bookingId);
@@ -451,63 +202,32 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_PAYMENT_AMOUNT", request.paymentAmount);
             cmd.Parameters.AddWithValue("@IP_PAYMENT_REF", string.IsNullOrWhiteSpace(request.paymentReference) ? DBNull.Value : request.paymentReference);
             cmd.Parameters.AddWithValue("@IP_IS_COMPASSIONATE", request.isCompassionate);
-            //--------------------------------------------------
-            // OUTPUT PARAMETERS
-            //--------------------------------------------------
 
-            SqlParameter outBillId = new SqlParameter("@OUT_BILL_ID", SqlDbType.Int)
-            {
-                Direction = ParameterDirection.Output
-            };
+            // NEW: deposit refund mode/reference (only meaningful when a
+            // refund is actually due — SP handles null/empty gracefully).
+            cmd.Parameters.AddWithValue("@IP_REFUND_MODE", string.IsNullOrWhiteSpace(request.refundMode) ? DBNull.Value : request.refundMode);
+            cmd.Parameters.AddWithValue("@IP_REFUND_REF", string.IsNullOrWhiteSpace(request.refundReference) ? DBNull.Value : request.refundReference);
+
+            SqlParameter outBillId = new SqlParameter("@OUT_BILL_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outBillId);
 
-            SqlParameter outGross = new SqlParameter("@OUT_FINAL_GROSS", SqlDbType.Decimal)
-            {
-                Precision = 18,
-                Scale = 2,
-                Direction = ParameterDirection.Output
-            };
+            SqlParameter outGross = new SqlParameter("@OUT_FINAL_GROSS", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outGross);
 
-            SqlParameter outRefund = new SqlParameter("@OUT_DEPOSIT_REFUND", SqlDbType.Decimal)
-            {
-                Precision = 18,
-                Scale = 2,
-                Direction = ParameterDirection.Output
-            };
+            SqlParameter outRefund = new SqlParameter("@OUT_DEPOSIT_REFUND", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outRefund);
 
-            SqlParameter outNet = new SqlParameter("@OUT_NET_PAYABLE", SqlDbType.Decimal)
-            {
-                Precision = 18,
-                Scale = 2,
-                Direction = ParameterDirection.Output
-            };
+            SqlParameter outNet = new SqlParameter("@OUT_NET_PAYABLE", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outNet);
 
-            SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1)
-            {
-                Direction = ParameterDirection.Output
-            };
+            SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outStatus);
 
-            SqlParameter outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500)
-            {
-                Direction = ParameterDirection.Output
-            };
+            SqlParameter outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outMessage);
 
-            //--------------------------------------------------
-            // EXECUTE
-            //--------------------------------------------------
-
             con.Open();
-
             cmd.ExecuteNonQuery();
-
-            //--------------------------------------------------
-            // RESULT
-            //--------------------------------------------------
 
             result.status = Convert.ToString(outStatus.Value) ?? "";
             result.message = Convert.ToString(outMessage.Value) ?? "";
@@ -522,6 +242,5 @@ namespace Suvarna.DGMS.Api.Repositories
 
             return result;
         }
-
     }
 }

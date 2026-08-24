@@ -170,7 +170,7 @@ namespace Suvarna.DGMS.Api.Services
                 data
             );
         }
-        public ApiResponse<HkQuickStats> GetQuickStats(int sessionId,int locationId)
+        public ApiResponse<HkQuickStats> GetQuickStats(int sessionId, int locationId)
         {
             var data = _repo.GetQuickStats(sessionId, locationId);
 
@@ -179,5 +179,35 @@ namespace Suvarna.DGMS.Api.Services
                 data
             );
         }
+
+
+
+
+public ApiResponse<List<HkEscalation>> GetEscalations(int sessionId)
+    {
+        var data = _repo.GetEscalations(sessionId);
+        return ApiResponse<List<HkEscalation>>.Success(
+            $"{data.Count} escalation(s) fetched successfully.", data);
     }
+
+    public ApiResponse<List<HkNotification>> GetMyNotifications(int sessionId)
+    {
+        var data = _repo.GetMyNotifications(sessionId);
+        return ApiResponse<List<HkNotification>>.Success(
+            $"{data.Count} notification(s) fetched successfully.", data);
+    }
+
+    public ApiResponse<HkOperationResult> MarkNotificationRead(int sessionId, int? notificationId)
+    {
+        var data = _repo.MarkNotificationRead(sessionId, notificationId);
+
+        if (data.status != "S")
+        {
+            throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark notification read." : data.message);
+        }
+
+        return ApiResponse<HkOperationResult>.Success(data.message, data);
+    }
+
+}
 }

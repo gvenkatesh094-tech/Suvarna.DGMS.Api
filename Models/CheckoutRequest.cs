@@ -29,5 +29,15 @@ namespace Suvarna.DGMS.Api.Models
         public bool isCompassionate { get; set; }
 
         public string? remarks { get; set; }
+
+
+
+        public string? refundMode { get; set; }        
+        public string? refundReference { get; set; }  
+
     }
+
+
+
+
 }

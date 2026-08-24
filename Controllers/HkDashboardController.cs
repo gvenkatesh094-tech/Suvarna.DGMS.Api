@@ -136,9 +136,38 @@ namespace Suvarna.DGMS.Api.Controllers
             );
         }
         [HttpGet("quickstats")]
-        public IActionResult GetQuickStats([FromQuery] int  sessionId,int locationId)
+        public IActionResult GetQuickStats([FromQuery] int sessionId, int locationId)
         {
             return Ok(_service.GetQuickStats(sessionId, locationId));
         }
+
+
+
+        // ==========================================
+        // SUPERVISOR ESCALATIONS
+        // ==========================================
+
+        [HttpGet("escalations")]
+        public IActionResult GetEscalations([FromQuery] int sessionId)
+        {
+            return Ok(_service.GetEscalations(sessionId));
+        }
+
+        // ==========================================
+        // MY NOTIFICATIONS
+        // ==========================================
+
+        [HttpGet("notifications")]
+        public IActionResult GetMyNotifications([FromQuery] int sessionId)
+        {
+            return Ok(_service.GetMyNotifications(sessionId));
+        }
+
+        [HttpPost("notifications/read")]
+        public IActionResult MarkNotificationRead([FromQuery] int sessionId, [FromQuery] int? notificationId = null)
+        {
+            return Ok(_service.MarkNotificationRead(sessionId, notificationId));
+        }
+
     }
 }
