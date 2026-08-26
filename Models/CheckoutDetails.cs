@@ -134,6 +134,7 @@ namespace Suvarna.DGMS.Api.Models
         public string billNo { get; set; } = string.Empty;
 
         public string billStatus { get; set; } = string.Empty;
+        public decimal depositBalance { get; set; }
 
         //=========================================
         // Services

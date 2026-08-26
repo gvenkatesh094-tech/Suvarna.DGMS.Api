@@ -14,7 +14,6 @@ namespace Suvarna.DGMS.Api.Services
 
         //====================================================
         // GET CHECKOUT BOOKINGS
-        // FIX: single global search term.
         //====================================================
 
         public ApiResponse<List<CheckoutBooking>> GetCheckoutBookings(
@@ -30,8 +29,6 @@ namespace Suvarna.DGMS.Api.Services
 
         //====================================================
         // PREPARE CHECKOUT
-        // FIX: no longer mutates any state — see CheckoutRepository.
-        // Safe to call repeatedly (drawer open / cancel / reopen).
         //====================================================
 
         public ApiResponse<CheckoutDetails> PrepareCheckout(int sessionId, int bookingId, DateTime checkoutDt)
@@ -50,9 +47,6 @@ namespace Suvarna.DGMS.Api.Services
 
         //====================================================
         // GET CHECKOUT DETAILS
-        // FIX: checkoutDt is now optional (defaults to "now" in the SP)
-        // instead of being a silently-required parameter the frontend
-        // never actually sent.
         //====================================================
 
         public ApiResponse<CheckoutDetails> GetCheckoutDetails(int sessionId, int bookingId, DateTime? checkoutDt)
@@ -126,8 +120,6 @@ namespace Suvarna.DGMS.Api.Services
                 throw new Exception("Payment amount cannot be negative.");
             }
 
-            // FIX: "Bill to Corporate" should never carry a cash/card amount
-            // collected today — the balance is invoiced later instead.
             if (request.paymentMode == "CORP_BILL" && request.paymentAmount > 0)
             {
                 throw new Exception("Payment amount must be 0 when billing to Corporate — the balance will be invoiced separately.");
@@ -149,6 +141,24 @@ namespace Suvarna.DGMS.Api.Services
             if (request.discountAmount > 0 && string.IsNullOrWhiteSpace(request.discountReason))
             {
                 throw new Exception("Discount reason is required.");
+            }
+
+            // NEW: penalty / damage-recovery validation — same pattern as
+            // discount: amount must be non-negative, and a reason is
+            // mandatory whenever an actual amount is being charged.
+            if (request.penaltyAmount < 0)
+            {
+                throw new Exception("Penalty amount cannot be negative.");
+            }
+
+            if (request.penaltyAmount > 0 && string.IsNullOrWhiteSpace(request.penaltyReasonCode))
+            {
+                throw new Exception("Penalty reason is required when a penalty amount is entered.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.penaltyRemarks) && request.penaltyRemarks.Length > 400)
+            {
+                throw new Exception("Penalty remarks cannot exceed 400 characters.");
             }
 
             if (!request.roomInspected)

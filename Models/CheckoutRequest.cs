@@ -29,6 +29,9 @@ namespace Suvarna.DGMS.Api.Models
         public bool isCompassionate { get; set; }
 
         public string? remarks { get; set; }
+        public decimal penaltyAmount { get; set; }
+        public string? penaltyReasonCode { get; set; }
+        public string? penaltyRemarks { get; set; }
 
 
 

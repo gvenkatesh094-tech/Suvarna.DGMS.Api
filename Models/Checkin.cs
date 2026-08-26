@@ -71,6 +71,8 @@
         public string? paymentMode { get; set; }
         public string? paymentRef { get; set; }
         public decimal totalPaidAmount { get; set; }
+
+
         public decimal baseAmount { get; set; }
 
         public decimal cgstAmount { get; set; }

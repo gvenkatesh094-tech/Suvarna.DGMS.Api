@@ -15,7 +15,6 @@ namespace Suvarna.DGMS.Api.Repositories
 
         //=========================================================
         // GET CHECKOUT BOOKINGS
-        // FIX: single global search term, matching the updated SP.
         //=========================================================
 
         public List<CheckoutBooking> GetCheckoutBookings(
@@ -62,13 +61,6 @@ namespace Suvarna.DGMS.Api.Repositories
 
         //=========================================================
         // PREPARE / GET CHECKOUT DETAILS
-        // FIX: PrepareCheckout no longer calls
-        // GenerateAccommodationCharges() / CalculateBill() — those wrote
-        // ACTUAL_CHECKOUT_DT and zeroed the deposit balance on EVERY
-        // preview, permanently, even if the drawer was then cancelled.
-        // Those two SPs are now DROPPED. PR_DGMS_GET_CHECKOUT_DETAILS is
-        // 100% read-only and safe to call any number of times — so
-        // "Prepare" now simply IS "Get Details".
         //=========================================================
 
         public CheckoutDetails? PrepareCheckout(int sessionId, int bookingId, DateTime checkoutDt)
@@ -139,6 +131,10 @@ namespace Suvarna.DGMS.Api.Repositories
                     gstAmount = Convert.ToDecimal(reader["GST_AMOUNT"]),
                     grossAmount = Convert.ToDecimal(reader["GROSS_AMOUNT"]),
                     depositCollected = Convert.ToDecimal(reader["DEPOSIT_COLLECTED"]),
+                    // NEW: raw deposit balance — lets the frontend re-run the
+                    // adjustment/refund math live as the staff enters a
+                    // penalty or changes the discount, before confirming.
+                    depositBalance = Convert.ToDecimal(reader["DEPOSIT_BALANCE"]),
                     depositAdjusted = Convert.ToDecimal(reader["DEPOSIT_ADJUSTED"]),
                     refundAmount = Convert.ToDecimal(reader["REFUND_AMOUNT"]),
                     netPayable = Convert.ToDecimal(reader["NET_PAYABLE"]),
@@ -196,10 +192,13 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_PAYMENT_REF", string.IsNullOrWhiteSpace(request.paymentReference) ? DBNull.Value : request.paymentReference);
             cmd.Parameters.AddWithValue("@IP_IS_COMPASSIONATE", request.isCompassionate);
 
-            // NEW: deposit refund mode/reference (only meaningful when a
-            // refund is actually due — SP handles null/empty gracefully).
             cmd.Parameters.AddWithValue("@IP_REFUND_MODE", string.IsNullOrWhiteSpace(request.refundMode) ? DBNull.Value : request.refundMode);
             cmd.Parameters.AddWithValue("@IP_REFUND_REF", string.IsNullOrWhiteSpace(request.refundReference) ? DBNull.Value : request.refundReference);
+
+            // NEW: penalty / damage-recovery charged at checkout.
+            cmd.Parameters.AddWithValue("@IP_PENALTY_AMT", request.penaltyAmount);
+            cmd.Parameters.AddWithValue("@IP_PENALTY_REASON_CD", string.IsNullOrWhiteSpace(request.penaltyReasonCode) ? DBNull.Value : request.penaltyReasonCode);
+            cmd.Parameters.AddWithValue("@IP_PENALTY_REMARKS", string.IsNullOrWhiteSpace(request.penaltyRemarks) ? DBNull.Value : request.penaltyRemarks);
 
             SqlParameter outBillId = new SqlParameter("@OUT_BILL_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outBillId);
@@ -212,6 +211,11 @@ namespace Suvarna.DGMS.Api.Repositories
 
             SqlParameter outNet = new SqlParameter("@OUT_NET_PAYABLE", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outNet);
+
+            // NEW: echoes back the penalty actually posted, so the receipt
+            // trusts the server's number rather than its own request copy.
+            SqlParameter outPenalty = new SqlParameter("@OUT_PENALTY_AMT", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(outPenalty);
 
             SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(outStatus);
@@ -228,6 +232,7 @@ namespace Suvarna.DGMS.Api.Repositories
             result.grossAmount = outGross.Value == DBNull.Value ? 0 : Convert.ToDecimal(outGross.Value);
             result.depositRefund = outRefund.Value == DBNull.Value ? 0 : Convert.ToDecimal(outRefund.Value);
             result.netPayable = outNet.Value == DBNull.Value ? 0 : Convert.ToDecimal(outNet.Value);
+            result.penaltyAmount = outPenalty.Value == DBNull.Value ? 0 : Convert.ToDecimal(outPenalty.Value);
             result.bookingId = request.bookingId;
             result.checkoutDate = request.checkoutDt;
             result.paymentMode = request.paymentMode;

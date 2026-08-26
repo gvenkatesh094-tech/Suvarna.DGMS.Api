@@ -85,5 +85,6 @@ namespace Suvarna.DGMS.Api.Models
         public bool bedReleased { get; set; }
 
         public bool checkoutCompleted { get; set; }
+        public decimal penaltyAmount { get; set; }
     }
 }
