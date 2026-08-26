@@ -9,60 +9,74 @@ namespace Suvarna.DGMS.Api.Controllers
     {
         private readonly ReceptionDashboardService _service;
 
-        public ReceptionDashboardController(
-            ReceptionDashboardService service)
+        public ReceptionDashboardController(ReceptionDashboardService service)
         {
             _service = service;
         }
 
-        //------------------------------------------------------
-        // Dashboard Summary
-        //------------------------------------------------------
+        // ==========================================
+        // SUMMARY
+        // GET api/reception-dashboard/summary?sessionId=1
+        // ==========================================
 
         [HttpGet("summary")]
-        public IActionResult GetSummary()
+        public IActionResult GetSummary([FromQuery] int sessionId)
         {
-            return Ok(_service.GetDashboardSummary());
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+
+            return Ok(_service.GetSummary(sessionId));
         }
 
-        //------------------------------------------------------
-        // Active Bookings
-        //------------------------------------------------------
+        // ==========================================
+        // ACTIVE BOOKINGS
+        // GET api/reception-dashboard/active-bookings?sessionId=1
+        // ==========================================
 
         [HttpGet("active-bookings")]
-        public IActionResult GetActiveBookings()
+        public IActionResult GetActiveBookings([FromQuery] int sessionId)
         {
-            return Ok(_service.GetActiveBookings());
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+
+            return Ok(_service.GetActiveBookings(sessionId));
         }
 
-        //------------------------------------------------------
-        // Room Status
-        //------------------------------------------------------
+        // ==========================================
+        // ROOM STATUS
+        // GET api/reception-dashboard/room-status?sessionId=1
+        // ==========================================
 
         [HttpGet("room-status")]
-        public IActionResult GetRoomStatus()
+        public IActionResult GetRoomStatus([FromQuery] int sessionId)
         {
-            return Ok(_service.GetRoomStatus());
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+
+            return Ok(_service.GetRoomStatus(sessionId));
         }
 
-        //------------------------------------------------------
-        // Alerts
-        //------------------------------------------------------
+        // ==========================================
+        // ALERTS
+        // GET api/reception-dashboard/alerts?sessionId=1
+        // ==========================================
 
         [HttpGet("alerts")]
-        public IActionResult GetAlerts()
+        public IActionResult GetAlerts([FromQuery] int sessionId)
         {
-            return Ok(_service.GetAlerts());
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+
+            return Ok(_service.GetAlerts(sessionId));
         }
 
-        //------------------------------------------------------
-        // Revenue
-        //------------------------------------------------------
+        // ==========================================
+        // REVENUE
+        // GET api/reception-dashboard/revenue?sessionId=1
+        // ==========================================
 
         [HttpGet("revenue")]
-        public IActionResult GetRevenue()
+        public IActionResult GetRevenue([FromQuery] int sessionId)
         {
-            return Ok(_service.GetRevenue());
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+
+            return Ok(_service.GetRevenue(sessionId));
         }
     }
 }

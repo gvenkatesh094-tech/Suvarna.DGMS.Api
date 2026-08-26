@@ -1,287 +1,237 @@
-﻿using System;
-using System.Data;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Suvarna.DGMS.Api.Models;
+using System.Data;
 
 namespace Suvarna.DGMS.Api.Repositories
 {
     public class ReceptionDashboardRepository
     {
-        private readonly IConfiguration _configuration;
-        private readonly string _connectionString;
+        private readonly string _conn;
 
         public ReceptionDashboardRepository(IConfiguration configuration)
         {
-            _configuration = configuration;
-            _connectionString = _configuration.GetConnectionString("DefaultConnection");
+            _conn = configuration.GetConnectionString("SqlServer");
         }
 
-        //=========================================================
-        // Dashboard Summary
-        //=========================================================
+        // ==========================================
+        // SUMMARY
+        // ==========================================
 
-        public ReceptionDashboardSummary GetDashboardSummary()
+        public ReceptionDashboardSummary GetSummary(int sessionId)
         {
-            ReceptionDashboardSummary summary = new ReceptionDashboardSummary();
-
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            try
             {
-                using (SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_DASHBOARD_SUMMARY", con))
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_DASHBOARD_SUMMARY", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    return new ReceptionDashboardSummary
                     {
-                        if (dr.Read())
-                        {
-                            summary.TotalRooms =
-                                dr["TotalRooms"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["TotalRooms"]);
-
-                            summary.OccupiedRooms =
-                                dr["OccupiedRooms"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["OccupiedRooms"]);
-
-                            summary.AvailableRooms =
-                                dr["AvailableRooms"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["AvailableRooms"]);
-
-                            summary.PendingCheckIn =
-                                dr["PendingCheckIn"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["PendingCheckIn"]);
-
-                            summary.DueCheckOut =
-                                dr["DueCheckOut"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["DueCheckOut"]);
-
-                            summary.Reservations =
-                                dr["Reservations"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["Reservations"]);
-
-                            summary.OccupancyRate = dr["OccupancyRate"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["OccupancyRate"]);
-                        }
-                    }
+                        totalRooms = GetInt(dr, "TOTAL_ROOMS"),
+                        occupiedRooms = GetInt(dr, "OCCUPIED_ROOMS"),
+                        availableRooms = GetInt(dr, "AVAILABLE_ROOMS"),
+                        pendingCheckin = GetInt(dr, "PENDING_CHECKIN"),
+                        overdueCheckin = GetInt(dr, "OVERDUE_CHECKIN"),
+                        dueCheckout = GetInt(dr, "DUE_CHECKOUT"),
+                        overdueCheckout = GetInt(dr, "OVERDUE_CHECKOUT"),
+                        reservations = GetInt(dr, "RESERVATIONS"),
+                        arrivingTomorrow = GetInt(dr, "ARRIVING_TOMORROW"),
+                        occupancyRate = GetDecimal(dr, "OCCUPANCY_RATE"),
+                        todayRevenue = GetDecimal(dr, "TODAY_REVENUE"),
+                        mtdRevenue = GetDecimal(dr, "MTD_REVENUE")
+                    };
                 }
-            }
 
-            return summary;
+                return new ReceptionDashboardSummary();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching reception dashboard summary.", ex);
+            }
         }
-        //=========================================================
-        // Active Bookings
-        //=========================================================
 
-        public List<ReceptionBooking> GetActiveBookings()
+        // ==========================================
+        // ACTIVE BOOKINGS
+        // ==========================================
+
+        public List<ReceptionActiveBooking> GetActiveBookings(int sessionId)
         {
-            List<ReceptionBooking> bookings = new List<ReceptionBooking>();
+            List<ReceptionActiveBooking> list = new();
 
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            try
             {
-                using (SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ACTIVE_BOOKINGS", con))
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ACTIVE_BOOKINGS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    list.Add(new ReceptionActiveBooking
                     {
-                        while (dr.Read())
-                        {
-                            ReceptionBooking booking = new ReceptionBooking
-                            {
-                                BookingId = dr["BookingId"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["BookingId"]),
-
-                                BookingRef = dr["BookingNo"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["BookingNo"].ToString(),
-
-                                GuestName = dr["GuestName"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["GuestName"].ToString(),
-
-                                MobileNo = dr["MobileNo"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["MobileNo"].ToString(),
-
-                                RoomNo = dr["RoomNo"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["RoomNo"].ToString(),
-
-                                Category = dr["AccommodationType"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["AccommodationType"].ToString(),
-
-                                CheckInDate = dr["CheckInDate"] == DBNull.Value
-                                    ? DateTime.MinValue
-                                    : Convert.ToDateTime(dr["CheckInDate"]),
-
-                                CheckOutDate = dr["CheckOutDate"] == DBNull.Value
-                                    ? DateTime.MinValue
-                                    : Convert.ToDateTime(dr["CheckOutDate"]),
-
-                                ChargedAmount = dr["ChargedAmount"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToDecimal(dr["ChargedAmount"]),
-
-                                GstPercent = dr["GSTPercent"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToDecimal(dr["GSTPercent"]),
-
-                                DepositAmount = dr["DepositAmount"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToDecimal(dr["DepositAmount"])
-                            };
-
-                            bookings.Add(booking);
-                        }
-                    }
+                        bookingId = GetInt(dr, "BOOKING_ID"),
+                        bookingRef = GetString(dr, "BOOKING_REF") ?? "",
+                        guestName = GetString(dr, "GUEST_NAME") ?? "",
+                        mobileNo = GetString(dr, "MOBILE_NO") ?? "",
+                        roomNo = GetString(dr, "ROOM_NO") ?? "",
+                        categoryName = GetString(dr, "CATEGORY_NAME") ?? "",
+                        checkinDt = GetNullableDateTime(dr, "CHECKIN_DT"),
+                        expectedCheckoutDt = GetNullableDateTime(dr, "EXPECTED_CHECKOUT_DT"),
+                        chargedAmount = GetDecimal(dr, "CHARGED_AMOUNT"),
+                        gstPercent = GetDecimal(dr, "GST_PERCENT"),
+                        depositAmount = GetDecimal(dr, "DEPOSIT_AMOUNT")
+                    });
                 }
-            }
 
-            return bookings;
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching active bookings.", ex);
+            }
         }
-        //=========================================================
-        // Room Status
-        //=========================================================
 
-        public List<ReceptionRoomStatus> GetRoomStatus()
+        // ==========================================
+        // ROOM STATUS
+        // ==========================================
+
+        public List<ReceptionRoomStatus> GetRoomStatus(int sessionId)
         {
-            List<ReceptionRoomStatus> rooms = new List<ReceptionRoomStatus>();
+            List<ReceptionRoomStatus> list = new();
 
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            try
             {
-                using (SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ROOM_STATUS", con))
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ROOM_STATUS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    list.Add(new ReceptionRoomStatus
                     {
-                        while (dr.Read())
-                        {
-                            ReceptionRoomStatus room = new ReceptionRoomStatus
-                            {
-                                RoomId = dr["RoomId"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToInt32(dr["RoomId"]),
-
-                                RoomNo = dr["RoomNo"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["RoomNo"].ToString(),
-
-                                RoomName = dr["RoomName"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["RoomName"].ToString(),
-
-                                RoomStatus = dr["RoomStatus"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["RoomStatus"].ToString()
-                            };
-
-                            rooms.Add(room);
-                        }
-                    }
+                        roomId = GetInt(dr, "ROOM_ID"),
+                        roomNo = GetString(dr, "ROOM_NO") ?? "",
+                        roomName = GetString(dr, "ROOM_NAME"),
+                        roomStatus = GetString(dr, "ROOM_STATUS") ?? ""
+                    });
                 }
-            }
 
-            return rooms;
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching room status.", ex);
+            }
         }
-        //=========================================================
-        // Alerts
-        //=========================================================
 
-        public List<ReceptionAlert> GetAlerts()
+        // ==========================================
+        // ALERTS
+        // ==========================================
+
+        public List<ReceptionAlert> GetAlerts(int sessionId)
         {
-            List<ReceptionAlert> alerts = new List<ReceptionAlert>();
+            List<ReceptionAlert> list = new();
 
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            try
             {
-                using (SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ALERTS", con))
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_ALERTS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    list.Add(new ReceptionAlert
                     {
-                        while (dr.Read())
-                        {
-                            ReceptionAlert alert = new ReceptionAlert
-                            {
-                                AlertColor = dr["AlertColor"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["AlertColor"].ToString(),
-
-                                AlertTitle = dr["AlertTitle"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["AlertTitle"].ToString(),
-
-                                AlertDescription = dr["AlertDescription"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["AlertDescription"].ToString(),
-
-                                ActionText = dr["ActionText"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["ActionText"].ToString()
-                            };
-
-                            alerts.Add(alert);
-                        }
-                    }
+                        alertId = GetInt(dr, "ALERT_ID"),
+                        alertColor = GetString(dr, "ALERT_COLOR") ?? "",
+                        alertTitle = GetString(dr, "ALERT_TITLE") ?? "",
+                        alertSubtitle = GetString(dr, "ALERT_SUBTITLE") ?? "",
+                        actionText = GetString(dr, "ACTION_TEXT") ?? ""
+                    });
                 }
-            }
 
-            return alerts;
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching alerts.", ex);
+            }
         }
-        //=========================================================
-        // Revenue (Last 7 Days)
-        //=========================================================
 
-        public List<ReceptionRevenue> GetRevenue()
+        // ==========================================
+        // REVENUE
+        // ==========================================
+
+        public List<ReceptionRevenueItem> GetRevenue(int sessionId)
         {
-            List<ReceptionRevenue> revenue = new List<ReceptionRevenue>();
+            List<ReceptionRevenueItem> list = new();
 
-            using (SqlConnection con = new SqlConnection(_connectionString))
+            try
             {
-                using (SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_REVENUE", con))
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RECEPTION_REVENUE", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    list.Add(new ReceptionRevenueItem
                     {
-                        while (dr.Read())
-                        {
-                            ReceptionRevenue item = new ReceptionRevenue
-                            {
-                                DayName = dr["DayName"] == DBNull.Value
-                                    ? string.Empty
-                                    : dr["DayName"].ToString(),
-
-                                Amount = dr["Amount"] == DBNull.Value
-                                    ? 0
-                                    : Convert.ToDecimal(dr["Amount"])
-                            };
-
-                            revenue.Add(item);
-                        }
-                    }
+                        dayName = GetString(dr, "DAY_NAME") ?? "",
+                        amount = GetDecimal(dr, "AMOUNT")
+                    });
                 }
-            }
 
-            return revenue;
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching revenue.", ex);
+            }
+        }
+
+        // ==========================================
+        // COMMON HELPERS
+        // ==========================================
+
+        private static string? GetString(SqlDataReader dr, string column)
+        {
+            return dr[column] == DBNull.Value ? null : Convert.ToString(dr[column]);
+        }
+
+        private static int GetInt(SqlDataReader dr, string column)
+        {
+            return dr[column] == DBNull.Value ? 0 : Convert.ToInt32(dr[column]);
+        }
+
+        private static decimal GetDecimal(SqlDataReader dr, string column)
+        {
+            return dr[column] == DBNull.Value ? 0 : Convert.ToDecimal(dr[column]);
+        }
+
+        private static DateTime? GetNullableDateTime(SqlDataReader dr, string column)
+        {
+            return dr[column] == DBNull.Value ? null : Convert.ToDateTime(dr[column]);
         }
     }
 }

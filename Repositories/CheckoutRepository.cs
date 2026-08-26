@@ -15,16 +15,12 @@ namespace Suvarna.DGMS.Api.Repositories
 
         //=========================================================
         // GET CHECKOUT BOOKINGS
-        // FIX: added optional search filters (booking no / guest name /
-        // mobile / room no), matching the new SP signature.
+        // FIX: single global search term, matching the updated SP.
         //=========================================================
 
         public List<CheckoutBooking> GetCheckoutBookings(
             int sessionId,
-            string? bookingNo = null,
-            string? guestName = null,
-            string? mobileNo = null,
-            string? roomNo = null)
+            string? searchTerm = null)
         {
             List<CheckoutBooking> list = new List<CheckoutBooking>();
 
@@ -33,10 +29,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
-            cmd.Parameters.AddWithValue("@IP_BOOKING_NO", (object?)bookingNo ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@IP_GUEST_NAME", (object?)guestName ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@IP_MOBILE_NO", (object?)mobileNo ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@IP_ROOM_NO", (object?)roomNo ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IP_SEARCH_TERM", (object?)searchTerm ?? DBNull.Value);
 
             con.Open();
             using SqlDataReader reader = cmd.ExecuteReader();

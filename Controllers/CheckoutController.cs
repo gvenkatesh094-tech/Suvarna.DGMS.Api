@@ -17,18 +17,15 @@ namespace Suvarna.DGMS.Api.Controllers
 
         //=========================================================
         // GET CHECKOUT BOOKINGS
-        // FIX: added optional search filters
+        // FIX: single global search term, matching SP + frontend.
         //=========================================================
 
         [HttpGet("bookings")]
         public IActionResult GetCheckoutBookings(
             [FromQuery] int sessionId,
-            [FromQuery] string? bookingNo = null,
-            [FromQuery] string? guestName = null,
-            [FromQuery] string? mobileNo = null,
-            [FromQuery] string? roomNo = null)
+            [FromQuery] string? searchTerm = null)
         {
-            return Ok(_service.GetCheckoutBookings(sessionId, bookingNo, guestName, mobileNo, roomNo));
+            return Ok(_service.GetCheckoutBookings(sessionId, searchTerm));
         }
 
         //=========================================================

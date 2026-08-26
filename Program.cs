@@ -154,6 +154,27 @@ builder.Services.AddScoped<LaundryLogService>();
 builder.Services.AddScoped<DepositLedgerRepository>();
 builder.Services.AddScoped<DepositLedgerService>();
 
+builder.Services.AddScoped<DepositLedgerRepository>();
+builder.Services.AddScoped<DepositLedgerService>();
+
+builder.Services.AddScoped<GstReportsRepository>();
+builder.Services.AddScoped<GstReportsService>();
+
+builder.Services.AddScoped<MaintenanceRequestsRepository>();
+builder.Services.AddScoped<MaintenanceRequestsService>();
+
+builder.Services.AddScoped<RevenueReportsRepository>();
+builder.Services.AddScoped<RevenueReportsService>();
+
+builder.Services.AddScoped<ExecutiveDashboardRepository>();
+builder.Services.AddScoped<ExecutiveDashboardService>();
+
+builder.Services.AddScoped<OccupancyReportsRepository>();
+builder.Services.AddScoped<OccupancyReportsService>();
+
+builder.Services.AddScoped<ReceptionDashboardRepository>();
+builder.Services.AddScoped<ReceptionDashboardService>();
+
 
 #endregion
 

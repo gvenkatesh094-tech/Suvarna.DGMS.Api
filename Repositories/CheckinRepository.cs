@@ -83,7 +83,7 @@ namespace Suvarna.DGMS.Api.Repositories
         //    }
         //}
 
-        public List<CheckinRoom> GetRooms(int sessionId, int? locationId, int? occCatId, DateTime checkinDt  , DateTime checkOutDt, int? bookinId, int? accmTypeId = null)
+        public List<CheckinRoom> GetRooms(int sessionId, int? locationId, int? occCatId, DateTime checkinDt, DateTime checkOutDt, int? bookinId, int? accmTypeId = null)
 
         {
             List<CheckinRoom> list = new List<CheckinRoom>();
@@ -366,6 +366,14 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_DEPOSIT_AMT", request.depositAmount);
                 AddParameter(cmd, "@IP_DEPOSIT_PAYMENT_MODE", request.depositPaymentMode);
                 AddParameter(cmd, "@IP_DEPOSIT_REF", request.depositRef);
+
+                // FIX: the room + GST payment collected at check-in was
+                // never sent to the proc before, so DGM_BILL_HDR always
+                // stored 0.00 for every amount and DGM_PAYMENT_TXN was
+                // never written until checkout.
+                AddParameter(cmd, "@IP_PAYMENT_MODE", request.paymentMode);
+                AddParameter(cmd, "@IP_PAYMENT_REF", request.paymentRef);
+                AddParameter(cmd, "@IP_TOTAL_PAID_AMT", request.totalPaidAmount);
                 AddParameter(cmd, "@IP_BASE_AMT", request.baseAmount);
                 AddParameter(cmd, "@IP_CGST_AMT", request.cgstAmount);
                 AddParameter(cmd, "@IP_SGST_AMT", request.sgstAmount);

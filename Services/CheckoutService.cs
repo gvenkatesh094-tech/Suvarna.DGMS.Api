@@ -14,17 +14,14 @@ namespace Suvarna.DGMS.Api.Services
 
         //====================================================
         // GET CHECKOUT BOOKINGS
-        // FIX: added optional search filters
+        // FIX: single global search term.
         //====================================================
 
         public ApiResponse<List<CheckoutBooking>> GetCheckoutBookings(
             int sessionId,
-            string? bookingNo = null,
-            string? guestName = null,
-            string? mobileNo = null,
-            string? roomNo = null)
+            string? searchTerm = null)
         {
-            var data = _repo.GetCheckoutBookings(sessionId, bookingNo, guestName, mobileNo, roomNo);
+            var data = _repo.GetCheckoutBookings(sessionId, searchTerm);
 
             return ApiResponse<List<CheckoutBooking>>.Success(
                 "Checkout bookings fetched successfully.",
