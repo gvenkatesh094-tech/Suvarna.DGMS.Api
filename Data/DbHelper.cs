@@ -1,7 +1,6 @@
-﻿using Npgsql;
-using Dapper;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System.Data;
 
 namespace Suvarna.DGMS.Api.Data
 {
@@ -11,29 +10,30 @@ namespace Suvarna.DGMS.Api.Data
 
         public DbHelper(IConfiguration config)
         {
-            _connectionString = config.GetConnectionString("Server")!;
+            _connectionString = config.GetConnectionString("SqlServer")
+                ?? throw new InvalidOperationException("Connection string 'SqlServer' is missing.");
         }
 
-        public NpgsqlConnection GetConnection()
+        public SqlConnection GetConnection()
         {
-            return new NpgsqlConnection(_connectionString);
+            return new SqlConnection(_connectionString);
         }
 
-        // ✅ INSERT / UPDATE / DELETE
+        // INSERT / UPDATE / DELETE
         public int ExecuteNonQuery(string sql, object? param = null)
         {
             using var conn = GetConnection();
             return conn.Execute(sql, param);
         }
 
-        // ✅ Single row
+        // Single row
         public T? GetSingle<T>(string sql, object? param = null)
         {
             using var conn = GetConnection();
             return conn.QueryFirstOrDefault<T>(sql, param);
         }
 
-        // ✅ Multiple rows
+        // Multiple rows
         public List<T> GetList<T>(string sql, object? param = null)
         {
             using var conn = GetConnection();

@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Suvarna.DGMS.Api.Repositories;
 
 namespace Suvarna.DGMS.Api.Middleware
 {
@@ -35,22 +34,22 @@ namespace Suvarna.DGMS.Api.Middleware
                 stopwatch.Stop();
 
                 int statusCode = context.Response.StatusCode;
+                long duration = stopwatch.ElapsedMilliseconds;
 
-                // 🔥 Log to console or file
-                _logger.LogInformation(
-                    "HTTP {Method} {Path} responded {StatusCode} in {Duration} ms",
-                    method,
-                    path,
-                    statusCode,
-                    stopwatch.ElapsedMilliseconds
-                );
-
-                // OPTIONAL: Log to DB (SCOPED SERVICE)
-                var errorRepo = context.RequestServices.GetRequiredService<ErrorRepository>();
-
-                string message = $"[{method}] {path} => {statusCode} ({stopwatch.ElapsedMilliseconds} ms)";
-
-                await errorRepo.LogErrorAsync("RequestLogging", message);
+                // Log to console / file only. No database call here,
+                // so logging never slows down the API response.
+                if (duration > 3000)
+                {
+                    _logger.LogWarning(
+                        "SLOW REQUEST: HTTP {Method} {Path} responded {StatusCode} in {Duration} ms",
+                        method, path, statusCode, duration);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "HTTP {Method} {Path} responded {StatusCode} in {Duration} ms",
+                        method, path, statusCode, duration);
+                }
             }
         }
     }

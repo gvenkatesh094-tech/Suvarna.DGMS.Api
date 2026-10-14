@@ -170,6 +170,98 @@ namespace Suvarna.DGMS.Api.Services
                 data
             );
         }
+        // ==========================================
+        // NEW: UPLOAD CHECKLIST ITEM PHOTO
+        // ==========================================
+
+        public ApiResponse<HkOperationResult> UploadChecklistItemPhoto(string sessionId, int taskId, string itemCd, IFormFile photo)
+        {
+            var data = _repo.UploadChecklistItemPhoto(
+                sessionId,
+                taskId,
+                itemCd,
+                photo
+            );
+
+            if (data.status != "S")
+            {
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to upload checklist item photo." : data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(
+                data.message,
+                data
+            );
+        }
+
+        // ==========================================
+        // NEW: TASK AUDIT TRAIL
+        // ==========================================
+
+        public ApiResponse<List<HkTaskHistoryEntry>> GetTaskHistory(string sessionId, int taskId)
+        {
+            var data = _repo.GetTaskHistory(sessionId, taskId);
+
+            return ApiResponse<List<HkTaskHistoryEntry>>.Success(
+                $"{data.Count} history record(s) fetched successfully.",
+                data
+            );
+        }
+
+        // ==========================================
+        // NEW: REQUEST NEW TASK
+        // ==========================================
+
+        public ApiResponse<HkOperationResult> RequestNewTask(string sessionId)
+        {
+            var data = _repo.RequestNewTask(sessionId);
+
+            if (data.status != "S")
+            {
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to submit request." : data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(data.message, data);
+        }
+
+        public ApiResponse<List<HkTaskRequest>> GetTaskRequests(string sessionId)
+        {
+            var data = _repo.GetTaskRequests(sessionId);
+
+            return ApiResponse<List<HkTaskRequest>>.Success(
+                $"{data.Count} request(s) fetched successfully.",
+                data
+            );
+        }
+
+        public ApiResponse<HkOperationResult> DismissTaskRequest(string sessionId, int requestId)
+        {
+            var data = _repo.DismissTaskRequest(sessionId, requestId);
+
+            if (data.status != "S")
+            {
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to dismiss request." : data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(data.message, data);
+        }
+
+        // ==========================================
+        // NEW: CREATE MANUAL TASK
+        // ==========================================
+
+        public ApiResponse<HkOperationResult> CreateManualTask(CreateManualHkTaskRequest request)
+        {
+            var data = _repo.CreateManualTask(request);
+
+            if (data.status != "S")
+            {
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to create task." : data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(data.message, data);
+        }
+
         public ApiResponse<HkQuickStats> GetQuickStats(int sessionId, int locationId)
         {
             var data = _repo.GetQuickStats(sessionId, locationId);
@@ -183,31 +275,31 @@ namespace Suvarna.DGMS.Api.Services
 
 
 
-public ApiResponse<List<HkEscalation>> GetEscalations(int sessionId)
-    {
-        var data = _repo.GetEscalations(sessionId);
-        return ApiResponse<List<HkEscalation>>.Success(
-            $"{data.Count} escalation(s) fetched successfully.", data);
-    }
-
-    public ApiResponse<List<HkNotification>> GetMyNotifications(int sessionId)
-    {
-        var data = _repo.GetMyNotifications(sessionId);
-        return ApiResponse<List<HkNotification>>.Success(
-            $"{data.Count} notification(s) fetched successfully.", data);
-    }
-
-    public ApiResponse<HkOperationResult> MarkNotificationRead(int sessionId, int? notificationId)
-    {
-        var data = _repo.MarkNotificationRead(sessionId, notificationId);
-
-        if (data.status != "S")
+        public ApiResponse<List<HkEscalation>> GetEscalations(int sessionId)
         {
-            throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark notification read." : data.message);
+            var data = _repo.GetEscalations(sessionId);
+            return ApiResponse<List<HkEscalation>>.Success(
+                $"{data.Count} escalation(s) fetched successfully.", data);
         }
 
-        return ApiResponse<HkOperationResult>.Success(data.message, data);
-    }
+        public ApiResponse<List<HkNotification>> GetMyNotifications(int sessionId)
+        {
+            var data = _repo.GetMyNotifications(sessionId);
+            return ApiResponse<List<HkNotification>>.Success(
+                $"{data.Count} notification(s) fetched successfully.", data);
+        }
 
-}
+        public ApiResponse<HkOperationResult> MarkNotificationRead(int sessionId, int? notificationId)
+        {
+            var data = _repo.MarkNotificationRead(sessionId, notificationId);
+
+            if (data.status != "S")
+            {
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark notification read." : data.message);
+            }
+
+            return ApiResponse<HkOperationResult>.Success(data.message, data);
+        }
+
+    }
 }

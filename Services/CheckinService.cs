@@ -82,21 +82,27 @@ namespace Suvarna.DGMS.Api.Services
 
             return ApiResponse<CheckinResult>.Success(data.message, data);
         }
-        public ApiResponse<PatientInfo?> GetPatientInfo(string umrNo)
+        public ApiResponse<List<PatientLookup>> SearchPatients(string? searchBy, string? searchText)
         {
-            var data =
-                _repo.GetPatientInfo(umrNo);
+            string text = (searchText ?? "").Trim();
 
-            if (data == null)
+            // Same rule as the UI: at least 3 characters
+            if (text.Length < 3)
             {
-                return ApiResponse<PatientInfo?>.Success(
-                    "Patient not found.",
-                    null
+                return ApiResponse<List<PatientLookup>>.Success(
+                    "Enter at least 3 characters to search.",
+                    new List<PatientLookup>()
                 );
             }
 
-            return ApiResponse<PatientInfo?>.Success(
-                "Patient information fetched successfully.",
+            string mode = string.Equals(searchBy, "NAME", StringComparison.OrdinalIgnoreCase)
+                ? "NAME"
+                : "ALL";
+
+            var data = _repo.SearchPatients(mode, text);
+
+            return ApiResponse<List<PatientLookup>>.Success(
+                data.Count == 0 ? "No matching patient found." : "Patients fetched successfully.",
                 data
             );
         }

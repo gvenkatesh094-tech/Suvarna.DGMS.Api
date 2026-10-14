@@ -19,9 +19,10 @@ namespace Suvarna.DGMS.Api.Controllers
         public IActionResult GetEntries(
             [FromQuery] int sessionId,
             [FromQuery] string? status = null,
-            [FromQuery] string? type = null)
+            [FromQuery] string? type = null,
+            [FromQuery] string? scope = "ACTIVE")       // ACTIVE | ALL
         {
-            return Ok(_service.GetEntries(sessionId, status, type));
+            return Ok(_service.GetEntries(sessionId, status, type, scope));
         }
 
         [HttpGet("active-bookings")]
@@ -54,5 +55,34 @@ namespace Suvarna.DGMS.Api.Controllers
             request.laundryLogId = laundryLogId;
             return Ok(_service.Cancel(request));
         }
+
+        // "Reverse Charge" — un-bills a delivered entry's auto-posted
+        // laundry charge (e.g. wrong item count / guest dispute) without
+        // touching its Delivered status. This is the ONLY supported way
+        // to remove a laundry charge — Guest Folio Billing's own Cancel
+        // action refuses charges with CHARGE_SOURCE = 'LAUNDRY'.
+        [HttpPost("{laundryLogId:int}/reverse-charge")]
+        public IActionResult ReverseCharge(int laundryLogId, [FromBody] ReverseLaundryChargeRequest request)
+        {
+            return Ok(_service.ReverseCharge(request.sessionId, laundryLogId, request.reason));
+        }
+
+       
+
+        // Amount to collect before returning laundry to a checked-out guest
+        [HttpGet("{laundryLogId:int}/return-preview")]
+        public IActionResult GetReturnPreview(int laundryLogId, [FromQuery] int sessionId)
+        {
+            return Ok(_service.GetReturnPreview(sessionId, laundryLogId));
+        }
+
+        // Return laundry + post charge + record payment, one transaction
+        [HttpPost("{laundryLogId:int}/return-collect")]
+        public IActionResult ReturnWithPayment(int laundryLogId, [FromBody] LaundryReturnRequest request)
+        {
+            request.laundryLogId = laundryLogId;
+            return Ok(_service.ReturnWithPayment(request));
+        }
+
     }
 }

@@ -10,7 +10,7 @@ namespace Suvarna.DGMS.Api.Models
 
         public DateTime checkoutDt { get; set; }
 
-        public string paymentMode { get; set; } = string.Empty;
+        public string? paymentMode { get; set; } = string.Empty;
 
         public decimal paymentAmount { get; set; }
 
@@ -36,7 +36,13 @@ namespace Suvarna.DGMS.Api.Models
 
 
         public string? refundMode { get; set; }        
-        public string? refundReference { get; set; }  
+        public string? refundReference { get; set; }
+        // NEW: mode-specific payment capture
+        public string? paymentRemarks { get; set; }   // CASH only
+        public string? cardLast4 { get; set; }        // ONLINE, last 4 digits only — never store a full card number
+        public string? upiVpa { get; set; }           // ONLINE, UPI VPA
+        public bool laundryAcknowledged { get; set; }
+
 
     }
 

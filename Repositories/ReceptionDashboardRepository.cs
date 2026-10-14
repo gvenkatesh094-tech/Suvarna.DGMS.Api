@@ -160,6 +160,9 @@ namespace Suvarna.DGMS.Api.Repositories
                     list.Add(new ReceptionAlert
                     {
                         alertId = GetInt(dr, "ALERT_ID"),
+                        alertCode = GetString(dr, "ALERT_CODE") ?? "",
+                        severity = GetString(dr, "SEVERITY") ?? "",
+                        alertCount = GetInt(dr, "ALERT_COUNT"),
                         alertColor = GetString(dr, "ALERT_COLOR") ?? "",
                         alertTitle = GetString(dr, "ALERT_TITLE") ?? "",
                         alertSubtitle = GetString(dr, "ALERT_SUBTITLE") ?? "",

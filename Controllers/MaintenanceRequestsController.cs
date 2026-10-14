@@ -15,11 +15,7 @@ namespace Suvarna.DGMS.Api.Controllers
             _service = service;
         }
 
-        // ==========================================
-        // GET MAINTENANCE REQUESTS (grid)
-        // GET api/maintenancerequests?sessionId=1&priority=&status=&category=&roomId=&fromDt=&toDt=
-        // ==========================================
-
+        // GET api/maintenancerequests?sessionId=1&closedDays=7
         [HttpGet]
         public IActionResult GetMaintRequests(
             [FromQuery] int sessionId,
@@ -28,123 +24,98 @@ namespace Suvarna.DGMS.Api.Controllers
             [FromQuery] string? category = null,
             [FromQuery] int? roomId = null,
             [FromQuery] DateTime? fromDt = null,
-            [FromQuery] DateTime? toDt = null)
+            [FromQuery] DateTime? toDt = null,
+            [FromQuery] int? closedDays = null)
         {
             if (sessionId <= 0) return BadRequest("A valid session is required.");
-
-            return Ok(_service.GetMaintRequests(sessionId, priority, status, category, roomId, fromDt, toDt));
+            return Ok(_service.GetMaintRequests(sessionId, priority, status, category, roomId, fromDt, toDt, closedDays));
         }
-
-        // ==========================================
-        // ROOM LOOKUP (for the Raise-Request modal)
-        // GET api/maintenancerequests/rooms?sessionId=1
-        // ==========================================
 
         [HttpGet("rooms")]
         public IActionResult GetRoomLookup([FromQuery] int sessionId)
         {
             if (sessionId <= 0) return BadRequest("A valid session is required.");
-
             return Ok(_service.GetRoomLookup(sessionId));
         }
-
-        // ==========================================
-        // RAISE REQUEST
-        // POST api/maintenancerequests
-        // ==========================================
 
         [HttpPost]
         public IActionResult RaiseRequest([FromBody] RaiseMaintRequestPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.RaiseRequest(payload));
         }
 
-        // ==========================================
-        // ACKNOWLEDGE
-        // POST api/maintenancerequests/acknowledge
-        // ==========================================
+        // NEW — assign or reassign a technician
+        [HttpPost("assign")]
+        public IActionResult AssignRequest([FromBody] AssignMaintRequestPayload payload)
+        {
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
+            return Ok(_service.AssignRequest(payload));
+        }
 
         [HttpPost("acknowledge")]
         public IActionResult AcknowledgeRequest([FromBody] AcknowledgeMaintRequestPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.AcknowledgeRequest(payload));
         }
-
-        // ==========================================
-        // START WORK
-        // POST api/maintenancerequests/start-work
-        // ==========================================
 
         [HttpPost("start-work")]
         public IActionResult StartWork([FromBody] StartMaintWorkPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.StartWork(payload));
         }
-
-        // ==========================================
-        // RESOLVE
-        // POST api/maintenancerequests/resolve
-        // ==========================================
 
         [HttpPost("resolve")]
         public IActionResult ResolveRequest([FromBody] ResolveMaintRequestPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.ResolveRequest(payload));
         }
-
-        // ==========================================
-        // CLOSE
-        // POST api/maintenancerequests/close
-        // ==========================================
 
         [HttpPost("close")]
         public IActionResult CloseRequest([FromBody] CloseMaintRequestPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.CloseRequest(payload));
         }
-
-        // ==========================================
-        // SUBMIT QC
-        // POST api/maintenancerequests/qc
-        // ==========================================
 
         [HttpPost("qc")]
         public IActionResult SubmitQc([FromBody] SubmitMaintQcPayload payload)
         {
-            if (payload == null) return BadRequest("Request payload is required.");
-            if (payload.sessionId <= 0) return BadRequest("A valid session is required.");
-
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
             return Ok(_service.SubmitQc(payload));
         }
 
-        // ==========================================
-        // WORK LOG
-        // GET api/maintenancerequests/worklog?sessionId=1&maintReqId=101
-        // ==========================================
-
         [HttpGet("worklog")]
-        public IActionResult GetWorkLog(
-            [FromQuery] int sessionId,
-            [FromQuery] int maintReqId)
+        public IActionResult GetWorkLog([FromQuery] int sessionId, [FromQuery] int maintReqId)
         {
             if (sessionId <= 0) return BadRequest("A valid session is required.");
-
             return Ok(_service.GetWorkLog(sessionId, maintReqId));
+        }
+
+        // NEW — full activity history
+        [HttpGet("activity")]
+        public IActionResult GetActivityLog([FromQuery] int sessionId, [FromQuery] int maintReqId)
+        {
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+            return Ok(_service.GetActivityLog(sessionId, maintReqId));
+        }
+
+        // NEW — technicians
+        [HttpGet("staff")]
+        public IActionResult GetStaff([FromQuery] int sessionId, [FromQuery] bool includeInactive = false)
+        {
+            if (sessionId <= 0) return BadRequest("A valid session is required.");
+            return Ok(_service.GetStaff(sessionId, includeInactive));
+        }
+
+        [HttpPost("staff")]
+        public IActionResult SaveStaff([FromBody] SaveMaintStaffPayload payload)
+        {
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
+            return Ok(_service.SaveStaff(payload));
         }
     }
 }

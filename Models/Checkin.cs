@@ -2,9 +2,10 @@
 {
     public class Checkin
     {
-         
-        
-        
+ 
+
+
+
         public int sessionId { get; set; } 
 
         public int? existingBookingId { get; set; }
@@ -96,6 +97,11 @@
 
         public string billingModel { get; set; }
         public int userId { get; set; }
+
+        // NEW: mode-specific payment capture (same as Checkin)
+        public string? paymentRemarks { get; set; }
+        public string? cardLast4 { get; set; }
+        public string? upiVpa { get; set; }
     }
 
     public class CheckinResult
@@ -118,5 +124,22 @@
         public string admnNo { get; set; } = "";
 
         public string displayName { get; set; } = "";
+    }
+    public class PatientLookup
+    {
+        public int patientId { get; set; }
+        public string umrNo { get; set; } = string.Empty;
+        public string displayName { get; set; } = string.Empty;
+        public string gender { get; set; } = string.Empty;
+        public string admnNo { get; set; } = string.Empty;
+        public string ipNo { get; set; } = string.Empty;
+
+        public int? admnId { get; set; }
+        public string? age { get; set; }
+        public string? mobileNo { get; set; }
+        public string? wardName { get; set; }
+        public string? bedNo { get; set; }
+        public DateTime? admnDate { get; set; }
+        public string? dischargeStatus { get; set; }
     }
 }

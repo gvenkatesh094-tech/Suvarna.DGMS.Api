@@ -37,6 +37,14 @@ namespace Suvarna.DGMS.Api.Models
         public decimal gstPct { get; set; }
         public decimal totalAmt { get; set; }
         public string status { get; set; } = "";
+
+        // FIX (missing): 'MANUAL' / 'LAUNDRY' — GuestFolioBillingRepository.GetFolio
+        // sets this from the new CHARGE_SOURCE column returned by
+        // PR_DGMS_GET_BILLING_FOLIO. Without this property the object
+        // initializer there (`chargeSource = ...`) won't compile.
+        // The UI uses it to hide the Cancel button on laundry-sourced
+        // charges and point staff to the Laundry Log screen instead.
+        public string chargeSource { get; set; } = "MANUAL";
     }
 
     // -----------------------------------------------------------------
@@ -79,6 +87,8 @@ namespace Suvarna.DGMS.Api.Models
         public int? admnId { get; set; }
         public string? wardNm { get; set; }
         public string? transferStatus { get; set; }
+        public string? gstInvoiceNo { get; set; }
+        public DateTime? gstInvoiceDt { get; set; }
 
         public List<BillingChargeLine> chargeLines { get; set; } = new();
     }
@@ -92,6 +102,13 @@ namespace Suvarna.DGMS.Api.Models
         public int bookingId { get; set; }
         public int serviceId { get; set; }
         public decimal qty { get; set; } = 1;
+    }
+
+    public class CancelChargeRequest
+    {
+        public int sessionId { get; set; }
+        public int chargeId { get; set; }
+        public string? reason { get; set; }
     }
 
     public class UpdateChargeRequest

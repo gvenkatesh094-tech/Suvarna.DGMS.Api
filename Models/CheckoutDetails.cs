@@ -136,12 +136,27 @@ namespace Suvarna.DGMS.Api.Models
         public string billStatus { get; set; } = string.Empty;
         public decimal depositBalance { get; set; }
 
+        
+        public decimal roomGstAmount { get; set; }
+        public decimal serviceGstAmount { get; set; }
+
         //=========================================
         // Services
         //=========================================
 
         public List<CheckoutServiceItem> services { get; set; }
             = new List<CheckoutServiceItem>();
+        public List<CheckoutOpenLaundry> openLaundry { get; set; } = new();
+    }
+    public class CheckoutOpenLaundry
+    {
+        public int laundryLogId { get; set; }
+        public string slipNo { get; set; } = "";
+        public string laundryType { get; set; } = "";
+        public int itemCount { get; set; }
+        public string status { get; set; } = "";     // PENDING / IN_PROGRESS
+        public DateTime? pickupDt { get; set; }
+        public DateTime createDt { get; set; }
     }
 
     public class CheckoutServiceItem

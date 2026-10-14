@@ -14,17 +14,12 @@ namespace Suvarna.DGMS.Api.Repositories
         }
 
         // ==========================================
-        // GET MAINTENANCE REQUESTS (grid)
+        // GRID
         // ==========================================
 
         public List<MaintenanceRequestListItem> GetMaintRequests(
-            int sessionId,
-            string? priority,
-            string? status,
-            string? category,
-            int? roomId,
-            DateTime? fromDt,
-            DateTime? toDt)
+            int sessionId, string? priority, string? status, string? category,
+            int? roomId, DateTime? fromDt, DateTime? toDt, int? closedDays)
         {
             List<MaintenanceRequestListItem> list = new();
 
@@ -41,6 +36,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_ROOM_ID", roomId);
                 AddParameter(cmd, "@IP_FROM_DT", fromDt?.Date);
                 AddParameter(cmd, "@IP_TO_DT", toDt?.Date);
+                AddParameter(cmd, "@IP_CLOSED_DAYS", closedDays);
 
                 conn.Open();
 
@@ -53,6 +49,8 @@ namespace Suvarna.DGMS.Api.Repositories
                         maintNo = GetString(dr, "MAINT_NO") ?? "",
                         roomId = GetInt(dr, "ROOM_ID"),
                         roomNo = GetString(dr, "ROOM_NO") ?? "",
+                        roomName = GetString(dr, "ROOM_NM"),
+                        roomStatus = GetString(dr, "ROOM_STATUS_CD"),
                         bookingId = GetNullableInt(dr, "BOOKING_ID"),
 
                         category = GetString(dr, "CATEGORY") ?? "",
@@ -62,22 +60,26 @@ namespace Suvarna.DGMS.Api.Repositories
 
                         raisedByType = GetString(dr, "RAISED_BY_TYPE") ?? "",
                         raisedByGuestName = GetString(dr, "RAISED_BY_GUEST_NM"),
+
+                        assignedStaffId = GetNullableInt(dr, "ASSIGNED_STAFF_ID"),
                         assignedToName = GetString(dr, "ASSIGNED_TO_NAME"),
+                        assignedToMobile = GetString(dr, "ASSIGNED_TO_MOBILE"),
 
                         roomBlockRequired = GetString(dr, "ROOM_BLOCK_REQUIRED") ?? "",
                         roomBlocked = GetString(dr, "ROOM_BLOCKED") ?? "",
 
-                        raisedDt = GetNullableDateTime(dr, "RAISED_DT") ?? DateTime.MinValue,
-                        acknowledgedDt = GetNullableDateTime(dr, "ACKNOWLEDGED_DT"),
-                        workStartedDt = GetNullableDateTime(dr, "WORK_STARTED_DT"),
-                        workCompletedDt = GetNullableDateTime(dr, "WORK_COMPLETED_DT"),
-                        closedDt = GetNullableDateTime(dr, "CLOSED_DT"),
-                        slaTargetDt = GetNullableDateTime(dr, "SLA_TARGET_DT"),
+                        raisedDt = GetUtc(dr, "RAISED_DT") ?? DateTime.MinValue,
+                        acknowledgedDt = GetUtc(dr, "ACKNOWLEDGED_DT"),
+                        workStartedDt = GetUtc(dr, "WORK_STARTED_DT"),
+                        workCompletedDt = GetUtc(dr, "WORK_COMPLETED_DT"),
+                        closedDt = GetUtc(dr, "CLOSED_DT"),
+                        slaTargetDt = GetUtc(dr, "SLA_TARGET_DT"),
 
                         qcResult = GetString(dr, "QC_RESULT"),
                         qcRemarks = GetString(dr, "QC_REMARKS"),
                         resolutionRemarks = GetString(dr, "RESOLUTION_REMARKS"),
                         costAmount = GetDecimal(dr, "COST_AMT"),
+                        reworkCount = GetInt(dr, "REWORK_COUNT"),
 
                         isOverdue = GetBool(dr, "IS_OVERDUE")
                     });
@@ -87,12 +89,12 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while fetching maintenance requests.", ex);
+                throw new Exception("Error while fetching maintenance requests: " + ex.Message, ex);
             }
         }
 
         // ==========================================
-        // GET ROOM LOOKUP (reuses existing PR_DGMS_GET_ROOM_LOOKUP)
+        // ROOM LOOKUP
         // ==========================================
 
         public List<MaintenanceRoomOption> GetRoomLookup(int sessionId)
@@ -104,9 +106,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 using SqlConnection conn = new SqlConnection(_conn);
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_ROOM_LOOKUP", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
-
-                // This existing proc takes the session id as VARCHAR(100).
-                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId.ToString());
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId.ToString());   // proc takes VARCHAR
 
                 conn.Open();
 
@@ -127,15 +127,15 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while fetching room lookup.", ex);
+                throw new Exception("Error while fetching room lookup: " + ex.Message, ex);
             }
         }
 
         // ==========================================
-        // RAISE REQUEST (reuses existing PR_DGMS_RAISE_MAINT_REQ)
+        // RAISE
         // ==========================================
 
-        public RaiseMaintRequestResult RaiseRequest(RaiseMaintRequestPayload payload)
+        public RaiseMaintRequestResult RaiseRequest(RaiseMaintRequestPayload p)
         {
             try
             {
@@ -143,27 +143,24 @@ namespace Suvarna.DGMS.Api.Repositories
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_RAISE_MAINT_REQ", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                // This existing proc takes the session id as VARCHAR(100).
-                cmd.Parameters.AddWithValue("@IP_SESSION_ID", payload.sessionId.ToString());
-                cmd.Parameters.AddWithValue("@IP_ROOM_ID", payload.roomId);
-                AddParameter(cmd, "@IP_BOOKING_ID", payload.bookingId);
-                cmd.Parameters.AddWithValue("@IP_COMPLAINT_CAT", payload.complaintCategory);
-                cmd.Parameters.AddWithValue("@IP_DESCRIPTION", payload.description);
-                AddParameter(cmd, "@IP_PRIORITY", string.IsNullOrWhiteSpace(payload.priority) ? null : payload.priority);
-                cmd.Parameters.AddWithValue("@IP_RAISED_BY_TYPE", string.IsNullOrWhiteSpace(payload.raisedByType) ? "STAFF" : payload.raisedByType);
-                cmd.Parameters.AddWithValue("@IP_BLOCK_ROOM", string.IsNullOrWhiteSpace(payload.blockRoom) ? "N" : payload.blockRoom);
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId.ToString());   // proc takes VARCHAR
+                cmd.Parameters.AddWithValue("@IP_ROOM_ID", p.roomId);
+                AddParameter(cmd, "@IP_BOOKING_ID", p.bookingId);
+                cmd.Parameters.AddWithValue("@IP_COMPLAINT_CAT", p.complaintCategory);
+                cmd.Parameters.AddWithValue("@IP_DESCRIPTION", p.description);
+                AddParameter(cmd, "@IP_PRIORITY", string.IsNullOrWhiteSpace(p.priority) ? null : p.priority);
+                cmd.Parameters.AddWithValue("@IP_RAISED_BY_TYPE", string.IsNullOrWhiteSpace(p.raisedByType) ? "STAFF" : p.raisedByType);
+                cmd.Parameters.AddWithValue("@IP_BLOCK_ROOM", p.blockRoom == "Y" ? "Y" : "N");
+                AddParameter(cmd, "@IP_RAISED_BY_NAME", string.IsNullOrWhiteSpace(p.raisedByName) ? null : p.raisedByName.Trim());
 
-                SqlParameter outId = new SqlParameter("@OUT_MAINT_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                var outId = new SqlParameter("@OUT_MAINT_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                var outNo = new SqlParameter("@OUT_MAINT_NO", SqlDbType.VarChar, 30) { Direction = ParameterDirection.Output };
+                var outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                var outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(outId);
-
-                SqlParameter outNo = new SqlParameter("@OUT_MAINT_NO", SqlDbType.VarChar, 30) { Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(outNo);
-
-                SqlParameter status = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
-                cmd.Parameters.Add(status);
-
-                SqlParameter message = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
-                cmd.Parameters.Add(message);
+                cmd.Parameters.Add(outStatus);
+                cmd.Parameters.Add(outMessage);
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
@@ -172,123 +169,76 @@ namespace Suvarna.DGMS.Api.Repositories
                 {
                     maintReqId = outId.Value == DBNull.Value ? 0 : Convert.ToInt32(outId.Value),
                     maintNo = Convert.ToString(outNo.Value) ?? "",
-                    status = Convert.ToString(status.Value) ?? "",
-                    message = Convert.ToString(message.Value) ?? ""
+                    status = Convert.ToString(outStatus.Value) ?? "",
+                    message = Convert.ToString(outMessage.Value) ?? ""
                 };
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while raising maintenance request.", ex);
+                throw new Exception("Error while raising maintenance request: " + ex.Message, ex);
             }
         }
 
         // ==========================================
-        // ACKNOWLEDGE / START / RESOLVE / CLOSE / QC
+        // ASSIGN / REASSIGN (NEW)
         // ==========================================
 
-        public MaintenanceActionResult AcknowledgeRequest(int sessionId, int maintReqId)
+        public MaintenanceActionResult AssignRequest(AssignMaintRequestPayload p)
         {
-            try
+            return RunAction("DGMS.PR_DGMS_ASSIGN_MAINT_REQ", "assigning technician", cmd =>
             {
-                using SqlConnection conn = new SqlConnection(_conn);
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_ACKNOWLEDGE_MAINT_REQ", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", p.maintReqId);
+                cmd.Parameters.AddWithValue("@IP_STAFF_ID", p.staffId);
+                AddParameter(cmd, "@IP_REMARKS", string.IsNullOrWhiteSpace(p.remarks) ? null : p.remarks.Trim());
+            });
+        }
 
+        // ==========================================
+        // STATUS ACTIONS
+        // ==========================================
+
+        public MaintenanceActionResult AcknowledgeRequest(int sessionId, int maintReqId) =>
+            RunAction("DGMS.PR_DGMS_ACKNOWLEDGE_MAINT_REQ", "acknowledging request", cmd =>
+            {
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", maintReqId);
+            });
 
-                return ExecuteActionProc(conn, cmd);
-            }
-            catch (Exception ex)
+        public MaintenanceActionResult StartWork(StartMaintWorkPayload p) =>
+            RunAction("DGMS.PR_DGMS_START_MAINT_WORK", "starting work", cmd =>
             {
-                throw new Exception("Error while acknowledging maintenance request.", ex);
-            }
-        }
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", p.maintReqId);
+            });
 
-        public MaintenanceActionResult StartWork(StartMaintWorkPayload payload)
-        {
-            try
+        public MaintenanceActionResult ResolveRequest(ResolveMaintRequestPayload p) =>
+            RunAction("DGMS.PR_DGMS_RESOLVE_MAINT_REQ", "resolving request", cmd =>
             {
-                using SqlConnection conn = new SqlConnection(_conn);
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_START_MAINT_WORK", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", p.maintReqId);
+                cmd.Parameters.AddWithValue("@IP_RESOLUTION_REMARKS", p.resolutionRemarks);
+                AddParameter(cmd, "@IP_MATERIAL_USED", string.IsNullOrWhiteSpace(p.materialUsed) ? null : p.materialUsed.Trim());
+                AddDecimal(cmd, "@IP_MATERIAL_COST", p.materialCost, 18, 2);
+                AddDecimal(cmd, "@IP_LABOUR_HRS", p.labourHrs, 5, 2);
+                AddDecimal(cmd, "@IP_LABOUR_COST", p.labourCost, 18, 2);
+            });
 
-                cmd.Parameters.AddWithValue("@IP_SESSION_ID", payload.sessionId);
-                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", payload.maintReqId);
-                AddParameter(cmd, "@IP_ASSIGNED_TO_USER_ID", payload.assignedToUserId);
-                AddParameter(cmd, "@IP_ASSIGNED_TO_NAME", payload.assignedToName);
-
-                return ExecuteActionProc(conn, cmd);
-            }
-            catch (Exception ex)
+        public MaintenanceActionResult CloseRequest(int sessionId, int maintReqId) =>
+            RunAction("DGMS.PR_DGMS_CLOSE_MAINT_REQ", "closing request", cmd =>
             {
-                throw new Exception("Error while starting maintenance work.", ex);
-            }
-        }
-
-        public MaintenanceActionResult ResolveRequest(ResolveMaintRequestPayload payload)
-        {
-            try
-            {
-                using SqlConnection conn = new SqlConnection(_conn);
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_RESOLVE_MAINT_REQ", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                cmd.Parameters.AddWithValue("@IP_SESSION_ID", payload.sessionId);
-                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", payload.maintReqId);
-                cmd.Parameters.AddWithValue("@IP_RESOLUTION_REMARKS", payload.resolutionRemarks);
-                AddParameter(cmd, "@IP_MATERIAL_USED", payload.materialUsed);
-                AddParameter(cmd, "@IP_MATERIAL_COST", payload.materialCost);
-                AddParameter(cmd, "@IP_LABOUR_HRS", payload.labourHrs);
-                AddParameter(cmd, "@IP_LABOUR_COST", payload.labourCost);
-
-                return ExecuteActionProc(conn, cmd);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error while resolving maintenance request.", ex);
-            }
-        }
-
-        public MaintenanceActionResult CloseRequest(int sessionId, int maintReqId)
-        {
-            try
-            {
-                using SqlConnection conn = new SqlConnection(_conn);
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CLOSE_MAINT_REQ", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
-
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", maintReqId);
+            });
 
-                return ExecuteActionProc(conn, cmd);
-            }
-            catch (Exception ex)
+        public MaintenanceActionResult SubmitQc(SubmitMaintQcPayload p) =>
+            RunAction("DGMS.PR_DGMS_SUBMIT_MAINT_QC", "submitting QC", cmd =>
             {
-                throw new Exception("Error while closing maintenance request.", ex);
-            }
-        }
-
-        public MaintenanceActionResult SubmitQc(SubmitMaintQcPayload payload)
-        {
-            try
-            {
-                using SqlConnection conn = new SqlConnection(_conn);
-                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_SUBMIT_MAINT_QC", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                cmd.Parameters.AddWithValue("@IP_SESSION_ID", payload.sessionId);
-                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", payload.maintReqId);
-                cmd.Parameters.AddWithValue("@IP_QC_RESULT", payload.qcResult);
-                AddParameter(cmd, "@IP_QC_REMARKS", payload.qcRemarks);
-
-                return ExecuteActionProc(conn, cmd);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error while submitting QC.", ex);
-            }
-        }
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", p.maintReqId);
+                cmd.Parameters.AddWithValue("@IP_QC_RESULT", p.qcResult);
+                AddParameter(cmd, "@IP_QC_REMARKS", string.IsNullOrWhiteSpace(p.qcRemarks) ? null : p.qcRemarks.Trim());
+            });
 
         // ==========================================
         // WORK LOG
@@ -303,7 +253,6 @@ namespace Suvarna.DGMS.Api.Repositories
                 using SqlConnection conn = new SqlConnection(_conn);
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_MAINT_REQ_WORKLOG", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
-
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", maintReqId);
 
@@ -324,7 +273,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         lineTotalAmount = GetDecimal(dr, "LINE_TOTAL_AMT"),
                         photoUrl = GetString(dr, "PHOTO_URL"),
                         remarks = GetString(dr, "REMARKS"),
-                        createDt = GetNullableDateTime(dr, "CREATE_DT") ?? DateTime.MinValue
+                        createDt = GetUtc(dr, "CREATE_DT") ?? DateTime.MinValue
                     });
                 }
 
@@ -332,72 +281,187 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while fetching maintenance work log.", ex);
+                throw new Exception("Error while fetching maintenance work log: " + ex.Message, ex);
             }
         }
 
         // ==========================================
-        // COMMON HELPERS
+        // ACTIVITY LOG (NEW)
         // ==========================================
 
-        private static MaintenanceActionResult ExecuteActionProc(SqlConnection conn, SqlCommand cmd)
+        public List<MaintenanceActivityItem> GetActivityLog(int sessionId, int maintReqId)
         {
-            SqlParameter status = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1)
-            { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(status);
+            List<MaintenanceActivityItem> list = new();
 
-            SqlParameter message = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500)
-            { Direction = ParameterDirection.Output };
-            cmd.Parameters.Add(message);
-
-            conn.Open();
-            cmd.ExecuteNonQuery();
-
-            return new MaintenanceActionResult
+            try
             {
-                status = Convert.ToString(status.Value) ?? "",
-                message = Convert.ToString(message.Value) ?? ""
-            };
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_MAINT_REQ_LOG", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", maintReqId);
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new MaintenanceActivityItem
+                    {
+                        logId = Convert.ToInt64(dr["LOG_ID"]),
+                        actionCd = GetString(dr, "ACTION_CD") ?? "",
+                        fromStatus = GetString(dr, "FROM_STATUS"),
+                        toStatus = GetString(dr, "TO_STATUS"),
+                        staffName = GetString(dr, "STAFF_NM"),
+                        remarks = GetString(dr, "REMARKS"),
+                        actionBy = GetInt(dr, "ACTION_BY"),
+                        actionDt = GetUtc(dr, "ACTION_DT") ?? DateTime.MinValue
+                    });
+                }
+
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching activity log: " + ex.Message, ex);
+            }
         }
 
-        private static void AddParameter(SqlCommand cmd, string name, object? value)
+        // ==========================================
+        // TECHNICIANS (NEW)
+        // ==========================================
+
+        public List<MaintenanceStaffItem> GetStaff(int sessionId, bool includeInactive)
         {
+            List<MaintenanceStaffItem> list = new();
+
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_MAINT_STAFF", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_INCLUDE_INACTIVE", includeInactive ? "Y" : "N");
+
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new MaintenanceStaffItem
+                    {
+                        staffId = GetInt(dr, "STAFF_ID"),
+                        staffName = GetString(dr, "STAFF_NM") ?? "",
+                        mobileNo = GetString(dr, "MOBILE_NO"),
+                        skillCats = GetString(dr, "SKILL_CATS"),
+                        isActive = (GetString(dr, "RECORD_STATUS") ?? "A") == "A",
+                        openJobs = GetInt(dr, "OPEN_JOBS")
+                    });
+                }
+
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching technicians: " + ex.Message, ex);
+            }
+        }
+
+        public SaveMaintStaffResult SaveStaff(SaveMaintStaffPayload p)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_SAVE_MAINT_STAFF", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                AddParameter(cmd, "@IP_STAFF_ID", p.staffId);
+                cmd.Parameters.AddWithValue("@IP_STAFF_NM", p.staffName.Trim());
+                AddParameter(cmd, "@IP_MOBILE_NO", string.IsNullOrWhiteSpace(p.mobileNo) ? null : p.mobileNo.Trim());
+                AddParameter(cmd, "@IP_SKILL_CATS", string.IsNullOrWhiteSpace(p.skillCats) ? null : p.skillCats.Trim());
+                cmd.Parameters.AddWithValue("@IP_ACTIVE", p.isActive ? "Y" : "N");
+
+                var outId = new SqlParameter("@OUT_STAFF_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                var outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                var outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(outId);
+                cmd.Parameters.Add(outStatus);
+                cmd.Parameters.Add(outMessage);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+
+                return new SaveMaintStaffResult
+                {
+                    staffId = outId.Value == DBNull.Value ? 0 : Convert.ToInt32(outId.Value),
+                    status = Convert.ToString(outStatus.Value) ?? "",
+                    message = Convert.ToString(outMessage.Value) ?? ""
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while saving technician: " + ex.Message, ex);
+            }
+        }
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+
+        private MaintenanceActionResult RunAction(string proc, string what, Action<SqlCommand> addParams)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand(proc, conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                addParams(cmd);
+
+                var status = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                var message = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(status);
+                cmd.Parameters.Add(message);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+
+                return new MaintenanceActionResult
+                {
+                    status = Convert.ToString(status.Value) ?? "",
+                    message = Convert.ToString(message.Value) ?? ""
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while {what}: " + ex.Message, ex);
+            }
+        }
+
+        private static void AddParameter(SqlCommand cmd, string name, object? value) =>
             cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
-        }
 
-        private static string? GetString(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToString(dr[column]);
-        }
+        private static void AddDecimal(SqlCommand cmd, string name, decimal? value, byte precision, byte scale) =>
+            cmd.Parameters.Add(new SqlParameter(name, SqlDbType.Decimal)
+            {
+                Precision = precision,
+                Scale = scale,
+                Value = value.HasValue ? value.Value : DBNull.Value
+            });
 
-        private static int GetInt(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? 0 : Convert.ToInt32(dr[column]);
-        }
+        private static string? GetString(SqlDataReader dr, string c) => dr[c] == DBNull.Value ? null : Convert.ToString(dr[c]);
+        private static int GetInt(SqlDataReader dr, string c) => dr[c] == DBNull.Value ? 0 : Convert.ToInt32(dr[c]);
+        private static int? GetNullableInt(SqlDataReader dr, string c) => dr[c] == DBNull.Value ? null : Convert.ToInt32(dr[c]);
+        private static decimal GetDecimal(SqlDataReader dr, string c) => dr[c] == DBNull.Value ? 0 : Convert.ToDecimal(dr[c]);
+        private static decimal? GetNullableDecimal(SqlDataReader dr, string c) => dr[c] == DBNull.Value ? null : Convert.ToDecimal(dr[c]);
+        private static bool GetBool(SqlDataReader dr, string c) => dr[c] != DBNull.Value && Convert.ToBoolean(dr[c]);
 
-        private static int? GetNullableInt(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToInt32(dr[column]);
-        }
-
-        private static decimal GetDecimal(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? 0 : Convert.ToDecimal(dr[column]);
-        }
-
-        private static decimal? GetNullableDecimal(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToDecimal(dr[column]);
-        }
-
-        private static bool GetBool(SqlDataReader dr, string column)
-        {
-            return dr[column] != DBNull.Value && Convert.ToBoolean(dr[column]);
-        }
-
-        private static DateTime? GetNullableDateTime(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToDateTime(dr[column]);
-        }
+        /// <summary>
+        /// Every maintenance timestamp is written with GETUTCDATE(). Marking it
+        /// as UTC makes the JSON carry a trailing "Z", so the browser shows the
+        /// correct local (IST) time instead of a time 5h30m behind.
+        /// </summary>
+        private static DateTime? GetUtc(SqlDataReader dr, string c) =>
+            dr[c] == DBNull.Value ? null : DateTime.SpecifyKind(Convert.ToDateTime(dr[c]), DateTimeKind.Utc);
     }
 }

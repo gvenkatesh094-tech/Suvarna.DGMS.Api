@@ -23,6 +23,7 @@
         public DateTime? startedAt { get; set; }
         public DateTime? completedAt { get; set; }
         public DateTime? inspectedAt { get; set; }
+        public DateTime? assignedDt { get; set; }
         public string slaBreachFlag { get; set; } = "N";
         public string inspectionRequired { get; set; } = "Y";
         public int failCount { get; set; }
@@ -31,6 +32,8 @@
         public int checklistDone { get; set; }
         public string? photoUrl { get; set; }
         public string? photoNotes { get; set; }
+      
+        
     }
 
     public class HkChecklistItem

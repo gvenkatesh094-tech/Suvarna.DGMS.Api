@@ -136,6 +136,13 @@ namespace Suvarna.DGMS.Api.Repositories
                     balanceAmt = GetDecimal(dr, "BALANCE_AMT"),
                     billStatus = GetString(dr, "BILL_STATUS") ?? "",
 
+                    // NEW — requires two extra properties on the BillingFolio
+                    // model: `string? gstInvoiceNo` and `DateTime? gstInvoiceDt`.
+                    // (Models.cs wasn't in the files I was given, so add these
+                    // two manually — everything else here just reads them.)
+                    gstInvoiceNo = GetString(dr, "GST_INVOICE_NO"),
+                    gstInvoiceDt = GetNullableDateTime(dr, "GST_INVOICE_DT"),
+
                     depositAmt = GetDecimal(dr, "DEPOSIT_AMT"),
                     depositBalance = GetDecimal(dr, "DEPOSIT_BALANCE"),
                     depositStatus = GetString(dr, "DEPOSIT_STATUS") ?? "",
@@ -162,7 +169,10 @@ namespace Suvarna.DGMS.Api.Repositories
                             baseAmt = GetDecimal(dr, "BASE_AMT"),
                             gstPct = GetDecimal(dr, "GST_PCT"),
                             totalAmt = GetDecimal(dr, "TOTAL_AMT"),
-                            status = GetString(dr, "STATUS") ?? ""
+                            status = GetString(dr, "STATUS") ?? "",
+                            // NEW — requires one extra property on the
+                            // BillingChargeLine model: `string chargeSource`.
+                            chargeSource = GetString(dr, "CHARGE_SOURCE") ?? "MANUAL"
                         });
                     }
                 }
@@ -254,6 +264,54 @@ namespace Suvarna.DGMS.Api.Repositories
             catch (Exception ex)
             {
                 throw new Exception("Error while updating charge.", ex);
+            }
+        }
+
+        // ==========================================
+        // CANCEL CHARGE — NEW
+        // Requires two model classes I don't have (Models.cs wasn't in the
+        // files given to me) — add these to your Models project:
+        //
+        //   public class CancelChargeRequest
+        //   {
+        //       public int sessionId { get; set; }
+        //       public int chargeId { get; set; }
+        //       public string? reason { get; set; }
+        //   }
+        //
+        // ChargeResult already exists (reused from Add/Update Charge).
+        // ==========================================
+
+        public ChargeResult CancelCharge(CancelChargeRequest request)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CANCEL_BILLING_CHARGE", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", request.sessionId);
+                cmd.Parameters.AddWithValue("@IP_CHARGE_ID", request.chargeId);
+                cmd.Parameters.AddWithValue("@IP_REASON", string.IsNullOrWhiteSpace(request.reason) ? DBNull.Value : request.reason);
+
+                var outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                var outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(outStatus);
+                cmd.Parameters.Add(outMessage);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+
+                return new ChargeResult
+                {
+                    chargeId = request.chargeId,
+                    status = Convert.ToString(outStatus.Value) ?? "",
+                    message = Convert.ToString(outMessage.Value) ?? ""
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while cancelling charge.", ex);
             }
         }
 

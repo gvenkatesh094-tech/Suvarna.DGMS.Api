@@ -135,6 +135,73 @@ namespace Suvarna.DGMS.Api.Controllers
                 )
             );
         }
+        // ==========================================
+        // UPLOAD CHECKLIST ITEM PHOTO
+        // NEW: backs the mandatory-photo-per-checklist-item flow on the
+        // hk-tasks page. Was previously missing entirely — the frontend
+        // (uploadChecklistItemPhoto in hk-dashboard.service.ts) already
+        // called this route, so every photo upload was silently 404ing.
+        // ==========================================
+
+        [HttpPost("tasks/checklist/upload-photo")]
+        public IActionResult UploadChecklistItemPhoto(
+            [FromForm] string sessionId,
+            [FromForm] int taskId,
+            [FromForm] string itemCd,
+            IFormFile photo)
+        {
+            return Ok(
+                _service.UploadChecklistItemPhoto(
+                    sessionId,
+                    taskId,
+                    itemCd,
+                    photo
+                )
+            );
+        }
+
+        // ==========================================
+        // NEW: TASK AUDIT TRAIL (points 2 & 6)
+        // ==========================================
+
+        [HttpGet("tasks/history")]
+        public IActionResult GetTaskHistory([FromQuery] string sessionId, [FromQuery] int taskId)
+        {
+            return Ok(_service.GetTaskHistory(sessionId, taskId));
+        }
+
+        // ==========================================
+        // NEW: REQUEST NEW TASK
+        // ==========================================
+
+        [HttpPost("tasks/request")]
+        public IActionResult RequestNewTask([FromQuery] string sessionId)
+        {
+            return Ok(_service.RequestNewTask(sessionId));
+        }
+
+        [HttpGet("tasks/requests")]
+        public IActionResult GetTaskRequests([FromQuery] string sessionId)
+        {
+            return Ok(_service.GetTaskRequests(sessionId));
+        }
+
+        [HttpPost("tasks/requests/dismiss")]
+        public IActionResult DismissTaskRequest([FromQuery] string sessionId, [FromQuery] int requestId)
+        {
+            return Ok(_service.DismissTaskRequest(sessionId, requestId));
+        }
+
+        // ==========================================
+        // NEW: CREATE MANUAL TASK (supervisor picks Room + Type + Priority)
+        // ==========================================
+
+        [HttpPost("tasks/create-manual")]
+        public IActionResult CreateManualTask([FromBody] CreateManualHkTaskRequest request)
+        {
+            return Ok(_service.CreateManualTask(request));
+        }
+
         [HttpGet("quickstats")]
         public IActionResult GetQuickStats([FromQuery] int sessionId, int locationId)
         {

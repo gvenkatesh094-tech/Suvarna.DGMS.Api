@@ -422,15 +422,27 @@ namespace Suvarna.DGMS.Api.Repositories
                 //        parameters.Get<int?>(
                 //            "@OP_SESSION_ID")
                 //};
+                int? sessionId = parameters.Get<int?>("@OP_SESSION_ID");
+
+                // SP returns no row when it fails internally -> avoid a crash on null
+                if (sessionData == null)
+                {
+                    return new UserSessionResult { SessionId = sessionId };
+                }
+
                 return new UserSessionResult
                 {
-                    SessionId = parameters.Get<int?>("@OP_SESSION_ID"),
+                    SessionId = sessionId,
 
                     RoleId = sessionData.ROLE_ID,
 
                     RoleName = sessionData.ROLE_NAME,
 
-                    OrgId = sessionData.ORG_ID
+                    OrgId = sessionData.ORG_ID,
+
+                    OrgName = (string?)sessionData.ORG_NAME,
+
+                    DisplayName = (string?)sessionData.DISPLAY_NAME ?? (string?)sessionData.EMPLOYEE_NAME
                 };
             }
             catch (SqlException sqlEx)

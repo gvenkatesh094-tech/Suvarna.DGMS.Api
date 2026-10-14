@@ -11,16 +11,21 @@ namespace Suvarna.DGMS.Api.Models
         public string maintNo { get; set; } = "";
         public int roomId { get; set; }
         public string roomNo { get; set; } = "";
+        public string? roomName { get; set; }
+        public string? roomStatus { get; set; }
         public int? bookingId { get; set; }
 
         public string category { get; set; } = "";
         public string description { get; set; } = "";
         public string priority { get; set; } = "";       // CRITICAL / HIGH / MEDIUM / LOW
-        public string maintStatus { get; set; } = "";     // OPEN / ACKNOWLEDGED / IN_PROGRESS / RESOLVED / CLOSED
+        public string maintStatus { get; set; } = "";    // OPEN / ACKNOWLEDGED / IN_PROGRESS / RESOLVED / CLOSED
 
         public string raisedByType { get; set; } = "";
         public string? raisedByGuestName { get; set; }
+
+        public int? assignedStaffId { get; set; }
         public string? assignedToName { get; set; }
+        public string? assignedToMobile { get; set; }
 
         public string roomBlockRequired { get; set; } = "";
         public string roomBlocked { get; set; } = "";
@@ -36,6 +41,7 @@ namespace Suvarna.DGMS.Api.Models
         public string? qcRemarks { get; set; }
         public string? resolutionRemarks { get; set; }
         public decimal costAmount { get; set; }
+        public int reworkCount { get; set; }
 
         public bool isOverdue { get; set; }
     }
@@ -59,7 +65,35 @@ namespace Suvarna.DGMS.Api.Models
     }
 
     // ==========================================
-    // ROOM LOOKUP ROW (for the Raise-Request room dropdown)
+    // ACTIVITY LOG (NEW)
+    // ==========================================
+    public class MaintenanceActivityItem
+    {
+        public long logId { get; set; }
+        public string actionCd { get; set; } = "";
+        public string? fromStatus { get; set; }
+        public string? toStatus { get; set; }
+        public string? staffName { get; set; }
+        public string? remarks { get; set; }
+        public int actionBy { get; set; }
+        public DateTime actionDt { get; set; }
+    }
+
+    // ==========================================
+    // TECHNICIAN (NEW)
+    // ==========================================
+    public class MaintenanceStaffItem
+    {
+        public int staffId { get; set; }
+        public string staffName { get; set; } = "";
+        public string? mobileNo { get; set; }
+        public string? skillCats { get; set; }
+        public bool isActive { get; set; }
+        public int openJobs { get; set; }
+    }
+
+    // ==========================================
+    // ROOM LOOKUP ROW
     // ==========================================
     public class MaintenanceRoomOption
     {
@@ -71,7 +105,7 @@ namespace Suvarna.DGMS.Api.Models
     }
 
     // ==========================================
-    // ACTION RESULT
+    // RESULTS
     // ==========================================
     public class MaintenanceActionResult
     {
@@ -79,13 +113,17 @@ namespace Suvarna.DGMS.Api.Models
         public string message { get; set; } = "";
     }
 
-    // ==========================================
-    // RAISE-REQUEST RESULT
-    // ==========================================
     public class RaiseMaintRequestResult
     {
         public int maintReqId { get; set; }
         public string maintNo { get; set; } = "";
+        public string status { get; set; } = "";
+        public string message { get; set; } = "";
+    }
+
+    public class SaveMaintStaffResult
+    {
+        public int staffId { get; set; }
         public string status { get; set; } = "";
         public string message { get; set; } = "";
     }
@@ -100,9 +138,18 @@ namespace Suvarna.DGMS.Api.Models
         public int? bookingId { get; set; }
         public string complaintCategory { get; set; } = "";
         public string description { get; set; } = "";
-        public string? priority { get; set; }             // optional — auto-derived if omitted
+        public string? priority { get; set; }
         public string raisedByType { get; set; } = "STAFF";
+        public string? raisedByName { get; set; }        // NEW
         public string blockRoom { get; set; } = "N";
+    }
+
+    public class AssignMaintRequestPayload             // NEW
+    {
+        public int sessionId { get; set; }
+        public int maintReqId { get; set; }
+        public int staffId { get; set; }
+        public string? remarks { get; set; }
     }
 
     public class AcknowledgeMaintRequestPayload
@@ -142,5 +189,15 @@ namespace Suvarna.DGMS.Api.Models
         public int maintReqId { get; set; }
         public string qcResult { get; set; } = "";   // P / F
         public string? qcRemarks { get; set; }
+    }
+
+    public class SaveMaintStaffPayload                 // NEW
+    {
+        public int sessionId { get; set; }
+        public int? staffId { get; set; }
+        public string staffName { get; set; } = "";
+        public string? mobileNo { get; set; }
+        public string? skillCats { get; set; }
+        public bool isActive { get; set; } = true;
     }
 }

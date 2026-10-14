@@ -17,10 +17,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET DEPOSIT LEDGER
         // ==========================================
 
-        public List<DepositLedgerBooking> GetDepositLedger(
-            int sessionId,
-            int? propertyId,
-            string? statusFilter)
+        public List<DepositLedgerBooking> GetDepositLedger(int sessionId, int? propertyId, string? statusFilter)
         {
             List<DepositLedgerBooking> list = new();
 
@@ -32,7 +29,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 AddParameter(cmd, "@IP_PROPERTY_ID", propertyId);
-                AddParameter(cmd, "@IP_STATUS_FILTER", statusFilter);
+                AddParameter(cmd, "@IP_STATUS_FILTER", string.IsNullOrWhiteSpace(statusFilter) ? null : statusFilter.Trim().ToUpperInvariant());
 
                 conn.Open();
 
@@ -64,7 +61,19 @@ namespace Suvarna.DGMS.Api.Repositories
                         balanceAmount = GetDecimal(dr, "BALANCE_AMT"),
                         depositStatus = GetString(dr, "DEPOSIT_STATUS") ?? "",
 
-                        chargedAmount = GetDecimal(dr, "CHARGED_AMT")
+                        chargedAmount = GetDecimal(dr, "CHARGED_AMT"),
+
+                        // NEW — estimated dues & refundable amount
+                        duesAsOfDt = GetNullableDateTime(dr, "DUES_AS_OF_DT"),
+                        estStayDays = GetInt(dr, "EST_STAY_DAYS"),
+                        dailyRate = GetDecimal(dr, "DAILY_RATE"),
+                        estRoomAmount = GetDecimal(dr, "EST_ROOM_AMT"),
+                        estRoomGst = GetDecimal(dr, "EST_ROOM_GST"),
+                        estServiceAmount = GetDecimal(dr, "EST_SERVICE_AMT"),
+                        estServiceGst = GetDecimal(dr, "EST_SERVICE_GST"),
+                        paidAmount = GetDecimal(dr, "PAID_AMT"),
+                        estNetDues = GetDecimal(dr, "EST_NET_DUES"),
+                        refundableAmount = GetDecimal(dr, "REFUNDABLE_AMT")
                     });
                 }
 
@@ -72,10 +81,8 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    "Error while fetching deposit ledger.",
-                    ex
-                );
+                // FIX: keep the real reason — the generic text hid SQL errors
+                throw new Exception("Error while fetching deposit ledger: " + ex.Message, ex);
             }
         }
 
@@ -107,13 +114,10 @@ namespace Suvarna.DGMS.Api.Repositories
                         txnType = GetString(dr, "TXN_TYPE") ?? "",
                         txnDt = GetNullableDateTime(dr, "TXN_DT") ?? DateTime.MinValue,
                         amount = GetDecimal(dr, "AMOUNT"),
-
                         paymentMode = GetString(dr, "PAYMENT_MODE"),
                         paymentRef = GetString(dr, "PAYMENT_REF"),
-
                         refundMode = GetString(dr, "REFUND_MODE"),
                         refundRef = GetString(dr, "REFUND_REF"),
-
                         remarks = GetString(dr, "REMARKS") ?? "",
                         createBy = GetInt(dr, "CREATE_BY"),
                         createDt = GetNullableDateTime(dr, "CREATE_DT") ?? DateTime.MinValue
@@ -124,10 +128,7 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    "Error while fetching deposit transaction history.",
-                    ex
-                );
+                throw new Exception("Error while fetching deposit transaction history: " + ex.Message, ex);
             }
         }
 
@@ -145,25 +146,19 @@ namespace Suvarna.DGMS.Api.Repositories
 
                 AddParameter(cmd, "@IP_SESSION_ID", request.sessionId);
                 AddParameter(cmd, "@IP_BOOKING_ID", request.bookingId);
-                AddParameter(cmd, "@IP_REFUND_AMOUNT", request.refundAmount);
-                AddParameter(cmd, "@IP_REFUND_MODE", request.refundMode?.Trim());
-                AddParameter(cmd, "@IP_REFUND_REF", request.refundRef?.Trim());
-                AddParameter(cmd, "@IP_REMARKS", request.remarks?.Trim());
+                cmd.Parameters.Add(new SqlParameter("@IP_REFUND_AMOUNT", SqlDbType.Decimal) { Precision = 18, Scale = 2, Value = request.refundAmount });
+                AddParameter(cmd, "@IP_REFUND_MODE", request.refundMode?.Trim().ToUpperInvariant());
+                AddParameter(cmd, "@IP_REFUND_REF", string.IsNullOrWhiteSpace(request.refundRef) ? null : request.refundRef.Trim());
+                AddParameter(cmd, "@IP_REMARKS", string.IsNullOrWhiteSpace(request.remarks) ? null : request.remarks.Trim());
 
-                SqlParameter depositTxnId = new SqlParameter("@OUT_DEPOSIT_TXN_ID", SqlDbType.Int)
-                { Direction = ParameterDirection.Output };
+                SqlParameter depositTxnId = new SqlParameter("@OUT_DEPOSIT_TXN_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                SqlParameter balanceAmt = new SqlParameter("@OUT_BALANCE_AMT", SqlDbType.Decimal) { Direction = ParameterDirection.Output, Precision = 18, Scale = 2 };
+                SqlParameter status = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                SqlParameter message = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+
                 cmd.Parameters.Add(depositTxnId);
-
-                SqlParameter balanceAmt = new SqlParameter("@OUT_BALANCE_AMT", SqlDbType.Decimal)
-                { Direction = ParameterDirection.Output, Precision = 18, Scale = 2 };
                 cmd.Parameters.Add(balanceAmt);
-
-                SqlParameter status = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1)
-                { Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(status);
-
-                SqlParameter message = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500)
-                { Direction = ParameterDirection.Output };
                 cmd.Parameters.Add(message);
 
                 conn.Open();
@@ -179,10 +174,7 @@ namespace Suvarna.DGMS.Api.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    "Error while processing deposit refund.",
-                    ex
-                );
+                throw new Exception("Error while processing deposit refund: " + ex.Message, ex);
             }
         }
 
@@ -190,29 +182,19 @@ namespace Suvarna.DGMS.Api.Repositories
         // COMMON HELPERS
         // ==========================================
 
-        private static void AddParameter(SqlCommand cmd, string name, object? value)
-        {
+        private static void AddParameter(SqlCommand cmd, string name, object? value) =>
             cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
-        }
 
-        private static string? GetString(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToString(dr[column]);
-        }
+        private static string? GetString(SqlDataReader dr, string column) =>
+            dr[column] == DBNull.Value ? null : Convert.ToString(dr[column]);
 
-        private static int GetInt(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? 0 : Convert.ToInt32(dr[column]);
-        }
+        private static int GetInt(SqlDataReader dr, string column) =>
+            dr[column] == DBNull.Value ? 0 : Convert.ToInt32(dr[column]);
 
-        private static decimal GetDecimal(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? 0 : Convert.ToDecimal(dr[column]);
-        }
+        private static decimal GetDecimal(SqlDataReader dr, string column) =>
+            dr[column] == DBNull.Value ? 0 : Convert.ToDecimal(dr[column]);
 
-        private static DateTime? GetNullableDateTime(SqlDataReader dr, string column)
-        {
-            return dr[column] == DBNull.Value ? null : Convert.ToDateTime(dr[column]);
-        }
+        private static DateTime? GetNullableDateTime(SqlDataReader dr, string column) =>
+            dr[column] == DBNull.Value ? null : Convert.ToDateTime(dr[column]);
     }
 }

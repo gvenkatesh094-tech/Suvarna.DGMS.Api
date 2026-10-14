@@ -50,17 +50,17 @@ namespace Suvarna.DGMS.Api.Models
         public string roomStatus { get; set; } = "";
     }
 
-    // ==========================================
-    // ALERT
-    // ==========================================
-    public class ReceptionAlert
-    {
-        public int alertId { get; set; }
-        public string alertColor { get; set; } = "";
-        public string alertTitle { get; set; } = "";
-        public string alertSubtitle { get; set; } = "";
-        public string actionText { get; set; } = "";
-    }
+    //// ==========================================
+    //// ALERT
+    //// ==========================================
+    //public class ReceptionAlert
+    //{
+    //    public int alertId { get; set; }
+    //    public string alertColor { get; set; } = "";
+    //    public string alertTitle { get; set; } = "";
+    //    public string alertSubtitle { get; set; } = "";
+    //    public string actionText { get; set; } = "";
+    //}
 
     // ==========================================
     // REVENUE (7-day trend)

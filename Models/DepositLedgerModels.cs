@@ -33,6 +33,17 @@ namespace Suvarna.DGMS.Api.Models
         // Charges raised on the bill so far, excluding GST — drives the
         // "Charges (excl GST)" column in the grid.
         public decimal chargedAmount { get; set; }
+
+        public DateTime? duesAsOfDt { get; set; }
+        public int estStayDays { get; set; }
+        public decimal dailyRate { get; set; }
+        public decimal estRoomAmount { get; set; }
+        public decimal estRoomGst { get; set; }
+        public decimal estServiceAmount { get; set; }
+        public decimal estServiceGst { get; set; }
+        public decimal paidAmount { get; set; }        // payments already made during the stay
+        public decimal estNetDues { get; set; }        // what the guest still owes (estimate)
+        public decimal refundableAmount { get; set; }  // balance held − estimated dues (never < 0)
     }
 
     // ==========================================

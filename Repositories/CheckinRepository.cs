@@ -374,6 +374,12 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_PAYMENT_MODE", request.paymentMode);
                 AddParameter(cmd, "@IP_PAYMENT_REF", request.paymentRef);
                 AddParameter(cmd, "@IP_TOTAL_PAID_AMT", request.totalPaidAmount);
+
+                // NEW: mode-specific payment capture (CASH remarks,
+                // ONLINE card-last4/UPI VPA).
+                AddParameter(cmd, "@IP_PAYMENT_REMARKS", request.paymentRemarks);
+                AddParameter(cmd, "@IP_CARD_LAST4", request.cardLast4);
+                AddParameter(cmd, "@IP_UPI_VPA", request.upiVpa);
                 AddParameter(cmd, "@IP_BASE_AMT", request.baseAmount);
                 AddParameter(cmd, "@IP_CGST_AMT", request.cgstAmount);
                 AddParameter(cmd, "@IP_SGST_AMT", request.sgstAmount);
@@ -473,26 +479,49 @@ namespace Suvarna.DGMS.Api.Repositories
                 );
             }
         }
-        public PatientInfo? GetPatientInfo(string umrNo)
+        // ==========================================
+        // PATIENT LOOKUP (UMR / IP / Admission No / Name)
+        // ==========================================
+
+        public List<PatientLookup> SearchPatients(string searchBy, string searchText, int maxRows = 20)
         {
+            List<PatientLookup> list = new();
+
             using SqlConnection conn = new SqlConnection(_conn);
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_SEARCH_PATIENTS", conn);
 
-            using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGMS_PAT_INFO", conn);
             cmd.CommandType = CommandType.StoredProcedure;
-            AddParameter(cmd, "@IP_UMR_NO", umrNo?.Trim());
-            conn.Open();
-            using SqlDataReader dr = cmd.ExecuteReader();
-            if (!dr.Read())
-                return null;
+            cmd.CommandTimeout = 15;
 
-            return new PatientInfo
+            AddParameter(cmd, "@IP_SEARCH_BY", searchBy);
+            AddParameter(cmd, "@IP_SEARCH_TEXT", searchText);
+            AddParameter(cmd, "@IP_MAX_ROWS", maxRows);
+
+            conn.Open();
+
+            using SqlDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
             {
-                patientId = dr["PATIENT_ID"] == DBNull.Value ? 0 : Convert.ToInt32(dr["PATIENT_ID"]),
-                umrNo = dr["UMR_NO"]?.ToString() ?? "",
-                gender = dr["GENDER"]?.ToString() ?? "",
-                admnNo = dr["ADMN_NO"]?.ToString() ?? "",
-                displayName = dr["DISPLAY_NAME"]?.ToString() ?? ""
-            };
+                list.Add(new PatientLookup
+                {
+                    patientId = GetInt(dr, "PATIENT_ID"),
+                    umrNo = GetString(dr, "UMR_NO") ?? "",
+                    displayName = GetString(dr, "DISPLAY_NAME") ?? "",
+                    gender = GetString(dr, "GENDER") ?? "",
+                    admnNo = GetString(dr, "ADMN_NO") ?? "",
+                    ipNo = GetString(dr, "IP_NO") ?? "",
+                    admnId = GetNullableInt(dr, "ADMN_ID"),
+                    age = GetString(dr, "AGE"),
+                    mobileNo = GetString(dr, "MOBILE_NO"),
+                    wardName = GetString(dr, "WARD_NAME"),
+                    bedNo = GetString(dr, "BED_NO"),
+                    admnDate = GetNullableDateTime(dr, "ADMN_DT"),
+                    dischargeStatus = GetString(dr, "DISCHARGE_STATUS")
+                });
+            }
+
+            return list;
         }
 
         // ==========================================

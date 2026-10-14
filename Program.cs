@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -14,10 +13,21 @@ using Suvarna.DGMS.Api.Repositories;
 using Suvarna.DGMS.Api.Services;
 using System.Text;
 using Microsoft.Extensions.FileProviders;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#region Logging (Serilog - daily log file)
 
+builder.Host.UseSerilog((context, logConfig) => logConfig
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .WriteTo.File(
+        Path.Combine(AppContext.BaseDirectory, "Logs", "dgms-api-.log"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30));
+
+#endregion
 
 #region CORS
 
@@ -76,8 +86,8 @@ builder.Services.AddSwaggerGen(c =>
             {
                 Reference = new OpenApiReference
                 {
-                    Id="Bearer",
-                    Type=ReferenceType.SecurityScheme
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
                 }
             },
             Array.Empty<string>()
@@ -87,11 +97,12 @@ builder.Services.AddSwaggerGen(c =>
 
 #endregion
 
-#region Database
+#region Repositories
 
 builder.Services.AddSingleton<DbHelper>();
 
 builder.Services.AddScoped<ErrorRepository>();
+builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<PropertyRepository>();
 builder.Services.AddScoped<BuildingRepository>();
 builder.Services.AddScoped<FloorRepository>();
@@ -102,88 +113,38 @@ builder.Services.AddScoped<ServicesCatalogueRepository>();
 builder.Services.AddScoped<RoomAmenitiesRepository>();
 builder.Services.AddScoped<OccupantGuestRepository>();
 builder.Services.AddScoped<SystemParametersRepository>();
-builder.Services.AddScoped<AuthRepository>();
-
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<DepartmentMappingRepository>();
 builder.Services.AddScoped<CorpAgreementRepository>();
 builder.Services.AddScoped<GstConfigRepository>();
-
 builder.Services.AddScoped<TariffRepository>();
-
 builder.Services.AddScoped<CheckinRepository>();
-
-
-builder.Services.AddScoped<RoomService>();
-builder.Services.AddScoped<TariffService>();
-builder.Services.AddScoped<CheckinService>();
-builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<CheckoutRepository>();
-
-
 builder.Services.AddScoped<HkDashboardRepository>();
-
-builder.Services.AddScoped<HkDashboardService>();
-
 builder.Services.AddScoped<LookupRepository>();
-builder.Services.AddScoped<LookupService>();
-
 builder.Services.AddScoped<ReservationsRepository>();
-builder.Services.AddScoped<ReservationsService>();
-
-
 builder.Services.AddScoped<GuestFolioBillingRepository>();
-builder.Services.AddScoped<GuestFolioBillingService>();
-
 builder.Services.AddScoped<ActiveGuestsRepository>();
-builder.Services.AddScoped<ActiveGuestsService>();
-
 builder.Services.AddScoped<RoomTransferRepository>();
-builder.Services.AddScoped<RoomTransferService>();
-
 builder.Services.AddScoped<CorporateInvoicesRepository>();
-builder.Services.AddScoped<CorporateInvoicesService>();
-
 builder.Services.AddScoped<WaitingListRepository>();
-builder.Services.AddScoped<WaitingListService>();
-
 builder.Services.AddScoped<LaundryLogRepository>();
-builder.Services.AddScoped<LaundryLogService>();
-
 builder.Services.AddScoped<DepositLedgerRepository>();
-builder.Services.AddScoped<DepositLedgerService>();
-
-builder.Services.AddScoped<DepositLedgerRepository>();
-builder.Services.AddScoped<DepositLedgerService>();
-
 builder.Services.AddScoped<GstReportsRepository>();
-builder.Services.AddScoped<GstReportsService>();
-
 builder.Services.AddScoped<MaintenanceRequestsRepository>();
-builder.Services.AddScoped<MaintenanceRequestsService>();
-
 builder.Services.AddScoped<RevenueReportsRepository>();
-builder.Services.AddScoped<RevenueReportsService>();
-
 builder.Services.AddScoped<ExecutiveDashboardRepository>();
-builder.Services.AddScoped<ExecutiveDashboardService>();
-
 builder.Services.AddScoped<OccupancyReportsRepository>();
-builder.Services.AddScoped<OccupancyReportsService>();
-
 builder.Services.AddScoped<ReceptionDashboardRepository>();
-builder.Services.AddScoped<ReceptionDashboardService>();
-
 
 #endregion
 
 #region Services
 
-
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<BuildingService>();
 builder.Services.AddScoped<FloorService>();
@@ -194,14 +155,28 @@ builder.Services.AddScoped<ServicesCatalogueService>();
 builder.Services.AddScoped<RoomAmenitiesService>();
 builder.Services.AddScoped<OccupantGuestService>();
 builder.Services.AddScoped<DepartmentMappingService>();
-
 builder.Services.AddScoped<SystemParametersService>();
 builder.Services.AddScoped<CorpAgreementService>();
 builder.Services.AddScoped<GstConfigService>();
-
 builder.Services.AddScoped<TariffService>();
-
 builder.Services.AddScoped<CheckinService>();
+builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<HkDashboardService>();
+builder.Services.AddScoped<LookupService>();
+builder.Services.AddScoped<ReservationsService>();
+builder.Services.AddScoped<GuestFolioBillingService>();
+builder.Services.AddScoped<ActiveGuestsService>();
+builder.Services.AddScoped<RoomTransferService>();
+builder.Services.AddScoped<CorporateInvoicesService>();
+builder.Services.AddScoped<WaitingListService>();
+builder.Services.AddScoped<LaundryLogService>();
+builder.Services.AddScoped<DepositLedgerService>();
+builder.Services.AddScoped<GstReportsService>();
+builder.Services.AddScoped<MaintenanceRequestsService>();
+builder.Services.AddScoped<RevenueReportsService>();
+builder.Services.AddScoped<ExecutiveDashboardService>();
+builder.Services.AddScoped<OccupancyReportsService>();
+builder.Services.AddScoped<ReceptionDashboardService>();
 
 #endregion
 
@@ -248,8 +223,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
     options.Events = new CustomAuthFailureHandler();
 });
-builder.Services.Configure<ModuleSettings>(builder.Configuration.GetSection("ModuleSettings"));
 
+builder.Services.Configure<ModuleSettings>(builder.Configuration.GetSection("ModuleSettings"));
 builder.Services.Configure<SessionSettings>(builder.Configuration.GetSection("SessionSettings"));
 
 builder.Services.AddAuthorization();
@@ -261,18 +236,7 @@ var app = builder.Build();
 #region Middleware
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
-
 app.UseMiddleware<RequestLoggingMiddleware>();
-
-
-
-//app.UseHttpsRedirection();
-
-//app.UseCors("AllowAll");
-
-//app.UseAuthentication();
-
-//app.UseAuthorization();
 
 app.UseHttpsRedirection();
 
@@ -282,24 +246,22 @@ app.UseCors("AllowAll");
 app.UseStaticFiles();
 
 // Uploads folder static files
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "Uploads");
+Directory.CreateDirectory(uploadsPath);   // creates the folder if it does not exist
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "Uploads")),
+    FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/Uploads"
 });
 
 app.UseAuthentication();
-
 app.UseAuthorization();
-app.UseSwagger();
 
+app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Suvarna DGMS API V1");
-
     c.RoutePrefix = "swagger";
 });
 

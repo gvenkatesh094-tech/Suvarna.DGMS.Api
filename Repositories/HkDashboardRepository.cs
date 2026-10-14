@@ -52,6 +52,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         assignedStaffName = GetString(dr, "assignedStaffName"),
                         slaMinutes = GetInt(dr, "slaMinutes"),
                         triggeredDt = Convert.ToDateTime(dr["triggeredDt"]),
+                        assignedDt = GetNullableDateTime(dr, "assignedDt"),
                         startedAt = GetNullableDateTime(dr, "startedAt"),
                         completedAt = GetNullableDateTime(dr, "completedAt"),
                         inspectedAt = GetNullableDateTime(dr, "inspectedAt"),
@@ -71,6 +72,153 @@ namespace Suvarna.DGMS.Api.Repositories
             catch (Exception ex)
             {
                 throw new Exception("Error while fetching housekeeping tasks.", ex);
+            }
+        }
+
+        // ==========================================
+        // NEW: TASK AUDIT TRAIL (points 2 & 6)
+        // ==========================================
+
+        public List<HkTaskHistoryEntry> GetTaskHistory(string sessionId, int taskId)
+        {
+            List<HkTaskHistoryEntry> list = new List<HkTaskHistoryEntry>();
+
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_HK_TASK_HISTORY", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_HK_TASK_ID", taskId);
+
+                conn.Open();
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new HkTaskHistoryEntry
+                    {
+                        historyId = GetInt(dr, "historyId"),
+                        actionType = GetString(dr, "actionType") ?? "",
+                        actionDt = Convert.ToDateTime(dr["actionDt"]),
+                        actionByName = GetString(dr, "actionByName"),
+                        staffName = GetString(dr, "staffName"),
+                        remarks = GetString(dr, "remarks")
+                    });
+                }
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching task history.", ex);
+            }
+        }
+
+        // ==========================================
+        // NEW: REQUEST NEW TASK
+        // ==========================================
+
+        public HkOperationResult RequestNewTask(string sessionId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_REQUEST_NEW_HK_TASK", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                return RunWithOutputParams(cmd, conn);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while submitting task request.", ex);
+            }
+        }
+
+        public List<HkTaskRequest> GetTaskRequests(string sessionId)
+        {
+            List<HkTaskRequest> list = new List<HkTaskRequest>();
+
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_HK_TASK_REQUESTS", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+
+                conn.Open();
+                using SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    list.Add(new HkTaskRequest
+                    {
+                        requestId = GetInt(dr, "requestId"),
+                        staffUserId = GetInt(dr, "staffUserId"),
+                        staffName = GetString(dr, "staffName"),
+                        requestDt = Convert.ToDateTime(dr["requestDt"])
+                    });
+                }
+                return list;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching task requests.", ex);
+            }
+        }
+
+        public HkOperationResult DismissTaskRequest(string sessionId, int requestId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_DISMISS_HK_TASK_REQUEST", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_HK_TASK_REQUEST_ID", requestId);
+
+                return RunWithOutputParams(cmd, conn);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while dismissing task request.", ex);
+            }
+        }
+
+        // ==========================================
+        // NEW: CREATE MANUAL TASK
+        // ==========================================
+
+        public HkOperationResult CreateManualTask(CreateManualHkTaskRequest request)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CREATE_MANUAL_HK_TASK", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", request.sessionId);
+                cmd.Parameters.AddWithValue("@IP_ROOM_ID", request.roomId);
+                cmd.Parameters.AddWithValue("@IP_TASK_TYPE", request.taskType);
+                cmd.Parameters.AddWithValue("@IP_PRIORITY", (object?)request.priority ?? DBNull.Value);
+
+                // This proc has an extra OUTPUT parameter (the new task's
+                // id) beyond the usual @OUT_STATUS/@OUT_MESSAGE pair that
+                // RunWithOutputParams itself adds — must be supplied
+                // explicitly or SQL Server will reject the call.
+                var outTaskId = new SqlParameter("@OUT_HK_TASK_ID", SqlDbType.Int)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                cmd.Parameters.Add(outTaskId);
+
+                return RunWithOutputParams(cmd, conn);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while creating task.", ex);
             }
         }
 
@@ -330,6 +478,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         assignedStaffName = GetString(dr, "assignedStaffName"),
                         slaMinutes = GetInt(dr, "slaMinutes"),
                         triggeredDt = Convert.ToDateTime(dr["triggeredDt"]),
+                        assignedDt = GetNullableDateTime(dr, "assignedDt"),
                         startedAt = GetNullableDateTime(dr, "startedAt"),
                         completedAt = GetNullableDateTime(dr, "completedAt"),
                         inspectedAt = GetNullableDateTime(dr, "inspectedAt"),
@@ -438,6 +587,70 @@ namespace Suvarna.DGMS.Api.Repositories
                     ex);
             }
         }
+        // ==========================================
+        // NEW: UPLOAD CHECKLIST ITEM PHOTO
+        // Mirrors UploadPhoto() above but scoped to a single checklist
+        // item (itemCd) instead of the whole task, and stores under its
+        // own subfolder so item photos don't mix with task-level "Photo
+        // Proof" uploads. Calls a NEW stored proc — see
+        // PR_DGMS_UPLOAD_HK_CHECKLIST_ITEM_PHOTO.sql. That proc only
+        // stamps PHOTO_URL on the checklist item; it deliberately does
+        // NOT flip IS_COMPLETE, since the frontend already makes a
+        // separate PR_DGMS_TOGGLE_HK_CHECKLIST_ITEM call right after a
+        // successful upload to mark the item complete.
+        // ==========================================
+
+        public HkOperationResult UploadChecklistItemPhoto(string sessionId, int taskId, string itemCd, IFormFile photo)
+        {
+            try
+            {
+                string uploadFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "uploads",
+                    "housekeeping",
+                    "checklist");
+
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                string extension = Path.GetExtension(photo.FileName);
+
+                string fileName =
+                    $"HK_{taskId}_{itemCd}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+
+                string filePath = Path.Combine(uploadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    photo.CopyTo(stream);
+                }
+
+                string photoUrl = "/uploads/housekeeping/checklist/" + fileName;
+
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_UPLOAD_HK_CHECKLIST_ITEM_PHOTO", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_HK_TASK_ID", taskId);
+                cmd.Parameters.AddWithValue("@IP_ITEM_CD", itemCd);
+                cmd.Parameters.AddWithValue("@IP_PHOTO_URL", photoUrl);
+
+                var result = RunWithOutputParams(cmd, conn);
+                result.photoUrl = photoUrl;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    "Error while uploading checklist item photo.",
+                    ex);
+            }
+        }
+
         public HkQuickStats GetQuickStats(int sessionId, int locationId)
         {
             HkQuickStats stats = new HkQuickStats();

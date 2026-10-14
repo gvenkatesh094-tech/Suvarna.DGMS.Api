@@ -89,6 +89,24 @@ namespace Suvarna.DGMS.Api.Services
         }
 
         // ==========================================
+        // CANCEL CHARGE — NEW
+        // ==========================================
+
+        public ApiResponse<ChargeResult> CancelCharge(CancelChargeRequest request)
+        {
+            var data = _repo.CancelCharge(request);
+
+            if (data.status != "S")
+            {
+                // "Already cancelled" / "bill transferred" land here and
+                // surface to the UI as a toast rather than a false success.
+                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to cancel charge." : data.message);
+            }
+
+            return ApiResponse<ChargeResult>.Success(data.message, data);
+        }
+
+        // ==========================================
         // COLLECT PAYMENT
         // ==========================================
 

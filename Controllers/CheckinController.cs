@@ -58,19 +58,15 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.ConfirmCheckin(model, idFile, photoFile)
             );
         }
-        [HttpGet("patient")]
-        public IActionResult GetPatientInfo([FromQuery] string umrNo)
-        {
-            if (string.IsNullOrWhiteSpace(umrNo))
-            {
-                return BadRequest(
-                    "UHID / admn number is required."
-                );
-            }
+        // ==========================================
+        // PATIENT LOOKUP
+        // GET api/checkin/patients?searchBy=ALL|NAME&searchText=...
+        // ==========================================
 
-            return Ok(
-                _service.GetPatientInfo(umrNo)
-            );
+        [HttpGet("patients")]
+        public IActionResult SearchPatients([FromQuery] string? searchBy, [FromQuery] string? searchText)
+        {
+            return Ok(_service.SearchPatients(searchBy, searchText));
         }
     }
 }

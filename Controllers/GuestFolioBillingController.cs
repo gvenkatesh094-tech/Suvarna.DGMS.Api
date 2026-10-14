@@ -66,6 +66,19 @@ namespace Suvarna.DGMS.Api.Controllers
         }
 
         // ==========================================
+        // "Cancel" button on a charge line — NEW
+        // Replaces the "Edit" action in the Charge Lines table for the
+        // common wrong-charge case (e.g. Breakfast posted by mistake).
+        // ==========================================
+
+        [HttpPost("charge/{chargeId:int}/cancel")]
+        public IActionResult CancelCharge(int chargeId, [FromBody] CancelChargeRequest request)
+        {
+            request.chargeId = chargeId;
+            return Ok(_service.CancelCharge(request));
+        }
+
+        // ==========================================
         // "Collect Cash" / "Process Card" buttons
         // ==========================================
 
