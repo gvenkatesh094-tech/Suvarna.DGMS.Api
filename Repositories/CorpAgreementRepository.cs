@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+using Suvarna.DGMS.Api.Helpers;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -6,10 +7,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class CorpAgreementRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public CorpAgreementRepository(IConfiguration configuration)
+        public CorpAgreementRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
         public string Save(CorpAgreement agreement)
@@ -30,7 +33,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.CommandType = CommandType.StoredProcedure;
 
-            cmd.Parameters.AddWithValue("@IP_SESSION_ID", agreement.sessionId);
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require(agreement.sessionId));
             cmd.Parameters.AddWithValue("@IP_MODE", mode);
             if(mode=="U")
             {
@@ -44,7 +47,8 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_GRP_ID", agreement.GrpId);
             cmd.Parameters.AddWithValue("@IP_ORG_ID", agreement.OrgId);
             cmd.Parameters.AddWithValue("@IP_LOC_ID", agreement.LocId);
-            cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", agreement.propertyId);            
+            cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", agreement.propertyId);
+            cmd.Parameters.AddWithValue("@IP_ROOM_ALLOCATE", agreement.roomAllocate);            
             cmd.Parameters.AddWithValue("@IP_AGREEMENT_NO", agreement.AgreementNo);
             cmd.Parameters.AddWithValue("@IP_CORP_NM", agreement.CorpNm);
             cmd.Parameters.AddWithValue("@IP_CORP_GSTIN", agreement.CorpGstin);
@@ -89,6 +93,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGM_CORP_AGREEMENT", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             DataTable dt = new DataTable();
 

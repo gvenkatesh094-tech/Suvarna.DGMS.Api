@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Services;
 using System.Text.Json;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/checkin")]
     public class CheckinController : ControllerBase

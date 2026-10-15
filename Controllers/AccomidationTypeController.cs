@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Services;
 
@@ -6,6 +7,7 @@ using Suvarna.DGMS.Api.Services;
 namespace Suvarna.DGMS.Api.Controllers
 {
     [Route("api/accommodation")]
+    [Authorize]
     [ApiController]
     public class AccommodationTypeController : ControllerBase
     {

@@ -37,6 +37,7 @@ namespace Suvarna.DGMS.Api.Models
         public decimal chargedAmount { get; set; }
         public decimal gstPercent { get; set; }
         public decimal depositAmount { get; set; }
+        public decimal netDueAmount { get; set; }
     }
 
     // ==========================================

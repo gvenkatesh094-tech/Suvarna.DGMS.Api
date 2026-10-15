@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+using Suvarna.DGMS.Api.Helpers;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 using System.Net.NetworkInformation;
@@ -7,10 +8,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class PropertyRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public PropertyRepository(IConfiguration configuration)
+        public PropertyRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
 
         }
@@ -95,6 +98,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.pr_get_dgm_property", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             conn.Open();
 

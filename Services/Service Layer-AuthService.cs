@@ -65,13 +65,17 @@ namespace Suvarna.DGMS.Api.Services
                 // JWT TOKEN GENERATION
                 // =====================================
 
+                // FIX: real role from the database (same source the refresh-token
+                // flow already uses) instead of a hard-coded "admin".
+                var jwtUser = await _repository.GetUserById(result.UserId ?? 0);
+
                 var token = _jwtHelper.GenerateJwtToken(
 
                     result.UserId ?? 0,
 
                     request.UserName,
 
-                    "admin"    //THIS ROLE NEED TO COME FROM LOGIN PAGE DYNAMIC LIKE USER NAME AND PASSWORD
+                    string.IsNullOrWhiteSpace(jwtUser?.ROLE_NAME) ? "user" : jwtUser!.ROLE_NAME
                 );
                 var refreshToken = _jwtHelper.GenerateRefreshToken();
                 result.Token = token;

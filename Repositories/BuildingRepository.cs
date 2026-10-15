@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+using Suvarna.DGMS.Api.Helpers;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -6,10 +7,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class BuildingRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public BuildingRepository(IConfiguration configuration)
+        public BuildingRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -131,6 +134,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.pr_get_dgm_building", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             conn.Open();
 
@@ -173,6 +177,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.pr_get_dgm_building_byid", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             cmd.Parameters.AddWithValue("@DGM_BUILDING_MAST_ID", id);
 

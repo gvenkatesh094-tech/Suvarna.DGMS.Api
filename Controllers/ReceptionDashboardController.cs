@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Services;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/reception-dashboard")]
     public class ReceptionDashboardController : ControllerBase

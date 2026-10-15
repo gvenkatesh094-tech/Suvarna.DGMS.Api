@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Drawing;
+﻿using Microsoft.AspNetCore.Authorization;
+using DocumentFormat.OpenXml.Drawing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Suvarna.DGMS.Api.Models;
@@ -8,6 +9,7 @@ using Suvarna.DGMS.Api.Services;
 namespace Suvarna.DGMS.Api.Controllers
 {
     [Route("api/deptMap")]
+    [Authorize]
     [ApiController]
     public class DepartmentMappingController : ControllerBase
     {

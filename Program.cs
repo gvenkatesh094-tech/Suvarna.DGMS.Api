@@ -31,13 +31,26 @@ builder.Host.UseSerilog((context, logConfig) => logConfig
 
 #region CORS
 
+// Allowed browser origins come from appsettings:  "Cors": { "AllowedOrigins": [ "https://his.bhatiahospital.org" ] }
+// If the setting is missing the old behaviour (allow all) is kept, so nothing breaks on first deploy.
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (corsOrigins.Length > 0)
+        {
+            policy.WithOrigins(corsOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
     });
 });
 
@@ -45,9 +58,18 @@ builder.Services.AddCors(options =>
 
 #region Controllers
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidateModelAttribute>();
+    options.Filters.Add<SessionBindingFilter>();   // X-Session-Id must belong to the JWT user
+})
+.AddJsonOptions(o =>
+{
+    // DB stores UTC -> always send UTC ISO ('Z'); the browser shows local time
+    o.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+    o.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
 });
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -116,6 +138,7 @@ builder.Services.AddScoped<SystemParametersRepository>();
 builder.Services.AddScoped<DepartmentMappingRepository>();
 builder.Services.AddScoped<CorpAgreementRepository>();
 builder.Services.AddScoped<GstConfigRepository>();
+builder.Services.AddScoped<SecurityRepository>();
 builder.Services.AddScoped<TariffRepository>();
 builder.Services.AddScoped<CheckinRepository>();
 builder.Services.AddScoped<CheckoutRepository>();
@@ -142,11 +165,13 @@ builder.Services.AddScoped<ReceptionDashboardRepository>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SessionContext>();   // X-Session-Id of the current request
 
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<BuildingService>();
+builder.Services.AddScoped<SecurityService>();
 builder.Services.AddScoped<FloorService>();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<BedService>();
@@ -258,12 +283,16 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// Swagger: on by default (as before). Set "Swagger": { "Enabled": false } in the production appsettings to hide it.
+if (builder.Configuration.GetValue("Swagger:Enabled", true))
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Suvarna DGMS API V1");
-    c.RoutePrefix = "swagger";
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Suvarna DGMS API V1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.MapControllers();
 

@@ -5,6 +5,7 @@ using Suvarna.DGMS.Api.Models;
 
 namespace Suvarna.DGMS.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/ModuleSettings")]
     public class ModuleSettingsController : Controller

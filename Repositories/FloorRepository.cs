@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+using Suvarna.DGMS.Api.Helpers;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -6,10 +7,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class FloorRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public FloorRepository(IConfiguration configuration)
+        public FloorRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -78,6 +81,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.pr_get_dgm_floor", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             conn.Open();
 

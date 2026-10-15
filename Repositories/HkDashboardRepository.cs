@@ -526,7 +526,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 }
 
                 // File name
-                string extension = Path.GetExtension(photo.FileName);
+                string extension = Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(photo);
 
                 string fileName =
                     $"HK_{taskId}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
@@ -615,10 +615,10 @@ namespace Suvarna.DGMS.Api.Repositories
                     Directory.CreateDirectory(uploadFolder);
                 }
 
-                string extension = Path.GetExtension(photo.FileName);
+                string extension = Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(photo);
 
                 string fileName =
-                    $"HK_{taskId}_{itemCd}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                    $"HK_{taskId}_{System.Text.RegularExpressions.Regex.Replace(itemCd ?? "", "[^A-Za-z0-9_-]", "_")}_{DateTime.Now:yyyyMMddHHmmss}{extension}";   // itemCd comes from the client: strip "../" etc.
 
                 string filePath = Path.Combine(uploadFolder, fileName);
 

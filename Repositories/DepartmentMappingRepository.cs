@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Drawing;
+using Suvarna.DGMS.Api.Helpers;
+using DocumentFormat.OpenXml.Drawing;
 using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
@@ -7,10 +8,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class DepartmentMappingRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public DepartmentMappingRepository(IConfiguration configuration)
+        public DepartmentMappingRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -22,6 +25,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGM_DEPT_MAPPING", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             conn.Open();
 
@@ -63,7 +67,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_GRP_ID", model.grpId);
             cmd.Parameters.AddWithValue("@IP_ORG_ID", model.orgId);
             cmd.Parameters.AddWithValue("@IP_LOC_ID", model.locId);
-            cmd.Parameters.AddWithValue("@IP_SESSION_ID", model.sessionId);
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require(model.sessionId));
             cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", model.propertyId);
             cmd.Parameters.AddWithValue("@IP_ACCM_TYPE_ID", model.accmTypeId);
             cmd.Parameters.AddWithValue("@IP_OCC_CAT_ID", model.occCatId);
@@ -115,6 +119,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.PR_IUD_DGM_DEPT_MAPPING", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             cmd.Parameters.AddWithValue("@IP_MODE", "UPDATE");
             cmd.Parameters.AddWithValue("@IP_DEPT_MAPPING_ID", model.deptMappingId);
@@ -169,6 +174,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlCommand cmd = new SqlCommand("DGMS.PR_IUD_DGM_DEPT_MAPPING", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             cmd.Parameters.AddWithValue("@IP_MODE", "DELETE");
             cmd.Parameters.AddWithValue("@IP_DEPT_MAPPING_ID", id);

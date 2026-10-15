@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+using Suvarna.DGMS.Api.Helpers;
+using Microsoft.Data.SqlClient;
 using Suvarna.DGMS.Api.Models;
 using System.Data;
 
@@ -6,10 +7,12 @@ namespace Suvarna.DGMS.Api.Repositories
 {
     public class GstConfigRepository
     {
+        private readonly SessionContext _session;
         private readonly string _conn;
 
-        public GstConfigRepository(IConfiguration configuration)
+        public GstConfigRepository(IConfiguration configuration, SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -20,6 +23,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlConnection conn = new SqlConnection(_conn);
             using SqlCommand cmd = new SqlCommand("DGMS.PR_IUD_DGM_GST_CONFIG", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             cmd.Parameters.AddWithValue("@IP_MODE", "INSERT");
             cmd.Parameters.AddWithValue("@IP_GRP_ID", gst.grpId);
@@ -72,6 +76,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlConnection conn = new SqlConnection(_conn);
             using SqlCommand cmd = new SqlCommand("DGMS.PR_IUD_DGM_GST_CONFIG", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             cmd.Parameters.AddWithValue("@IP_MODE", "UPDATE");
             cmd.Parameters.AddWithValue("@IP_GST_CONFIG_ID", gst.gstConfigId);
@@ -125,6 +130,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlConnection conn = new SqlConnection(_conn);
             using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGM_GST_CONFIG", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
 
             DataTable dt = new DataTable();
             using SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -141,6 +147,7 @@ namespace Suvarna.DGMS.Api.Repositories
             using SqlConnection conn = new SqlConnection(_conn);
             using SqlCommand cmd = new SqlCommand("DGMS.PR_GET_DGM_GST_CONFIG_BY_ID", conn);
             cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require());
             cmd.Parameters.AddWithValue("@IP_GST_CONFIG_ID", gstConfigId);
 
             DataTable dt = new DataTable();

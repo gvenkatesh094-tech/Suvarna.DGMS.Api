@@ -281,7 +281,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     string fileName =
                         Guid.NewGuid().ToString() +
-                        Path.GetExtension(idFile.FileName);
+                        Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(idFile, allowPdf: true);
 
                     string fullPath =
                         Path.Combine(folder, fileName);
@@ -312,7 +312,7 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     string fileName =
                         Guid.NewGuid().ToString() +
-                        Path.GetExtension(photoFile.FileName);
+                        Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(photoFile);
 
                     string fullPath =
                         Path.Combine(folder, fileName);

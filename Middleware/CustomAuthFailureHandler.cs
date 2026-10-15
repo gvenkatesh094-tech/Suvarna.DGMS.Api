@@ -9,6 +9,13 @@ namespace Suvarna.DGMS.Api.Middleware
 {
     public class CustomAuthFailureHandler : JwtBearerEvents
     {
+        // The Angular app reads lower-case fields (status, code, message, data).
+        // JsonSerializer.Serialize() defaults to PascalCase, so camelCase is set explicitly.
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         public override Task Challenge(JwtBearerChallengeContext context)
         {
             context.HandleResponse();
@@ -21,10 +28,12 @@ namespace Suvarna.DGMS.Api.Middleware
                 Data = null
             };
 
-            context.Response.StatusCode = StatusCodes.Status200OK;
+            // FIX: real HTTP 401. It used to be 200, so the browser could never tell
+            // "token expired" from a normal answer and the auto token-refresh could not run.
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.ContentType = "application/json";
 
-            var json = JsonSerializer.Serialize(response);
+            var json = JsonSerializer.Serialize(response, JsonOptions);
             return context.Response.WriteAsync(json);
         }
 
@@ -38,10 +47,10 @@ namespace Suvarna.DGMS.Api.Middleware
                 Data = null
             };
 
-            context.Response.StatusCode = StatusCodes.Status200OK;
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/json";
 
-            var json = JsonSerializer.Serialize(response);
+            var json = JsonSerializer.Serialize(response, JsonOptions);
             return context.Response.WriteAsync(json);
         }
     }

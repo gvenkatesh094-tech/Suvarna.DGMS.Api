@@ -88,7 +88,8 @@ namespace Suvarna.DGMS.Api.Repositories
                         expectedCheckoutDt = GetNullableDateTime(dr, "EXPECTED_CHECKOUT_DT"),
                         chargedAmount = GetDecimal(dr, "CHARGED_AMOUNT"),
                         gstPercent = GetDecimal(dr, "GST_PERCENT"),
-                        depositAmount = GetDecimal(dr, "DEPOSIT_AMOUNT")
+                        depositAmount = GetDecimal(dr, "DEPOSIT_AMOUNT"),
+                        netDueAmount = GetDecimal(dr, "NET_DUE_AMOUNT")
                     });
                 }
 
