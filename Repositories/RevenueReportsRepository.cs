@@ -40,7 +40,10 @@ namespace Suvarna.DGMS.Api.Repositories
                         serviceRevenue = GetDecimal(dr, "SERVICE_REVENUE"),
                         gstCollected = GetDecimal(dr, "GST_COLLECTED"),
                         grossRevenue = GetDecimal(dr, "GROSS_REVENUE"),
-                        billCount = GetInt(dr, "BILL_COUNT")
+                        billCount = GetInt(dr, "BILL_COUNT"),
+                        otherRevenue = Has(dr, "OTHER_REVENUE") ? GetDecimal(dr, "OTHER_REVENUE") : 0,
+                        discountAmount = Has(dr, "DISCOUNT_AMT") ? GetDecimal(dr, "DISCOUNT_AMT") : 0,
+                        unbilledStayAmount = Has(dr, "UNBILLED_STAY_AMT") ? GetDecimal(dr, "UNBILLED_STAY_AMT") : 0
                     };
                 }
 
@@ -84,6 +87,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         foodAmount = GetDecimal(dr, "FOOD_AMT"),
                         laundryAmount = GetDecimal(dr, "LAUNDRY_AMT"),
                         otherAmount = GetDecimal(dr, "OTHER_AMT"),
+                        discountAmount = Has(dr, "DISCOUNT_AMT") ? GetDecimal(dr, "DISCOUNT_AMT") : 0,
                         subtotalAmount = GetDecimal(dr, "SUBTOTAL_AMT"),
                         gstAmount = GetDecimal(dr, "GST_AMT"),
                         grossAmount = GetDecimal(dr, "GROSS_AMT")
@@ -125,7 +129,9 @@ namespace Suvarna.DGMS.Api.Repositories
                     {
                         paymentMode = GetString(dr, "PAYMENT_MODE") ?? "",
                         totalAmount = GetDecimal(dr, "TOTAL_AMOUNT"),
-                        txnCount = GetInt(dr, "TXN_COUNT")
+                        txnCount = GetInt(dr, "TXN_COUNT"),
+                        receivedAmount = Has(dr, "RECEIVED_AMT") ? GetDecimal(dr, "RECEIVED_AMT") : 0,
+                        refundedAmount = Has(dr, "REFUNDED_AMT") ? GetDecimal(dr, "REFUNDED_AMT") : 0
                     });
                 }
 
@@ -140,6 +146,13 @@ namespace Suvarna.DGMS.Api.Repositories
         // ==========================================
         // COMMON HELPERS
         // ==========================================
+
+        private static bool Has(SqlDataReader dr, string column)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+                if (string.Equals(dr.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         private static void AddParameter(SqlCommand cmd, string name, object? value)
         {

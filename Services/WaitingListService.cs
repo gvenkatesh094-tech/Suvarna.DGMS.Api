@@ -24,7 +24,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to add to waiting list." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to add to waiting list." : data.message);
             }
 
             return ApiResponse<WaitlistActionResult>.Success(data.message, data);
@@ -36,7 +36,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to notify guest." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to notify guest." : data.message);
             }
 
             return ApiResponse<WaitlistActionResult>.Success(data.message, data);
@@ -48,7 +48,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to remove entry." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to remove entry." : data.message);
             }
 
             return ApiResponse<WaitlistActionResult>.Success(data.message, data);

@@ -89,6 +89,14 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_REMARKS", request.remarks);
 
                 AddParameter(cmd, "@IP_OCC_CAT_CD", request.occCatCd);
+
+                // NEW: advance with the reservation (needs 04_front_office_fixes.sql)
+                if (request.advanceAmount > 0)
+                {
+                    AddParameter(cmd, "@IP_ADVANCE_AMT", request.advanceAmount);
+                    AddParameter(cmd, "@IP_ADVANCE_MODE", request.advanceMode);
+                    AddParameter(cmd, "@IP_ADVANCE_REF", string.IsNullOrWhiteSpace(request.advanceRef) ? null : request.advanceRef.Trim());
+                }
                 // ==========================================
                 // OUTPUT PARAMETERS
                 // ==========================================
@@ -119,6 +127,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 // ==========================================
 
                 conn.Open();
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);   // works with the old procedure too (04 not run yet)
                 cmd.ExecuteNonQuery();
                 return new ReservationResult
                 {
@@ -202,7 +211,16 @@ namespace Suvarna.DGMS.Api.Repositories
 
 
                         bookingStatus = reader.SafeGetString("bookingStatus"),
-                        reservationDt = reader.SafeGetDateTime("reservationDt")
+                        reservationDt = reader.SafeGetDateTime("reservationDt"),
+
+                        // NEW (04 script) - read only when present
+                        advanceAmount = HasColumn(reader, "advanceAmount") ? (reader.SafeGetDecimal("advanceAmount") ?? 0) : 0,
+                        depositAmount = HasColumn(reader, "advanceAmount") ? reader.SafeGetDecimal("advanceAmount") : null,
+                        corpAgreementId = HasColumn(reader, "corpAgreementId") && !reader.IsDBNull(reader.GetOrdinal("corpAgreementId"))
+                            ? reader.SafeGetInt("corpAgreementId") : null,
+                        corpPoRef = HasColumn(reader, "corpPoRef") ? reader.SafeGetString("corpPoRef") : null,
+                        patientId = HasColumn(reader, "patientId") && !reader.IsDBNull(reader.GetOrdinal("patientId"))
+                            ? reader.SafeGetInt("patientId") : null
                     });
                 }
 
@@ -292,6 +310,59 @@ namespace Suvarna.DGMS.Api.Repositories
             }
         }
 
+
+        // ==========================================
+        // NEW: CANCEL RESERVATION (advance refunded less the cancellation charge)
+        // ==========================================
+
+        public ReservationCancelResult CancelReservation(ReservationCancelRequest request)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_connectionString);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CANCEL_RESERVATION", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                AddParameter(cmd, "@IP_SESSION_ID", request.sessionId);
+                AddParameter(cmd, "@IP_BOOKING_ID", request.bookingId);
+                AddParameter(cmd, "@IP_REASON", request.cancelRemarks?.Trim());
+                AddParameter(cmd, "@IP_CANCEL_CHARGE_AMT", request.cancelChargeAmount);
+                AddParameter(cmd, "@IP_REFUND_MODE", string.IsNullOrWhiteSpace(request.refundMode) ? null : request.refundMode);
+                AddParameter(cmd, "@IP_REFUND_REF", string.IsNullOrWhiteSpace(request.refundRef) ? null : request.refundRef.Trim());
+
+                var outRefund = new SqlParameter("@OUT_REFUND_AMT", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
+                var outForfeit = new SqlParameter("@OUT_FORFEITED_AMT", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
+                var outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+                var outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(outRefund);
+                cmd.Parameters.Add(outForfeit);
+                cmd.Parameters.Add(outStatus);
+                cmd.Parameters.Add(outMessage);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+
+                return new ReservationCancelResult
+                {
+                    bookingId = request.bookingId,
+                    refundAmount = outRefund.Value == DBNull.Value ? 0 : Convert.ToDecimal(outRefund.Value),
+                    forfeitedAmount = outForfeit.Value == DBNull.Value ? 0 : Convert.ToDecimal(outForfeit.Value),
+                    status = Convert.ToString(outStatus.Value) ?? "",
+                    message = Convert.ToString(outMessage.Value) ?? ""
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while cancelling reservation: {ex.Message}", ex);
+            }
+        }
+
+        private static bool HasColumn(SqlDataReader reader, string column)
+        {
+            for (int i = 0; i < reader.FieldCount; i++)
+                if (string.Equals(reader.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         // ==========================================
         // COMMON PARAMETER HELPER

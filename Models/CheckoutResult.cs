@@ -86,5 +86,13 @@ namespace Suvarna.DGMS.Api.Models
 
         public bool checkoutCompleted { get; set; }
         public decimal penaltyAmount { get; set; }
+
+        // NEW: early checkout - unused room rent paid at check-in, refunded to the guest
+        public decimal excessRefund { get; set; }
+
+        // NEW (Round B): GST tax invoice issued right after check-out
+        public string? gstInvoiceNo { get; set; }
+        public int? gstInvoiceId { get; set; }
+        public string? gstInvoiceMessage { get; set; }   // why no invoice (e.g. complimentary stay)
     }
 }

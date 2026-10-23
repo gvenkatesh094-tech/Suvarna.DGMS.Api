@@ -26,7 +26,7 @@ namespace Suvarna.DGMS.Api.Services
             if (!string.IsNullOrWhiteSpace(statusFilter) &&
                 !new[] { "ALL", "HELD", "EXHAUSTED" }.Contains(statusFilter.Trim().ToUpperInvariant()))
             {
-                throw new Exception("Invalid status filter. Use HELD, EXHAUSTED or ALL.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid status filter. Use HELD, EXHAUSTED or ALL.");
             }
 
             var data = _repo.GetDepositLedger(sessionId, propertyId, statusFilter);
@@ -42,7 +42,7 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<List<DepositTxnHistory>> GetDepositTxnHistory(int sessionId, int bookingId)
         {
-            if (bookingId <= 0) throw new Exception("A valid booking is required.");
+            if (bookingId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid booking is required.");
 
             var data = _repo.GetDepositTxnHistory(sessionId, bookingId);
 
@@ -63,7 +63,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Deposit refund failed." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Deposit refund failed." : data.message);
             }
 
             return ApiResponse<DepositRefundResult>.Success(data.message, data);
@@ -77,26 +77,26 @@ namespace Suvarna.DGMS.Api.Services
 
         private static void ValidateRefundRequest(DepositRefundRequest request)
         {
-            if (request == null) throw new Exception("Refund request payload is required.");
-            if (request.bookingId <= 0) throw new Exception("A valid booking is required.");
-            if (request.refundAmount <= 0) throw new Exception("Refund amount must be greater than zero.");
+            if (request == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund request payload is required.");
+            if (request.bookingId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid booking is required.");
+            if (request.refundAmount <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund amount must be greater than zero.");
             if (decimal.Round(request.refundAmount, 2) != request.refundAmount)
-                throw new Exception("Refund amount can have at most 2 decimal places.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund amount can have at most 2 decimal places.");
 
-            if (string.IsNullOrWhiteSpace(request.refundMode)) throw new Exception("Refund mode is required.");
+            if (string.IsNullOrWhiteSpace(request.refundMode)) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund mode is required.");
 
             string mode = request.refundMode.Trim().ToUpperInvariant();
             if (!ValidRefundModes.Contains(mode))
-                throw new Exception("Invalid refund mode. Allowed: " + string.Join(", ", ValidRefundModes) + ".");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid refund mode. Allowed: " + string.Join(", ", ValidRefundModes) + ".");
 
             if (mode != "CASH" && string.IsNullOrWhiteSpace(request.refundRef))
-                throw new Exception("Refund reference is required for non-cash refunds.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund reference is required for non-cash refunds.");
 
             if (!string.IsNullOrWhiteSpace(request.refundRef) && request.refundRef.Trim().Length > 50)
-                throw new Exception("Refund reference cannot exceed 50 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund reference cannot exceed 50 characters.");
 
             if (!string.IsNullOrWhiteSpace(request.remarks) && request.remarks.Trim().Length > 300)
-                throw new Exception("Remarks cannot exceed 300 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Remarks cannot exceed 300 characters.");
         }
     }
 }

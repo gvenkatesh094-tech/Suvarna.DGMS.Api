@@ -66,6 +66,12 @@
 
         public DateTime expectedCheckoutDt { get; set; }
 
+        // NEW: actual check-in time (null = now). Accepted by the proc for the last 24 hours only.
+        public DateTime? checkinDt { get; set; }
+
+        // NEW: 'Y' = staff confirmed the check-in although the company credit limit is crossed
+        public string? creditOverride { get; set; }
+
         public decimal depositAmount { get; set; }
         public string? depositPaymentMode { get; set; }
         public string? depositRef { get; set; }
@@ -102,6 +108,40 @@
         public string? paymentRemarks { get; set; }
         public string? cardLast4 { get; set; }
         public string? upiVpa { get; set; }
+
+        // NEW: SUCCESS POS payment (api/pos-payment) used for this check-in; RRN / card last 4 are taken from it
+        public long? posTxnId { get; set; }
+    }
+
+    // NEW: result of PR_DGMS_GET_STAY_QUOTE - what check-in will charge for the stay
+    public class StayQuote
+    {
+        public int tariffId { get; set; }
+        public string billingModel { get; set; } = "";
+        public int stayMinutes { get; set; }
+        public int stayDays { get; set; }
+        public int stayHours { get; set; }
+        public decimal billedUnits { get; set; }
+        public string unitLabel { get; set; } = "";
+        public decimal dailyRate { get; set; }
+        public decimal unitRate { get; set; }
+        public decimal chargeAmount { get; set; }
+        public decimal gstPct { get; set; }
+        public decimal cgstPct { get; set; }
+        public decimal sgstPct { get; set; }
+        public decimal baseAmount { get; set; }
+        public decimal cgstAmount { get; set; }
+        public decimal sgstAmount { get; set; }
+        public decimal igstAmount { get; set; }
+        public decimal totalGst { get; set; }
+        public decimal grossAmount { get; set; }
+        public decimal securityDepositAmount { get; set; }
+
+        // NEW: guest category rules applied to the room charge
+        public decimal listChargeAmount { get; set; }
+        public decimal discountPct { get; set; }
+        public decimal discountAmount { get; set; }
+        public string isComplimentary { get; set; } = "N";
     }
 
     public class CheckinResult

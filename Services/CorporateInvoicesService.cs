@@ -22,9 +22,9 @@ namespace Suvarna.DGMS.Api.Services
             );
         }
 
-        public ApiResponse<List<CorpAgreementLookup>> GetAgreements(int sessionId)
+        public ApiResponse<List<CorpAgreementLookup>> GetAgreements(int sessionId, bool includeExpired = false)
         {
-            var data = _repo.GetAgreements(sessionId);
+            var data = _repo.GetAgreements(sessionId, includeExpired);
 
             return ApiResponse<List<CorpAgreementLookup>>.Success(
                 "Corporate agreements fetched successfully.",
@@ -38,7 +38,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to generate corporate invoice." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to generate corporate invoice." : data.message);
             }
 
             return ApiResponse<CorpInvoiceGenerateResult>.Success(data.message, data);
@@ -54,6 +54,40 @@ namespace Suvarna.DGMS.Api.Services
             }
 
             return ApiResponse<CorpInvoiceDetail?>.Success("Invoice detail fetched successfully.", data);
+        }
+
+        // NEW (Round B): company payment (amount received + TDS deducted = invoice amount)
+        public ApiResponse<CorpInvoiceActionResult> RecordPayment(CorpInvoicePaymentRequest request)
+        {
+            if (request == null || request.invoiceId <= 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Select an invoice.");
+            if (request.amount < 0 || request.tdsAmount < 0 || request.amount + request.tdsAmount <= 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Enter the amount received (and TDS deducted, if any).");
+            if (request.amount != Math.Round(request.amount, 2) || request.tdsAmount != Math.Round(request.tdsAmount, 2))
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Amounts can have at most 2 decimal places.");
+            if (!string.IsNullOrWhiteSpace(request.paymentRef) && request.paymentRef.Trim().Length > 50)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Payment reference cannot exceed 50 characters.");
+
+            var data = _repo.RecordPayment(request);
+            if (data.status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to record the payment." : data.message);
+
+            return ApiResponse<CorpInvoiceActionResult>.Success(data.message, data);
+        }
+
+        // NEW (Round B)
+        public ApiResponse<CorpInvoiceActionResult> CancelInvoice(CorpInvoiceCancelRequest request)
+        {
+            if (request == null || request.invoiceId <= 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Select an invoice.");
+            if (string.IsNullOrWhiteSpace(request.reason) || request.reason.Trim().Length < 5)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Cancellation reason must be at least 5 characters.");
+
+            var data = _repo.CancelInvoice(request);
+            if (data.status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to cancel the invoice." : data.message);
+
+            return ApiResponse<CorpInvoiceActionResult>.Success(data.message, data);
         }
     }
 }

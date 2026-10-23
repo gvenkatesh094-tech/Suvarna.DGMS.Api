@@ -41,11 +41,8 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.GetById(id));
         }
 
-        [HttpPut("status")]
-        public IActionResult UpdateStatus([FromBody] Bed bed)
-        {
-            return Ok(_service.UpdateStatus(bed));
-        }
+        // REMOVED: PUT api/bed/status - it called DGMS.PR_DGMS_UPDATE_BED_STATUS, which does not exist
+        // in the database, and no screen used it. Bed status is set by check-in / checkout / housekeeping.
  
     }
 }

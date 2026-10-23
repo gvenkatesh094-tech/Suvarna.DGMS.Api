@@ -32,13 +32,13 @@ namespace Suvarna.DGMS.Api.Services
             ValidateDateRange(fromDt, toDt);
 
             if (!string.IsNullOrWhiteSpace(status) && !ValidInvoiceStatuses.Contains(status.Trim().ToUpperInvariant()))
-                throw new Exception("Invalid status filter. Use ISSUED, PAID or CANCELLED.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid status filter. Use ISSUED, PAID or CANCELLED.");
 
             if (slabPct.HasValue && !ValidSlabs.Contains(slabPct.Value))
-                throw new Exception("Invalid GST slab filter.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid GST slab filter.");
 
             if (!string.IsNullOrWhiteSpace(returnType) && !ValidReturnTypes.Contains(returnType.Trim().ToUpperInvariant()))
-                throw new Exception("Invalid return type filter. Use B2B or B2C.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid return type filter. Use B2B or B2C.");
 
             var data = _repo.GetGstInvoices(sessionId, fromDt, toDt, status, slabPct, returnType);
 
@@ -70,13 +70,13 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<GstActionResult> MarkInvoicePaid(MarkGstInvoicePaidRequest request)
         {
-            if (request == null) throw new Exception("Request payload is required.");
-            if (request.invoiceId <= 0) throw new Exception("A valid invoice is required.");
+            if (request == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
+            if (request.invoiceId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid invoice is required.");
 
             var data = _repo.MarkInvoicePaid(request.sessionId, request.invoiceId);
 
             if (data.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Unable to mark invoice as paid." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Unable to mark invoice as paid." : data.message);
 
             return ApiResponse<GstActionResult>.Success(data.message, data);
         }
@@ -87,19 +87,19 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<GstActionResult> CancelInvoice(CancelGstInvoiceRequest request)
         {
-            if (request == null) throw new Exception("Request payload is required.");
-            if (request.invoiceId <= 0) throw new Exception("A valid invoice is required.");
+            if (request == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
+            if (request.invoiceId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid invoice is required.");
 
             var reason = request.cancelReason?.Trim() ?? "";
             if (reason.Length < 5)
-                throw new Exception("Cancellation reason must be at least 5 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Cancellation reason must be at least 5 characters.");
             if (reason.Length > 300)
-                throw new Exception("Cancellation reason cannot exceed 300 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Cancellation reason cannot exceed 300 characters.");
 
             var data = _repo.CancelInvoice(request.sessionId, request.invoiceId, reason);
 
             if (data.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Unable to cancel invoice." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Unable to cancel invoice." : data.message);
 
             return ApiResponse<GstActionResult>.Success(data.message, data);
         }
@@ -157,16 +157,16 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<GstActionResult> MarkFiled(MarkGstFiledRequest request)
         {
-            if (request == null) throw new Exception("Request payload is required.");
-            if (request.filingId <= 0) throw new Exception("A valid filing record is required.");
+            if (request == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
+            if (request.filingId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid filing record is required.");
 
             if (!string.IsNullOrWhiteSpace(request.arnNo) && request.arnNo.Trim().Length > 30)
-                throw new Exception("ARN number cannot exceed 30 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("ARN number cannot exceed 30 characters.");
 
             var data = _repo.MarkFiled(request.sessionId, request.filingId, request.arnNo?.Trim());
 
             if (data.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Unable to mark return as filed." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Unable to mark return as filed." : data.message);
 
             return ApiResponse<GstActionResult>.Success(data.message, data);
         }
@@ -178,13 +178,13 @@ namespace Suvarna.DGMS.Api.Services
         private static void ValidateDateRange(DateTime fromDt, DateTime toDt)
         {
             if (fromDt == default || toDt == default)
-                throw new Exception("From and To dates are required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("From and To dates are required.");
 
             if (fromDt.Date > toDt.Date)
-                throw new Exception("From date cannot be after To date.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("From date cannot be after To date.");
 
             if ((toDt.Date - fromDt.Date).TotalDays > MaxDateRangeDays)
-                throw new Exception($"Date range cannot exceed {MaxDateRangeDays} days.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException($"Date range cannot exceed {MaxDateRangeDays} days.");
         }
     }
 }

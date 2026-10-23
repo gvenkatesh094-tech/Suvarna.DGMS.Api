@@ -72,7 +72,15 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.ExecuteNonQuery();
 
-            return outMsg.Value?.ToString() ?? string.Empty;
+            // FIX: the procedure's status was ignored
+            string msg = outMsg.Value == DBNull.Value ? string.Empty : Convert.ToString(outMsg.Value) ?? string.Empty;
+            string status = outStatus.Value == DBNull.Value ? string.Empty : Convert.ToString(outStatus.Value) ?? string.Empty;
+
+            if (status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
+                    string.IsNullOrWhiteSpace(msg) ? "Bed could not be saved." : msg);
+
+            return msg;
         }
         #region Get All Beds
 

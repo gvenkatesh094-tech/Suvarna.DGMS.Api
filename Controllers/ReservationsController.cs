@@ -67,6 +67,16 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.CheckAvailability(sessionId, propertyId, accmTypeId, checkinDt, checkoutDt)
             );
         }
+        // NEW: POST api/reservations/cancel
+        [HttpPost("cancel")]
+        public IActionResult Cancel([FromBody] ReservationCancelRequest request)
+        {
+            if (request == null)
+                return BadRequest(new { message = "Invalid cancel request." });
+
+            return Ok(_service.CancelReservation(request));
+        }
+
         [HttpPost("mark-noshow")]
         public IActionResult MarkNoShow([FromQuery] int sessionId, [FromQuery] int? graceHours = null)
         {

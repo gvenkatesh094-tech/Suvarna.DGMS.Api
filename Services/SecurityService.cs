@@ -17,6 +17,12 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<SecBlacklistCheckResult> CheckBlacklist(SecBlacklistCheckRequest q)
             => string.IsNullOrWhiteSpace(q.idNo) ? ApiResponse<SecBlacklistCheckResult>.Success("OK", new SecBlacklistCheckResult()) : ApiResponse<SecBlacklistCheckResult>.Success("OK", _repo.CheckBlacklist(q));
 
+        // NEW (Round D): blacklist check of a guest at check-in
+        public ApiResponse<SecBlacklistCheckResult> CheckGuest(SecGuestCheckRequest q)
+            => string.IsNullOrWhiteSpace(q?.idNo) || q.idNo.Trim().Length < 4
+                ? ApiResponse<SecBlacklistCheckResult>.Success("OK", new SecBlacklistCheckResult())
+                : ApiResponse<SecBlacklistCheckResult>.Success("OK", _repo.CheckGuest(q));
+
         public ApiResponse<SecIssuePassResult> IssuePass(SecIssuePassRequest q)
         {
             if (string.IsNullOrWhiteSpace(q.visitorName)) return ApiResponse<SecIssuePassResult>.Fail("Visitor name is required.");

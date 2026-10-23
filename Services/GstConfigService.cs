@@ -19,7 +19,7 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<string> Save(GstConfig gst)
         {
             if (gst == null)
-                return ApiResponse<string>.Fail("400", "Request body is empty.");
+                return ApiResponse<string>.Fail("Request body is empty.", "400");
 
             // enforce CGST/SGST vs IGST business rule before hitting DB
             //gst.NormalizeGstSplit();
@@ -29,9 +29,9 @@ namespace Suvarna.DGMS.Api.Services
                 var (success, message, newId) = _repo.Save(gst);
 
                 if (!success)
-                    return ApiResponse<string>.Fail("400", string.IsNullOrWhiteSpace(message)
+                    return ApiResponse<string>.Fail(string.IsNullOrWhiteSpace(message)
                         ? "GST Configuration could not be saved."
-                        : message);
+                        : message, "400");
 
                 return ApiResponse<string>.Success(
                     string.IsNullOrWhiteSpace(message) ? "GST Configuration saved successfully." : message,
@@ -39,7 +39,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponse<string>.Fail("500", $"Error saving GST Configuration: {ex.Message}");
+                return ApiResponse<string>.Fail($"Error saving GST Configuration: {ex.Message}", "500");
             }
         }
 
@@ -50,7 +50,7 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<string> Update(GstConfig gst)
         {
             if (gst == null || gst.gstConfigId <= 0)
-                return ApiResponse<string>.Fail("400", "Invalid GST Configuration Id.");
+                return ApiResponse<string>.Fail("Invalid GST Configuration Id.", "400");
 
          
 
@@ -59,9 +59,9 @@ namespace Suvarna.DGMS.Api.Services
                 var (success, message) = _repo.Update(gst);
 
                 if (!success)
-                    return ApiResponse<string>.Fail("400", string.IsNullOrWhiteSpace(message)
+                    return ApiResponse<string>.Fail(string.IsNullOrWhiteSpace(message)
                         ? "GST Configuration could not be updated."
-                        : message);
+                        : message, "400");
 
                 return ApiResponse<string>.Success(
                     string.IsNullOrWhiteSpace(message) ? "GST Configuration updated successfully." : message,
@@ -69,7 +69,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponse<string>.Fail("500", $"Error updating GST Configuration: {ex.Message}");
+                return ApiResponse<string>.Fail($"Error updating GST Configuration: {ex.Message}", "500");
             }
         }
 
@@ -112,7 +112,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponse<List<GstConfig>>.Fail("500", $"Error fetching GST Configurations: {ex.Message}");
+                return ApiResponse<List<GstConfig>>.Fail($"Error fetching GST Configurations: {ex.Message}", "500");
             }
         }
 
@@ -123,14 +123,14 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<GstConfig> GetById(int gstConfigId)
         {
             if (gstConfigId <= 0)
-                return ApiResponse<GstConfig>.Fail("400", "Invalid GST Configuration Id.");
+                return ApiResponse<GstConfig>.Fail("Invalid GST Configuration Id.", "400");
 
             try
             {
                 DataTable dt = _repo.GetById(gstConfigId);
 
                 if (dt.Rows.Count == 0)
-                    return ApiResponse<GstConfig>.Fail("404", "GST Configuration not found.");
+                    return ApiResponse<GstConfig>.Fail("GST Configuration not found.", "404");
 
                 DataRow row = dt.Rows[0];
 
@@ -164,7 +164,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponse<GstConfig>.Fail("500", $"Error fetching GST Configuration: {ex.Message}");
+                return ApiResponse<GstConfig>.Fail($"Error fetching GST Configuration: {ex.Message}", "500");
             }
         }
 

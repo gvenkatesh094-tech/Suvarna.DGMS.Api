@@ -25,18 +25,25 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.GetKpiSummary(sessionId, propertyId));
         }
 
+        // fromDate / toDate (optional, local dates): report period - default month to date
         [HttpGet("by-room-type")]
-        public IActionResult GetByRoomType([FromQuery] int sessionId)
+        public IActionResult GetByRoomType(
+            [FromQuery] int sessionId,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
         {
             if (sessionId <= 0) return BadRequest("A valid session is required.");
-            return Ok(_service.GetByRoomType(sessionId));
+            return Ok(_service.GetByRoomType(sessionId, fromDate, toDate));
         }
 
         [HttpGet("category-breakdown")]
-        public IActionResult GetCategoryBreakdown([FromQuery] int sessionId)
+        public IActionResult GetCategoryBreakdown(
+            [FromQuery] int sessionId,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
         {
             if (sessionId <= 0) return BadRequest("A valid session is required.");
-            return Ok(_service.GetCategoryBreakdown(sessionId));
+            return Ok(_service.GetCategoryBreakdown(sessionId, fromDate, toDate));
         }
 
         [HttpGet("trend")]

@@ -6,11 +6,17 @@ namespace Suvarna.DGMS.Api.Services
     public class CheckinService
     {
         private readonly CheckinRepository _repo;
+        private readonly PosPaymentService _pos;                       // NEW: POS machine payments
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext _session;
 
         public CheckinService(
-            CheckinRepository repo)
+            CheckinRepository repo,
+            PosPaymentService pos,
+            Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
             _repo = repo;
+            _pos = pos;
+            _session = session;
         }
 
         // ==========================================
@@ -62,6 +68,25 @@ namespace Suvarna.DGMS.Api.Services
         }
 
         // ==========================================
+        // NEW: STAY QUOTE
+        // ==========================================
+
+        public ApiResponse<StayQuote?> GetStayQuote(int sessionId, int tariffId, DateTime checkinDt, DateTime checkoutDt, int? occCatId = null, int? corpAgreementId = null)
+        {
+            if (tariffId <= 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Please select a tariff.");
+
+            if (checkoutDt <= checkinDt)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Expected check-out must be after the check-in time.");
+
+            var data = _repo.GetStayQuote(sessionId, tariffId, checkinDt, checkoutDt, occCatId, corpAgreementId);
+
+            return ApiResponse<StayQuote?>.Success(
+                data == null ? "Tariff not found." : "Stay amount calculated.",
+                data);
+        }
+
+        // ==========================================
         // CONFIRM CHECK-IN
         // ==========================================
 
@@ -69,16 +94,54 @@ namespace Suvarna.DGMS.Api.Services
         {
             //ValidateCheckin(request);
 
-            var data = _repo.ConfirmCheckin(request, idFile, photoFile);
+            // NEW: the request is form data, so SessionBindingFilter cannot replace its sessionId:
+            // use the checked X-Session-Id header (same rule as every other API)
+            var sid = _session.Require(request.sessionId);
+            if (int.TryParse(sid, out var headerSessionId)) request.sessionId = headerSessionId;
+
+            // NEW: card paid on the POS machine -> one swipe covers room + GST + deposit; RRN and card
+            // last 4 come from the verified POS payment, not from the screen
+            var pos = _pos.ClaimForPayment(sid, request.posTxnId, "CHECKIN", request.existingBookingId ?? 0,
+                request.totalPaidAmount + request.depositAmount, request.paymentMode);
+            if (pos != null)
+            {
+                request.paymentRef = pos.Rrn;
+                request.depositRef = pos.Rrn;
+                request.depositPaymentMode = request.paymentMode;
+                request.cardLast4 = pos.CardLast4;
+                request.upiVpa = null;
+            }
+
+            CheckinResult data;
+            try
+            {
+                data = _repo.ConfirmCheckin(request, idFile, photoFile);
+            }
+            catch
+            {
+                _pos.SafeRelease(sid, pos);
+                throw;
+            }
+
+            // NEW: company credit limit crossed -> the screen asks the user and sends creditOverride = 'Y'
+            if (data.status == "W")
+            {
+                _pos.SafeRelease(sid, pos);
+                return ApiResponse<CheckinResult>.Fail(data.message, "CREDIT_LIMIT");
+            }
 
             if (data.status != "S")
             {
-                throw new Exception(
+                _pos.SafeRelease(sid, pos);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
                     string.IsNullOrWhiteSpace(data.message)
                         ? "Check-in failed."
                         : data.message
                 );
             }
+
+            var posWarning = _pos.LinkAfterSave(sid, pos, data.bookingId, data.billId, null);
+            if (posWarning != null) data.message = (data.message ?? "") + " | " + posWarning;
 
             return ApiResponse<CheckinResult>.Success(data.message, data);
         }

@@ -23,10 +23,11 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.GetInvoices(sessionId));
         }
 
+        // includeExpired=true (NEW, Round B): an agreement that ended can still be invoiced for its last period
         [HttpGet("agreements")]
-        public IActionResult GetAgreements([FromQuery] int sessionId)
+        public IActionResult GetAgreements([FromQuery] int sessionId, [FromQuery] bool includeExpired = false)
         {
-            return Ok(_service.GetAgreements(sessionId));
+            return Ok(_service.GetAgreements(sessionId, includeExpired));
         }
 
         [HttpPost("generate")]
@@ -39,6 +40,22 @@ namespace Suvarna.DGMS.Api.Controllers
         public IActionResult GetInvoiceDetail(int invoiceId, [FromQuery] int sessionId)
         {
             return Ok(_service.GetInvoiceDetail(sessionId, invoiceId));
+        }
+
+        // NEW (Round B): company payment received against the invoice
+        [HttpPost("{invoiceId:int}/payment")]
+        public IActionResult RecordPayment(int invoiceId, [FromBody] CorpInvoicePaymentRequest request)
+        {
+            request.invoiceId = invoiceId;
+            return Ok(_service.RecordPayment(request));
+        }
+
+        // NEW (Round B): cancel an unpaid invoice (its stays can be invoiced again)
+        [HttpPost("{invoiceId:int}/cancel")]
+        public IActionResult CancelInvoice(int invoiceId, [FromBody] CorpInvoiceCancelRequest request)
+        {
+            request.invoiceId = invoiceId;
+            return Ok(_service.CancelInvoice(request));
         }
     }
 }

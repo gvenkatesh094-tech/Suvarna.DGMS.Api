@@ -77,6 +77,13 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     options.SuppressModelStateInvalidFilter = true;
 });
 
+// FIX: with nullable reference types every non-nullable "string" property was treated as [Required],
+// so an empty optional field (phone, remarks, codes in delete requests ...) failed with "Validation failed".
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
+{
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
+
 #endregion
 
 #region Swagger
@@ -158,6 +165,10 @@ builder.Services.AddScoped<RevenueReportsRepository>();
 builder.Services.AddScoped<ExecutiveDashboardRepository>();
 builder.Services.AddScoped<OccupancyReportsRepository>();
 builder.Services.AddScoped<ReceptionDashboardRepository>();
+builder.Services.AddScoped<UserAccessRepository>();          // property level access
+builder.Services.AddScoped<RefundManagementRepository>();    // FIX: was not registered -> Refund Management screen failed with 500
+builder.Services.AddScoped<RoomAssetsRepository>();          // FIX: was not registered -> Room Assets screen failed with 500
+builder.Services.AddScoped<PosPaymentRepository>();         // NEW: PayLink POS payments (any POS provider PayLink supports)
 
 #endregion
 
@@ -165,9 +176,11 @@ builder.Services.AddScoped<ReceptionDashboardRepository>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<SessionContext>();   // X-Session-Id of the current request
+builder.Services.AddScoped<SessionContext>();
+builder.Services.AddScoped<Suvarna.DGMS.Api.Helpers.PropertyScope>();   // NEW: login property for list APIs   // X-Session-Id of the current request
 
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<PropertyAccessHelper>();          // property level access settings + JWT user
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<BuildingService>();
@@ -202,6 +215,15 @@ builder.Services.AddScoped<RevenueReportsService>();
 builder.Services.AddScoped<ExecutiveDashboardService>();
 builder.Services.AddScoped<OccupancyReportsService>();
 builder.Services.AddScoped<ReceptionDashboardService>();
+builder.Services.AddScoped<UserAccessService>();             // property level access
+builder.Services.AddScoped<RefundManagementService>();       // FIX: was not registered
+builder.Services.AddScoped<RoomAssetsService>();             // FIX: was not registered
+
+// NEW: PayLink POS. Credentials stay on the server (System Parameters DGMS_PAYLINK_*, never sent to the browser).
+builder.Services.AddScoped<PayLinkSettings>();   // 23-Oct: settings from System Parameters (DGMS_PAYLINK_*), not appsettings
+builder.Services.AddHttpClient(PayLinkClient.HttpClientName);
+builder.Services.AddScoped<PayLinkClient>();
+builder.Services.AddScoped<PosPaymentService>();
 
 #endregion
 
@@ -251,6 +273,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.Configure<ModuleSettings>(builder.Configuration.GetSection("ModuleSettings"));
 builder.Services.Configure<SessionSettings>(builder.Configuration.GetSection("SessionSettings"));
+builder.Services.Configure<PropertyAccessSettings>(builder.Configuration.GetSection("PropertyAccess"));
 
 builder.Services.AddAuthorization();
 
@@ -266,6 +289,25 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
+
+// NEW (security): guest ID proofs / photos are personal data. Old files under wwwroot/uploads/id and
+// wwwroot/uploads/guestphoto are no longer served as public files; use GET api/documents/guest.
+Suvarna.DGMS.Api.Helpers.SecureDocumentStore.Root =
+    Path.Combine(builder.Environment.ContentRootPath, "SecureUploads");
+Suvarna.DGMS.Api.Helpers.SecureDocumentStore.LegacyRoot =
+    Path.Combine(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"), "uploads");
+
+app.Use(async (context, next) =>
+{
+    var reqPath = context.Request.Path;
+    if (reqPath.StartsWithSegments("/uploads/id", StringComparison.OrdinalIgnoreCase) ||
+        reqPath.StartsWithSegments("/uploads/guestphoto", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+    await next();
+});
 
 // Default static files (wwwroot)
 app.UseStaticFiles();

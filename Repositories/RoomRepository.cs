@@ -108,7 +108,15 @@ namespace Suvarna.DGMS.Api.Repositories
 
             cmd.ExecuteNonQuery();
 
-            return outMsg.Value.ToString();
+            // FIX: the procedure's status was ignored - "room not found" / errors were shown as success
+            string msg = outMsg.Value == DBNull.Value ? string.Empty : Convert.ToString(outMsg.Value) ?? string.Empty;
+            string status = outStatus.Value == DBNull.Value ? string.Empty : Convert.ToString(outStatus.Value) ?? string.Empty;
+
+            if (status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
+                    string.IsNullOrWhiteSpace(msg) ? "Room could not be saved." : msg);
+
+            return msg;
         }
         public List<Room> GetAllRooms(int sessionId,int locationId)
         {

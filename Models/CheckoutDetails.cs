@@ -138,6 +138,12 @@ namespace Suvarna.DGMS.Api.Models
 
         
         public decimal roomGstAmount { get; set; }
+
+        // NEW: room rent paid at check-in that is more than the final bill (early checkout)
+        public decimal excessPaidRefund { get; set; }
+
+        // NEW: corporate booking (used to offer "Bill to company")
+        public int? corpAgreementId { get; set; }
         public decimal serviceGstAmount { get; set; }
 
         //=========================================

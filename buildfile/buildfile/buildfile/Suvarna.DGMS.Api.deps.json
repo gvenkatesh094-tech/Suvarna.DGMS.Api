@@ -14,8 +14,6 @@
           "Microsoft.Data.SqlClient": "6.1.4",
           "Newtonsoft.Json": "13.0.4",
           "Newtonsoft.Json.Encryption": "2.2.0",
-          "Npgsql": "10.0.0",
-          "Npgsql.Json.NET": "8.0.8",
           "Otp.NET": "1.4.1",
           "Serilog.AspNetCore": "10.0.0",
           "Serilog.Enrichers.Environment": "3.0.1",
@@ -516,30 +514,6 @@
           "lib/netstandard2.0/Newtonsoft.Json.Encryption.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
-          }
-        }
-      },
-      "Npgsql/10.0.0": {
-        "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "System.Diagnostics.DiagnosticSource": "10.0.0"
-        },
-        "runtime": {
-          "lib/net8.0/Npgsql.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.0.0"
-          }
-        }
-      },
-      "Npgsql.Json.NET/8.0.8": {
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.4",
-          "Npgsql": "10.0.0"
-        },
-        "runtime": {
-          "lib/net6.0/Npgsql.Json.NET.dll": {
-            "assemblyVersion": "8.0.8.0",
-            "fileVersion": "8.0.8.0"
           }
         }
       },
@@ -1163,20 +1137,6 @@
       "sha512": "sha512-C4+uGZVNVf+2tUDYAb8ctt9OkxY72BGw8jTE4Cfs2vuDjyfGT5+7ffO8mxL/C1zhZCFqt4ipxs6FesMl0eUs0w==",
       "path": "newtonsoft.json.encryption/2.2.0",
       "hashPath": "newtonsoft.json.encryption.2.2.0.nupkg.sha512"
-    },
-    "Npgsql/10.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-xZAYhPOU2rUIFpV48xsqhCx9vXs6Y+0jX2LCoSEfDFYMw9jtAOUk3iQsCnDLrFIv9NT3JGMihn7nnuZsPKqJmA==",
-      "path": "npgsql/10.0.0",
-      "hashPath": "npgsql.10.0.0.nupkg.sha512"
-    },
-    "Npgsql.Json.NET/8.0.8": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-q02hKI7fMassUBpQv3ddy53BDDvq600fjMWVuRUsYQjoF738SjIHSqlAEEHKXLl1/90BHGZNdSNmoWlihawGTg==",
-      "path": "npgsql.json.net/8.0.8",
-      "hashPath": "npgsql.json.net.8.0.8.nupkg.sha512"
     },
     "Otp.NET/1.4.1": {
       "type": "package",

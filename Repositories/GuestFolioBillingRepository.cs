@@ -17,7 +17,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET BOOKINGS (Select Guest dropdown)
         // ==========================================
 
-        public List<BillingBookingLookup> GetBookings(int sessionId, int? propertyId)
+        public List<BillingBookingLookup> GetBookings(int sessionId, int? propertyId, bool includeCheckedOut = false)
         {
             List<BillingBookingLookup> list = new();
 
@@ -28,6 +28,8 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", (object?)propertyId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IP_INCLUDE_CHECKEDOUT", includeCheckedOut ? "Y" : "N");   // NEW (Round B)
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);                          // works before 07 is run
                 conn.Open();
 
                 using SqlDataReader dr = cmd.ExecuteReader();
@@ -39,7 +41,10 @@ namespace Suvarna.DGMS.Api.Repositories
                         bookingRef = GetString(dr, "BOOKING_REF") ?? "",
                         guestNm = GetString(dr, "GUEST_NM") ?? "",
                         roomNo = GetString(dr, "ROOM_NO") ?? "",
-                        propertyId = GetInt(dr, "PROPERTY_ID")
+                        propertyId = GetInt(dr, "PROPERTY_ID"),
+                        bookingStatus = Has(dr, "BOOKING_STATUS") ? (GetString(dr, "BOOKING_STATUS") ?? "CHECKEDIN") : "CHECKEDIN",
+                        gstInvoiceNo = Has(dr, "GST_INVOICE_NO") ? GetString(dr, "GST_INVOICE_NO") : null,
+                        balanceAmt = Has(dr, "BALANCE_AMT") ? GetDecimal(dr, "BALANCE_AMT") : 0
                     });
                 }
 
@@ -152,7 +157,14 @@ namespace Suvarna.DGMS.Api.Repositories
                     patientId = GetNullableInt(dr, "PATIENT_ID"),
                     admnId = GetNullableInt(dr, "ADMN_ID"),
                     wardNm = GetString(dr, "WARD_NM"),
-                    transferStatus = GetString(dr, "TRANSFER_STATUS")
+                    transferStatus = GetString(dr, "TRANSFER_STATUS"),
+
+                    // NEW (Round B) - read only when 07 is run
+                    bookingStatus = Has(dr, "BOOKING_STATUS") ? (GetString(dr, "BOOKING_STATUS") ?? "CHECKEDIN") : "CHECKEDIN",
+                    discountAmt = Has(dr, "DISCOUNT_AMT") ? GetDecimal(dr, "DISCOUNT_AMT") : 0,
+                    billToType = Has(dr, "BILL_TO_TYPE") ? (GetString(dr, "BILL_TO_TYPE") ?? "GUEST") : "GUEST",
+                    corpNm = Has(dr, "CORP_NM") ? GetString(dr, "CORP_NM") : null,
+                    gstInvoiceId = Has(dr, "GST_INVOICE_ID") ? GetNullableInt(dr, "GST_INVOICE_ID") : null
                 };
 
                 // Result Set 2 : charge lines
@@ -172,7 +184,8 @@ namespace Suvarna.DGMS.Api.Repositories
                             status = GetString(dr, "STATUS") ?? "",
                             // NEW — requires one extra property on the
                             // BillingChargeLine model: `string chargeSource`.
-                            chargeSource = GetString(dr, "CHARGE_SOURCE") ?? "MANUAL"
+                            chargeSource = GetString(dr, "CHARGE_SOURCE") ?? "MANUAL",
+                            chargeType = Has(dr, "CHARGE_TYPE") ? (GetString(dr, "CHARGE_TYPE") ?? "SERVICE") : "SERVICE"
                         });
                     }
                 }
@@ -433,8 +446,104 @@ namespace Suvarna.DGMS.Api.Repositories
         }
 
         // ==========================================
+        // NEW (Round B): PRINT GST INVOICE (by booking, or by invoice id)
+        // ==========================================
+
+        public GstInvoicePrint? GetInvoicePrint(int sessionId, int? bookingId, int? invoiceId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_GST_INVOICE_PRINT", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_BOOKING_ID", (object?)bookingId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IP_INVOICE_ID", (object?)invoiceId ?? DBNull.Value);
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                if (!dr.Read())
+                    return null;
+
+                var inv = new GstInvoicePrint
+                {
+                    invoiceId = GetInt(dr, "INVOICE_ID"),
+                    invoiceNo = GetString(dr, "INVOICE_NO") ?? "",
+                    invoiceDt = GetNullableDateTime(dr, "INVOICE_DT"),
+                    invoiceStatus = GetString(dr, "INVOICE_STATUS") ?? "",
+                    propertyNm = GetString(dr, "PROPERTY_NM") ?? "",
+                    propertyAddress = GetString(dr, "PROPERTY_ADDRESS"),
+                    propertyCity = GetString(dr, "PROPERTY_CITY"),
+                    propertyState = GetString(dr, "PROPERTY_STATE"),
+                    propertyPin = GetString(dr, "PROPERTY_PIN"),
+                    propertyPhone = GetString(dr, "PROPERTY_PHONE"),
+                    propertyEmail = GetString(dr, "PROPERTY_EMAIL"),
+                    supplierGstin = GetString(dr, "SUPPLIER_GSTIN"),
+                    placeOfSupply = GetString(dr, "PLACE_OF_SUPPLY"),
+                    customerNm = GetString(dr, "CUSTOMER_NM") ?? "",
+                    customerAddress = GetString(dr, "CUSTOMER_ADDRESS"),
+                    customerGstin = GetString(dr, "CUSTOMER_GSTIN"),
+                    customerStateCd = GetString(dr, "CUSTOMER_STATE_CD"),
+                    bookingNo = GetString(dr, "BOOKING_NO") ?? "",
+                    roomNo = GetString(dr, "ROOM_NO") ?? "",
+                    checkinDt = GetNullableDateTime(dr, "CHECKIN_DT"),
+                    checkoutDt = GetNullableDateTime(dr, "CHECKOUT_DT"),
+                    baseAmt = GetDecimal(dr, "BASE_AMT"),
+                    cgstAmt = GetDecimal(dr, "CGST_AMT"),
+                    sgstAmt = GetDecimal(dr, "SGST_AMT"),
+                    igstAmt = GetDecimal(dr, "IGST_AMT"),
+                    totalTaxAmt = GetDecimal(dr, "TOTAL_TAX_AMT"),
+                    discountAmt = GetDecimal(dr, "DISCOUNT_AMT"),
+                    grossAmt = GetDecimal(dr, "GROSS_AMT"),
+                    roundingAdj = GetDecimal(dr, "ROUNDING_ADJ"),
+                    roundedAmt = GetDecimal(dr, "ROUNDED_AMT"),
+                    paidAmt = GetDecimal(dr, "PAID_AMT"),
+                    depositAdjustedAmt = GetDecimal(dr, "DEPOSIT_ADJUSTED_AMT"),
+                    balanceAmt = GetDecimal(dr, "BALANCE_AMT"),
+                    billToType = GetString(dr, "BILL_TO_TYPE") ?? "GUEST"
+                };
+
+                if (dr.NextResult())
+                {
+                    while (dr.Read())
+                    {
+                        inv.lines.Add(new GstInvoicePrintLine
+                        {
+                            lineNo = GetInt(dr, "LINE_NO"),
+                            sacCode = GetString(dr, "SAC_CODE") ?? "",
+                            description = GetString(dr, "SERVICE_DESC") ?? "",
+                            uom = GetString(dr, "UNIT_OF_MEASURE"),
+                            qty = GetDecimal(dr, "QTY"),
+                            unitRate = GetDecimal(dr, "UNIT_RATE_AMT"),
+                            baseAmt = GetDecimal(dr, "BASE_AMT"),
+                            gstPct = GetDecimal(dr, "GST_SLAB_PCT"),
+                            cgstAmt = GetDecimal(dr, "CGST_AMT"),
+                            sgstAmt = GetDecimal(dr, "SGST_AMT"),
+                            igstAmt = GetDecimal(dr, "IGST_AMT"),
+                            lineTotal = GetDecimal(dr, "LINE_TOTAL_AMT")
+                        });
+                    }
+                }
+
+                return inv;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while reading the GST invoice.", ex);
+            }
+        }
+
+        // ==========================================
         // COMMON HELPERS (same pattern as CheckinRepository)
         // ==========================================
+
+        /// <summary>NEW: true when the result set has this column (screens keep working before the DB script is run).</summary>
+        private static bool Has(SqlDataReader dr, string column)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+                if (string.Equals(dr.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         private static string? GetString(SqlDataReader dr, string column)
         {

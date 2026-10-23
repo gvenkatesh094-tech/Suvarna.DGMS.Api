@@ -47,9 +47,9 @@
 
         public DateTime EffectiveFromDt { get; set; }
 
-        public DateTime EffectiveToDt { get; set; }
+        public DateTime? EffectiveToDt { get; set; }   // FIX: open-ended agreements (NULL) crashed the list
 
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public string RecordStatus { get; set; }
 

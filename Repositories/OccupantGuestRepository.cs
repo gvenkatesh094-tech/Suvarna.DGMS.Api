@@ -9,8 +9,11 @@ namespace Suvarna.DGMS.Api.Repositories
     {
         private readonly string _conn;
 
-        public OccupantGuestRepository(IConfiguration configuration)
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext? _session;   // NEW: lists only the login location
+
+        public OccupantGuestRepository(IConfiguration configuration, Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -121,6 +124,11 @@ namespace Suvarna.DGMS.Api.Repositories
                 new SqlCommand("DGMS.PR_GET_OCCUPANT_CATEGORY", conn);
 
             cmd.CommandType = CommandType.StoredProcedure;
+
+            // session is mandatory: the procedure takes group / org / location from it (2026-10-22_dgms_room_bed.sql)
+            if (!int.TryParse(_session?.SessionId, out var sessionId) || sessionId <= 0)
+                throw new UnauthorizedAccessException("Session id is missing. Please login again.");
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
 
             conn.Open();
 

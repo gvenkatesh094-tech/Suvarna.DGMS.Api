@@ -7,9 +7,12 @@ namespace Suvarna.DGMS.Api.Services
     {
         private readonly BuildingRepository _repo;
 
-        public BuildingService(BuildingRepository repo)
+        private readonly Suvarna.DGMS.Api.Helpers.PropertyScope _scope;   // NEW: login property
+
+        public BuildingService(BuildingRepository repo, Suvarna.DGMS.Api.Helpers.PropertyScope scope)
         {
             _repo = repo;
+            _scope = scope;
         }
 
         public ApiResponse<string> inUpdService(Building building)
@@ -56,7 +59,8 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<List<Building>> GetAll()
         {
-            var list = _repo.GetAllBuildings();
+            // NEW: only buildings of the property chosen at login
+            var list = _scope.Filter(_repo.GetAllBuildings(), b => b.propertyId);
 
             return ApiResponse<List<Building>>.Success(
                 "Building List",

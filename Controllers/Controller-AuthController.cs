@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Suvarna.DGMS.Api.Helpers;
 using Suvarna.DGMS.Api.Models;
 using Suvarna.DGMS.Api.Services;
 
@@ -12,11 +13,37 @@ namespace Suvarna.DGMS.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _service;
+        private readonly SessionContext _session;
+        private readonly PropertyAccessHelper _access;
 
         public AuthController(
-            AuthService service)
+            AuthService service,
+            SessionContext session,
+            PropertyAccessHelper access)
         {
             _service = service;
+            _session = session;
+            _access = access;
+        }
+
+        // =====================================
+        // PROPERTY LEVEL ACCESS
+        // =====================================
+
+        /// <summary>Properties of one location for the login screen (user taken from the JWT).</summary>
+        [HttpGet("login-properties")]
+        public async Task<IActionResult> GetLoginProperties([FromQuery] long locId, [FromQuery] long userId = 0)
+        {
+            long jwtUserId = _access.JwtUserId;
+
+            return Ok(await _service.GetLoginProperties(jwtUserId > 0 ? jwtUserId : userId, locId));
+        }
+
+        /// <summary>Change the property of the current session (header X-Session-Id).</summary>
+        [HttpPost("switch-property")]
+        public async Task<IActionResult> SwitchProperty([FromBody] SwitchPropertyRequest request)
+        {
+            return Ok(await _service.SwitchProperty(_session.SessionId ?? string.Empty, request?.PropertyId ?? -1));
         }
 
         [AllowAnonymous]
@@ -125,9 +152,10 @@ namespace Suvarna.DGMS.Api.Controllers
 
                 return Ok(response);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, ex.Message);
+                // FIX (security): no internal error text to the browser; GlobalExceptionMiddleware logs it with a reference id
+                throw;
             }
         }
         [AllowAnonymous]

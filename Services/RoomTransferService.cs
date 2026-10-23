@@ -38,7 +38,8 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to confirm room transfer." : data.message);
+                // FIX: a plain Exception hid the reason ("Target room is not available" ...) behind "Unexpected error"
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to confirm room transfer." : data.message);
             }
 
             return ApiResponse<TransferResult>.Success(data.message, data);

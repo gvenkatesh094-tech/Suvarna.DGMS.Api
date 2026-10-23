@@ -62,7 +62,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@PROPERTY_NM", (object?)property.propertyName ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@PROPERTY_TYPE_CD", (object?)property.propertyType ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ADDRESS_LINE1", (object?)property.address ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@ADDRESS_LINE2", (object?)property.address ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ADDRESS_LINE2", DBNull.Value);   // FIX: the same address was saved twice
                 cmd.Parameters.AddWithValue("@CITY", (object?)property.city ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@STATE_CD", (object?)property.state ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@PIN_CODE", (object?)property.pinCode ?? DBNull.Value);
@@ -70,7 +70,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@TOTAL_BUILDINGS", property.buildings);
                 cmd.Parameters.AddWithValue("@TOTAL_ROOMS", property.rooms);
                 cmd.Parameters.AddWithValue("@TOTAL_BEDS", property.beds);
-                cmd.Parameters.AddWithValue("@CONTACT_PERSON_NM", (object?)property.phone ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CONTACT_PERSON_NM", DBNull.Value);   // FIX: the phone number was saved as the contact person
                 cmd.Parameters.AddWithValue("@CONTACT_PHONE", (object?)property.phone ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CONTACT_EMAIL", (object?)property.email ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CREATE_BY", property.userId);

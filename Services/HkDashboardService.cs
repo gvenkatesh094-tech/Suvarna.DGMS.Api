@@ -85,7 +85,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to assign task." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to assign task." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -101,7 +101,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to update checklist item." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to update checklist item." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -117,7 +117,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to complete task." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to complete task." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -133,7 +133,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to record inspection." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to record inspection." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -162,7 +162,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(
@@ -185,7 +185,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to upload checklist item photo." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to upload checklist item photo." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(
@@ -218,7 +218,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to submit request." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to submit request." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -240,7 +240,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to dismiss request." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to dismiss request." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -256,7 +256,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to create task." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to create task." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);
@@ -295,7 +295,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark notification read." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark notification read." : data.message);
             }
 
             return ApiResponse<HkOperationResult>.Success(data.message, data);

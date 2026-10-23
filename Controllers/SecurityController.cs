@@ -19,6 +19,8 @@ namespace Suvarna.DGMS.Api.Controllers
         [HttpGet("kpis")] public IActionResult Kpis([FromQuery] DateTime fromUtc, [FromQuery] DateTime toUtc) => Ok(_s.Kpis(fromUtc, toUtc));
 
         [HttpPost("blacklist/check")] public IActionResult Check([FromBody] SecBlacklistCheckRequest q) => Ok(_s.CheckBlacklist(q));
+        // NEW (Round D): guest at check-in (ID number is hashed, never stored)
+        [HttpPost("guest-check")] public IActionResult GuestCheck([FromBody] SecGuestCheckRequest q) => Ok(_s.CheckGuest(q));
         [HttpPost("passes")] public IActionResult Issue([FromBody] SecIssuePassRequest q) => Ok(_s.IssuePass(q));
         [HttpGet("passes")] public IActionResult Passes([FromQuery] string? status, [FromQuery] string? search, [FromQuery] DateTime? fromUtc, [FromQuery] DateTime? toUtc) => Ok(_s.Passes(status, search, fromUtc, toUtc));
         [HttpPost("passes/revoke")] public IActionResult Revoke([FromBody] SecRevokeRequest q) => Ok(_s.Revoke(q));

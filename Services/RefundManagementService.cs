@@ -26,7 +26,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to submit refund request." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to submit refund request." : data.message);
             }
 
             return ApiResponse<SubmitRefundResult>.Success(data.message, data);
@@ -40,21 +40,22 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<RefundActionResult> Decide(DecideRefundRequest request)
         {
-            if (request.decision != "APPROVE" && request.decision != "REJECT")
+            // NEW (Round B): CANCEL closes a pending / approved request that will not be paid
+            if (request.decision != "APPROVE" && request.decision != "REJECT" && request.decision != "CANCEL")
             {
-                throw new Exception("Decision must be APPROVE or REJECT.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Decision must be APPROVE, REJECT or CANCEL.");
             }
 
-            if (request.decision == "REJECT" && string.IsNullOrWhiteSpace(request.remarks))
+            if ((request.decision == "REJECT" || request.decision == "CANCEL") && string.IsNullOrWhiteSpace(request.remarks))
             {
-                throw new Exception("A reason is required to reject a refund request.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A reason is required.");
             }
 
             var data = _repo.Decide(request);
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to record decision." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to record decision." : data.message);
             }
 
             return ApiResponse<RefundActionResult>.Success(data.message, data);
@@ -66,7 +67,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to complete refund." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to complete refund." : data.message);
             }
 
             return ApiResponse<RefundActionResult>.Success(data.message, data);
@@ -80,32 +81,32 @@ namespace Suvarna.DGMS.Api.Services
         {
             if (request.bookingId <= 0)
             {
-                throw new Exception("Please select a booking.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Please select a booking.");
             }
 
             if (request.amount <= 0)
             {
-                throw new Exception("Refund amount must be greater than zero.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund amount must be greater than zero.");
             }
 
             if (string.IsNullOrWhiteSpace(request.mode))
             {
-                throw new Exception("Refund mode is required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Refund mode is required.");
             }
 
             if ((request.mode == "BANK_TRANSFER" || request.mode == "UPI") && string.IsNullOrWhiteSpace(request.accountRef))
             {
-                throw new Exception("Account/UPI details are required for this refund mode.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Account/UPI details are required for this refund mode.");
             }
 
             if (string.IsNullOrWhiteSpace(request.reasonCd))
             {
-                throw new Exception("Reason for refund is required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Reason for refund is required.");
             }
 
             if (request.reasonCd == "OTHER" && string.IsNullOrWhiteSpace(request.remarks))
             {
-                throw new Exception("Please specify a reason in remarks.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Please specify a reason in remarks.");
             }
         }
     }

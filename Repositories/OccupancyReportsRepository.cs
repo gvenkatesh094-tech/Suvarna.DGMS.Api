@@ -54,7 +54,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // OCCUPANCY BY ROOM TYPE
         // ==========================================
 
-        public List<OccRoomTypeStat> GetByRoomType(int sessionId)
+        public List<OccRoomTypeStat> GetByRoomType(int sessionId, DateTime? fromDate = null, DateTime? toDate = null)
         {
             List<OccRoomTypeStat> list = new();
 
@@ -65,8 +65,11 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                AddParameter(cmd, "@IP_FROM_DT", fromDate?.Date);
+                AddParameter(cmd, "@IP_TO_DT", toDate?.Date);
 
                 conn.Open();
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);   // works before 10_round_e.sql too
 
                 using SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -79,7 +82,10 @@ namespace Suvarna.DGMS.Api.Repositories
                         occupiedRooms = GetInt(dr, "OCCUPIED_ROOMS"),
                         occPct = GetDecimal(dr, "OCC_PCT"),
                         adr = GetDecimal(dr, "ADR"),
-                        revPar = GetDecimal(dr, "REVPAR")
+                        revPar = GetDecimal(dr, "REVPAR"),
+                        roomNights = Has(dr, "ROOM_NIGHTS") ? GetInt(dr, "ROOM_NIGHTS") : 0,
+                        periodOccPct = Has(dr, "PERIOD_OCC_PCT") ? GetDecimal(dr, "PERIOD_OCC_PCT") : 0,
+                        accmRevenue = Has(dr, "ACCM_REVENUE") ? GetDecimal(dr, "ACCM_REVENUE") : 0
                     });
                 }
 
@@ -95,7 +101,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // CATEGORY BREAKDOWN
         // ==========================================
 
-        public List<OccCategoryStat> GetCategoryBreakdown(int sessionId)
+        public List<OccCategoryStat> GetCategoryBreakdown(int sessionId, DateTime? fromDate = null, DateTime? toDate = null)
         {
             List<OccCategoryStat> list = new();
 
@@ -106,8 +112,11 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                AddParameter(cmd, "@IP_FROM_DT", fromDate?.Date);
+                AddParameter(cmd, "@IP_TO_DT", toDate?.Date);
 
                 conn.Open();
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);
 
                 using SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -209,6 +218,13 @@ namespace Suvarna.DGMS.Api.Repositories
         // ==========================================
         // COMMON HELPERS
         // ==========================================
+
+        private static bool Has(SqlDataReader dr, string column)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+                if (string.Equals(dr.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         private static void AddParameter(SqlCommand cmd, string name, object? value)
         {

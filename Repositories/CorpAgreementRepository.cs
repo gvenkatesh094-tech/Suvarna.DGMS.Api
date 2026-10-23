@@ -64,7 +64,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.AddWithValue("@IP_TARIFF_ID", agreement.TariffId);
             cmd.Parameters.AddWithValue("@IP_IS_GST_REGISTERED", agreement.IsGstRegistered);
             cmd.Parameters.AddWithValue("@IP_EFFECTIVE_FROM_DT", agreement.EffectiveFromDt);
-            cmd.Parameters.AddWithValue("@IP_EFFECTIVE_TO_DT", agreement.EffectiveToDt);
+            cmd.Parameters.AddWithValue("@IP_EFFECTIVE_TO_DT", (object?)agreement.EffectiveToDt ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@IP_REMARKS", agreement.Remarks);
             cmd.Parameters.AddWithValue("@IP_RECORD_STATUS", agreement.RecordStatus);
 
@@ -80,10 +80,22 @@ namespace Suvarna.DGMS.Api.Repositories
             outMessage.Direction = ParameterDirection.Output;
             cmd.Parameters.Add(outMessage);
 
+            // FIX: NULL text values made the call fail ("parameter was not supplied")
+            foreach (SqlParameter p in cmd.Parameters)
+                if (p.Direction == ParameterDirection.Input && p.Value == null) p.Value = DBNull.Value;
+
             conn.Open();
             cmd.ExecuteNonQuery();
 
-            return outMessage.Value.ToString();
+            // FIX: the procedure's status was ignored - "not found" / check messages were shown as success
+            string msg = outMessage.Value == DBNull.Value ? string.Empty : Convert.ToString(outMessage.Value) ?? string.Empty;
+            string status = outStatus.Value == DBNull.Value ? string.Empty : Convert.ToString(outStatus.Value) ?? string.Empty;
+
+            if (status != "Y" && status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
+                    string.IsNullOrWhiteSpace(msg) ? "Corporate agreement could not be saved." : msg);
+
+            return msg;
         }
         #region Get All corps
         public DataTable GetAll()

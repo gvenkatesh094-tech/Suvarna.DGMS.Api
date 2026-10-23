@@ -231,6 +231,15 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", maintReqId);
             });
 
+        // NEW (Round C)
+        public MaintenanceActionResult CancelRequest(CancelMaintRequestPayload p) =>
+            RunAction("DGMS.PR_DGMS_CANCEL_MAINT_REQ", "cancelling request", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", p.sessionId);
+                cmd.Parameters.AddWithValue("@IP_MAINT_REQ_ID", p.maintReqId);
+                cmd.Parameters.AddWithValue("@IP_REASON", (object?)p.reason?.Trim() ?? DBNull.Value);
+            });
+
         public MaintenanceActionResult SubmitQc(SubmitMaintQcPayload p) =>
             RunAction("DGMS.PR_DGMS_SUBMIT_MAINT_QC", "submitting QC", cmd =>
             {

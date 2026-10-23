@@ -7,9 +7,12 @@ namespace Suvarna.DGMS.Api.Services
     {
         private readonly PropertyRepository _repo;
 
-        public PropertyService(PropertyRepository repo)
+        private readonly Suvarna.DGMS.Api.Helpers.PropertyScope _scope;   // NEW: login property
+
+        public PropertyService(PropertyRepository repo, Suvarna.DGMS.Api.Helpers.PropertyScope scope)
         {
             _repo = repo;
+            _scope = scope;
         }
         public ApiResponse<string> GenerateCode(GenerateCodeRequest request)
         {
@@ -40,7 +43,8 @@ namespace Suvarna.DGMS.Api.Services
        
         public ApiResponse<List<Property>> GetAll(int sessionId, int locationId)
         {
-            var data = _repo.GetAllProperties( sessionId,  locationId);
+            // NEW: only the property chosen at login (all when "All Properties" / no property chosen)
+            var data = _scope.Filter(_repo.GetAllProperties( sessionId,  locationId), p => p.propertyId);
 
             return ApiResponse<List<Property>>.Success(
                 "Property list fetched successfully.",

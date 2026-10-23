@@ -21,6 +21,21 @@ namespace Suvarna.DGMS.Api.Helpers
             }
         }
 
+        /// <summary>
+        /// Property chosen at login (header "X-Property-Id"). For information / new code only:
+        /// stored procedures read the property from the session (DGMS.FN_DGMS_SESSION_PROPERTY),
+        /// so a screen cannot switch property by changing this header.
+        /// 0 = not chosen / "All Properties".
+        /// </summary>
+        public int PropertyId
+        {
+            get
+            {
+                var v = _http.HttpContext?.Request.Headers["X-Property-Id"].ToString();
+                return int.TryParse(v, out var id) && id > 0 ? id : 0;
+            }
+        }
+
         /// <summary>Header first; the request body's sessionId only as a fallback for older clients.</summary>
         public string Require(int bodySessionId = 0)
         {

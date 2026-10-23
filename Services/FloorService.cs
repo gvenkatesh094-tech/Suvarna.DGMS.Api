@@ -8,9 +8,12 @@ namespace Suvarna.DGMS.Api.Services
 
         private readonly FloorRepository _repo;
 
-        public FloorService(FloorRepository repo)
+        private readonly Suvarna.DGMS.Api.Helpers.PropertyScope _scope;   // NEW: login property
+
+        public FloorService(FloorRepository repo, Suvarna.DGMS.Api.Helpers.PropertyScope scope)
         {
             _repo = repo;
+            _scope = scope;
         }
         public ApiResponse<string> inUpdService(Floor floor)
         {
@@ -34,7 +37,8 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<List<Floor>> GetAll()
         {
-            var list = _repo.GetAllFloors();
+            // NEW: only floors of the property chosen at login
+            var list = _scope.Filter(_repo.GetAllFloors(), f => f.propertyId);
 
             return ApiResponse<List<Floor>>.Success(
                 "Floor List",

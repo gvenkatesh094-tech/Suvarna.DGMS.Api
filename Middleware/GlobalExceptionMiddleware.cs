@@ -25,11 +25,65 @@ namespace Suvarna.DGMS.Api.Middleware
             _env = env;
         }
 
+        /// <summary>
+        /// Text of a user-defined SQL error (number 50000 and above) anywhere in the exception chain;
+        /// null for real errors (deadlock, timeout, truncation ...), which keep the "Reference Id" message.
+        /// </summary>
+        private static string? FindProcedureMessage(Exception ex)
+        {
+            for (Exception? e = ex; e != null; e = e.InnerException)
+            {
+                if (e is Microsoft.Data.SqlClient.SqlException sql)
+                {
+                    foreach (Microsoft.Data.SqlClient.SqlError err in sql.Errors)
+                    {
+                        if (err.Number >= 50000 && !string.IsNullOrWhiteSpace(err.Message))
+                            return err.Message;
+                    }
+                    return null;
+                }
+            }
+            return null;
+        }
+
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
                 await _next(context);
+            }
+            catch (Suvarna.DGMS.Api.Helpers.UserMessageException uex) when (!context.Response.HasStarted)
+            {
+                // NEW: business-rule message from a procedure (status 'E') - shown to the user as it is
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.ContentType = "application/json";
+
+                var response = new ApiResponse<string>
+                {
+                    Status = false,
+                    Code = "400",
+                    Message = uex.Message,
+                    Data = null
+                };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
+            }
+            catch (Exception ex) when (!context.Response.HasStarted && FindProcedureMessage(ex) is string procMessage)
+            {
+                // NEW: a message raised on purpose by a procedure (RAISERROR / THROW 50000+, e.g.
+                // "Building Code already exists.") is a business message - shown as it is, also in production.
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.ContentType = "application/json";
+
+                var response = new ApiResponse<string>
+                {
+                    Status = false,
+                    Code = "400",
+                    Message = procMessage,
+                    Data = null
+                };
+
+                await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
             }
             catch (Exception ex)
             {

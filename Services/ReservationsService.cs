@@ -6,11 +6,17 @@ namespace Suvarna.DGMS.Api.Services
     public class ReservationsService
     {
         private readonly ReservationsRepository _repo;
+        private readonly PosPaymentService _pos;          // NEW: POS machine payments
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext _session;
 
         public ReservationsService(
-            ReservationsRepository repo)
+            ReservationsRepository repo,
+            PosPaymentService pos,
+            Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
             _repo = repo;
+            _pos = pos;
+            _session = session;
         }
 
 
@@ -22,14 +28,28 @@ namespace Suvarna.DGMS.Api.Services
             SaveReservation(
                 Reservation request)
         {
-            var data =
-                _repo.SaveReservation(
-                    request
-                );
+            // NEW: advance paid by card on the POS machine -> the RRN comes from the verified POS payment
+            var sid = _session.Require(request.sessionId);
+            var pos = request.advanceAmount > 0
+                ? _pos.ClaimForPayment(sid, request.posTxnId, "RESERVATION", request.bookingId ?? 0, request.advanceAmount, request.advanceMode)
+                : null;
+            if (pos != null) request.advanceRef = pos.Rrn;
+
+            ReservationResult data;
+            try
+            {
+                data = _repo.SaveReservation(request);
+            }
+            catch
+            {
+                _pos.SafeRelease(sid, pos);
+                throw;
+            }
 
             if (data.status != "S")
             {
-                throw new Exception(
+                _pos.SafeRelease(sid, pos);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
                     string.IsNullOrWhiteSpace(
                         data.message
                     )
@@ -38,6 +58,9 @@ namespace Suvarna.DGMS.Api.Services
                 );
             }
 
+
+            var posWarning = _pos.LinkAfterSave(sid, pos, data.bookingId, null, null);
+            if (posWarning != null) data.message = (data.message ?? "") + " | " + posWarning;
 
             return ApiResponse<
                 ReservationResult
@@ -67,13 +90,33 @@ namespace Suvarna.DGMS.Api.Services
                     data
                 );
         }
+        // NEW: cancel a reservation
+        public ApiResponse<ReservationCancelResult> CancelReservation(ReservationCancelRequest request)
+        {
+            if (request.bookingId <= 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Please select a reservation.");
+
+            if (string.IsNullOrWhiteSpace(request.cancelRemarks))
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Cancellation reason is required.");
+
+            if (request.cancelChargeAmount < 0)
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Cancellation charge cannot be negative.");
+
+            var data = _repo.CancelReservation(request);
+
+            if (data.status != "S")
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Reservation cancel failed." : data.message);
+
+            return ApiResponse<ReservationCancelResult>.Success(data.message, data);
+        }
+
         public ApiResponse<MarkNoShowResult> MarkNoShowReservations(int sessionId, int? graceHours)
         {
             var data = _repo.MarkNoShowReservations(sessionId, graceHours);
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark no-show reservations." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark no-show reservations." : data.message);
             }
 
             return ApiResponse<MarkNoShowResult>.Success(data.message, data);

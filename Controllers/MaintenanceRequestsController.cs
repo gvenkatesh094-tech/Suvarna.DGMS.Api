@@ -83,6 +83,14 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.CloseRequest(payload));
         }
 
+        // NEW (Round C)
+        [HttpPost("cancel")]
+        public IActionResult CancelRequest([FromBody] CancelMaintRequestPayload payload)
+        {
+            if (payload == null || payload.sessionId <= 0) return BadRequest("A valid session is required.");
+            return Ok(_service.CancelRequest(payload));
+        }
+
         [HttpPost("qc")]
         public IActionResult SubmitQc([FromBody] SubmitMaintQcPayload payload)
         {

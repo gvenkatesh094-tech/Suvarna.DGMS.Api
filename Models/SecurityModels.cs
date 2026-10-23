@@ -10,6 +10,9 @@ namespace Suvarna.DGMS.Api.Models
     }
 
     // ---- visitor pass ----
+    /// <summary>NEW (Round D): blacklist check of a guest at check-in. The ID number is only hashed, never stored.</summary>
+    public class SecGuestCheckRequest { public string? idNo { get; set; } public string? name { get; set; } }
+
     public class SecBlacklistCheckRequest { public string idType { get; set; } = ""; public string idNo { get; set; } = ""; public string? name { get; set; } }
     public class SecBlacklistCheckResult { public bool found { get; set; } public string? matchType { get; set; } public string? fullName { get; set; } public string? reasonCode { get; set; } public string? blacklistNo { get; set; } }
     public class SecIssuePassRequest

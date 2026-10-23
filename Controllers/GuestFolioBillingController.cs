@@ -21,10 +21,11 @@ namespace Suvarna.DGMS.Api.Controllers
         // "Select Guest" dropdown
         // ==========================================
 
+        // includeCheckedOut=true (NEW, Round B): guests checked out in the last 60 days are listed too
         [HttpGet("bookings")]
-        public IActionResult GetBookings([FromQuery] int sessionId, [FromQuery] int? propertyId = null)
+        public IActionResult GetBookings([FromQuery] int sessionId, [FromQuery] int? propertyId = null, [FromQuery] bool includeCheckedOut = false)
         {
-            return Ok(_service.GetBookings(sessionId, propertyId));
+            return Ok(_service.GetBookings(sessionId, propertyId, includeCheckedOut));
         }
 
         // ==========================================
@@ -57,15 +58,8 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.AddCharge(request));
         }
 
-        // ==========================================
-        // "Update Charge" button (edit drawer)
-        // ==========================================
-
-        [HttpPut("charge")]
-        public IActionResult UpdateCharge([FromBody] UpdateChargeRequest request)
-        {
-            return Ok(_service.UpdateCharge(request));
-        }
+        // REMOVED (Round B): PUT charge ("Update Charge") - no screen used it and it allowed any amount / GST /
+        // status to be written into a posted charge. A wrong charge is cancelled and posted again.
 
         // ==========================================
         // "Cancel" button on a charge line — NEW
@@ -108,6 +102,16 @@ namespace Suvarna.DGMS.Api.Controllers
         public IActionResult GenerateInvoice([FromBody] GenerateInvoiceRequest request)
         {
             return Ok(_service.GenerateInvoice(request));
+        }
+
+        // ==========================================
+        // NEW (Round B): "Print Invoice" - GET api/guestfolio/invoice-print?sessionId=&bookingId= (or &invoiceId=)
+        // ==========================================
+
+        [HttpGet("invoice-print")]
+        public IActionResult GetInvoicePrint([FromQuery] int sessionId, [FromQuery] int? bookingId = null, [FromQuery] int? invoiceId = null)
+        {
+            return Ok(_service.GetInvoicePrint(sessionId, bookingId, invoiceId));
         }
     }
 }

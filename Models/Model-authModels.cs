@@ -89,6 +89,11 @@
         public string BrowserVersion { get; set; } = string.Empty;
 
         public string ClientName { get; set; } = string.Empty;
+
+        // Property chosen at login.
+        // null = old client (no property step) -> behaves exactly as before.
+        // 0    = "All Properties" (administrators only).
+        public int? PropertyId { get; set; }
     }
     public class UserSessionResult
     {
@@ -102,6 +107,76 @@
         public string? OrgName { get; set; }
 
         public string? DisplayName { get; set; }
+
+        // Filled only when a property was sent in the request
+        public int? PropertyId { get; set; }
+        public string? PropertyName { get; set; }
+        public string? PropertyCode { get; set; }
+    }
+
+    // =========================================
+    // PROPERTY LEVEL ACCESS (login / switch)
+    // =========================================
+
+    public class LoginPropertyModel
+    {
+        public int PropertyId { get; set; }
+        public string PropertyCd { get; set; } = string.Empty;
+        public string PropertyNm { get; set; } = string.Empty;
+        public string? PropertyTypeCd { get; set; }
+        public string? City { get; set; }
+        public int LocId { get; set; }
+        public bool IsDefault { get; set; }
+    }
+
+    public class LoginPropertiesResponse
+    {
+        public int LocId { get; set; }
+
+        public bool IsAdmin { get; set; }
+
+        // ALL  = every property of the location
+        // MAP  = only the properties given on the permission screen
+        // NONE = strict mode and nothing given
+        // LEGACY = property access objects not installed in the database yet (old flow)
+        public string AccessMode { get; set; } = "ALL";
+
+        // Administrators may choose "All Properties" when the location has more than one
+        public bool AllowAllProperties { get; set; }
+
+        public List<LoginPropertyModel> Properties { get; set; } = new();
+    }
+
+    public class SwitchPropertyRequest
+    {
+        public int PropertyId { get; set; }
+    }
+
+    public class SessionPropertyResult
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public int PropertyId { get; set; }
+        public string? PropertyName { get; set; }
+        public string? PropertyCode { get; set; }
+    }
+
+    public class UserAccessInfo
+    {
+        public bool IsAdmin { get; set; }
+        public bool HasMapping { get; set; }
+        public List<int> LocIds { get; set; } = new();
+    }
+
+    /// <summary>appsettings section "PropertyAccess"</summary>
+    public class PropertyAccessSettings
+    {
+        // false (default) : a normal user with no permissions yet sees all properties of the location (old behaviour)
+        // true            : a normal user must be given properties on the permission screen
+        public bool StrictMode { get; set; } = false;
+
+        // Role names treated as administrators (all locations + all properties), e.g. [ "ADMIN" ]
+        public string[] AdminRoles { get; set; } = Array.Empty<string>();
     }
     public class UserLocationResponse
     {

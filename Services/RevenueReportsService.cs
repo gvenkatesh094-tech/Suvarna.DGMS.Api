@@ -63,13 +63,13 @@ namespace Suvarna.DGMS.Api.Services
         private static void ValidateDateRange(DateTime fromDt, DateTime toDt)
         {
             if (fromDt == default || toDt == default)
-                throw new Exception("From and To dates are required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("From and To dates are required.");
 
             if (fromDt.Date > toDt.Date)
-                throw new Exception("From date cannot be after To date.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("From date cannot be after To date.");
 
             if ((toDt.Date - fromDt.Date).TotalDays > MaxDateRangeDays)
-                throw new Exception($"Date range cannot exceed {MaxDateRangeDays} days.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException($"Date range cannot exceed {MaxDateRangeDays} days.");
         }
     }
 }

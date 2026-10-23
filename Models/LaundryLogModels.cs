@@ -111,6 +111,9 @@ namespace Suvarna.DGMS.Api.Models
         public string? cardLast4 { get; set; }
         public string? upiVpa { get; set; }
         public string? paymentRemarks { get; set; }
+
+        // NEW: SUCCESS POS payment (api/pos-payment); RRN / card last 4 are taken from it
+        public long? posTxnId { get; set; }
     }
 
     public class LaundryReturnResult

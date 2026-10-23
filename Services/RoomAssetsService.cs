@@ -32,7 +32,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to save asset." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to save asset." : data.message);
             }
 
             return ApiResponse<SaveAssetResult>.Success(data.message, data);
@@ -44,7 +44,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to log repair." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to log repair." : data.message);
             }
 
             return ApiResponse<AssetActionResult>.Success(data.message, data);
@@ -67,43 +67,43 @@ namespace Suvarna.DGMS.Api.Services
         {
             if (string.IsNullOrWhiteSpace(request.assetNo))
             {
-                throw new Exception("Asset Number is required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Asset Number is required.");
             }
 
             if (request.assetNo.Length > 30)
             {
-                throw new Exception("Asset Number cannot exceed 30 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Asset Number cannot exceed 30 characters.");
             }
 
             if (request.roomId <= 0)
             {
-                throw new Exception("Room is required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Room is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.assetType) || !ValidTypes.Contains(request.assetType))
             {
-                throw new Exception("Please select a valid asset type.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Please select a valid asset type.");
             }
 
             if (!string.IsNullOrWhiteSpace(request.assetStatus) && !ValidStatuses.Contains(request.assetStatus))
             {
-                throw new Exception("Invalid asset status.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid asset status.");
             }
 
             if (request.purchaseCostAmt.HasValue && request.purchaseCostAmt.Value < 0)
             {
-                throw new Exception("Purchase cost cannot be negative.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Purchase cost cannot be negative.");
             }
 
             if (request.purchaseDt.HasValue && request.purchaseDt.Value > DateTime.UtcNow)
             {
-                throw new Exception("Purchase date cannot be in the future.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Purchase date cannot be in the future.");
             }
 
             if (request.purchaseDt.HasValue && request.warrantyExpiryDt.HasValue
                 && request.warrantyExpiryDt.Value < request.purchaseDt.Value)
             {
-                throw new Exception("Warranty expiry date cannot be before the purchase date.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Warranty expiry date cannot be before the purchase date.");
             }
         }
     }

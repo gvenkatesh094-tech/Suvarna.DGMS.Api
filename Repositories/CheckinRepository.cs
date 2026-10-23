@@ -268,31 +268,14 @@ namespace Suvarna.DGMS.Api.Repositories
                 // SAVE ID DOCUMENT
                 //=========================================
 
+                // FIX (security): ID proofs and guest photos are personal data. They were saved under
+                // wwwroot/uploads and could be opened by anyone with the link. They are now saved
+                // outside wwwroot (SecureUploads) and served only through the authorized
+                // GET api/documents/guest endpoint.
                 if (idFile != null && idFile.Length > 0)
                 {
-                    string folder = Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        "wwwroot",
-                        "uploads",
-                        "id");
-
-                    if (!Directory.Exists(folder))
-                        Directory.CreateDirectory(folder);
-
-                    string fileName =
-                        Guid.NewGuid().ToString() +
-                        Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(idFile, allowPdf: true);
-
-                    string fullPath =
-                        Path.Combine(folder, fileName);
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        idFile.CopyTo(stream);
-                    }
-
-                    idDocumentPath =
-                        "/uploads/id/" + fileName;
+                    idDocumentPath = Suvarna.DGMS.Api.Helpers.SecureDocumentStore.Save(
+                        idFile, "id", allowPdf: true);
                 }
 
                 //=========================================
@@ -301,29 +284,8 @@ namespace Suvarna.DGMS.Api.Repositories
 
                 if (photoFile != null && photoFile.Length > 0)
                 {
-                    string folder = Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        "wwwroot",
-                        "uploads",
-                        "guestphoto");
-
-                    if (!Directory.Exists(folder))
-                        Directory.CreateDirectory(folder);
-
-                    string fileName =
-                        Guid.NewGuid().ToString() +
-                        Suvarna.DGMS.Api.Helpers.UploadValidator.SafeExtension(photoFile);
-
-                    string fullPath =
-                        Path.Combine(folder, fileName);
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        photoFile.CopyTo(stream);
-                    }
-
-                    photoPath =
-                        "/uploads/guestphoto/" + fileName;
+                    photoPath = Suvarna.DGMS.Api.Helpers.SecureDocumentStore.Save(
+                        photoFile, "guestphoto", allowPdf: false);
                 }
 
                 using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_CHECKIN", conn);
@@ -392,6 +354,11 @@ namespace Suvarna.DGMS.Api.Repositories
                 AddParameter(cmd, "@IP_MONTHLY_RATE", request.monthlyRate);
                 AddParameter(cmd, "@IP_BILLING_MODEL", request.billingModel);
 
+                // NEW: actual check-in time (the proc accepts the last 24 hours up to now; empty = now).
+                // Amounts above are kept for compatibility only - the proc now calculates them itself.
+                AddParameter(cmd, "@IP_CHECKIN_DT", request.checkinDt);
+                AddParameter(cmd, "@IP_CREDIT_OVERRIDE", request.creditOverride == "Y" ? "Y" : "N");   // NEW
+
                 AddParameter(cmd, "@IP_OCC_CAT_CD", request.occCatCd);
                 AddParameter(cmd, "@IP_GENDER_ID", request.genderId);
                 AddParameter(cmd, "@IP_ID_TYPE_ID", request.idTypeId);
@@ -431,6 +398,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.Add(message);
 
                 conn.Open();
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);   // works with the old procedure too (04 not run yet)
 
                 cmd.ExecuteNonQuery();
 
@@ -479,6 +447,58 @@ namespace Suvarna.DGMS.Api.Repositories
                 );
             }
         }
+        // ==========================================
+        // NEW: STAY QUOTE - the same calculation PR_DGMS_CHECKIN uses
+        // ==========================================
+
+        public StayQuote? GetStayQuote(int sessionId, int tariffId, DateTime checkinDt, DateTime checkoutDt, int? occCatId = null, int? corpAgreementId = null)
+        {
+            using SqlConnection conn = new SqlConnection(_conn);
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_STAY_QUOTE", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            AddParameter(cmd, "@IP_SESSION_ID", sessionId);
+            AddParameter(cmd, "@IP_TARIFF_ID", tariffId);
+            AddParameter(cmd, "@IP_CHECKIN_DT", checkinDt);
+            AddParameter(cmd, "@IP_CHECKOUT_DT", checkoutDt);
+            AddParameter(cmd, "@IP_OCC_CAT_ID", occCatId > 0 ? occCatId : null);   // NEW: guest category rules
+            AddParameter(cmd, "@IP_CORP_AGREEMENT_ID", corpAgreementId > 0 ? corpAgreementId : null);   // NEW (Round B): company discount
+
+            conn.Open();
+            Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);
+            using SqlDataReader dr = cmd.ExecuteReader();
+            bool Has(string c) { for (int i = 0; i < dr.FieldCount; i++) if (string.Equals(dr.GetName(i), c, StringComparison.OrdinalIgnoreCase)) return true; return false; }
+            if (!dr.Read()) return null;
+
+            return new StayQuote
+            {
+                tariffId = GetInt(dr, "TARIFF_ID"),
+                billingModel = GetString(dr, "BILLING_MODEL") ?? "",
+                stayMinutes = GetInt(dr, "STAY_MINUTES"),
+                stayDays = GetInt(dr, "STAY_DAYS"),
+                stayHours = GetInt(dr, "STAY_HOURS"),
+                billedUnits = GetDecimal(dr, "BILLED_UNITS"),
+                unitLabel = GetString(dr, "UNIT_LABEL") ?? "",
+                dailyRate = GetDecimal(dr, "DAILY_RATE"),
+                unitRate = GetDecimal(dr, "UNIT_RATE"),
+                chargeAmount = GetDecimal(dr, "CHARGE_AMT"),
+                gstPct = GetDecimal(dr, "GST_PCT"),
+                cgstPct = GetDecimal(dr, "CGST_PCT"),
+                sgstPct = GetDecimal(dr, "SGST_PCT"),
+                baseAmount = GetDecimal(dr, "BASE_AMT"),
+                cgstAmount = GetDecimal(dr, "CGST_AMT"),
+                sgstAmount = GetDecimal(dr, "SGST_AMT"),
+                igstAmount = GetDecimal(dr, "IGST_AMT"),
+                totalGst = GetDecimal(dr, "TOTAL_GST"),
+                grossAmount = GetDecimal(dr, "GROSS_AMT"),
+                securityDepositAmount = GetDecimal(dr, "SECURITY_DEPOSIT_AMT"),
+                listChargeAmount = Has("LIST_CHARGE_AMT") ? GetDecimal(dr, "LIST_CHARGE_AMT") : GetDecimal(dr, "CHARGE_AMT"),
+                discountPct = Has("DISCOUNT_PCT") ? GetDecimal(dr, "DISCOUNT_PCT") : 0,
+                discountAmount = Has("DISCOUNT_AMT") ? GetDecimal(dr, "DISCOUNT_AMT") : 0,
+                isComplimentary = Has("IS_COMPLIMENTARY") ? (GetString(dr, "IS_COMPLIMENTARY") ?? "N") : "N"
+            };
+        }
+
         // ==========================================
         // PATIENT LOOKUP (UMR / IP / Admission No / Name)
         // ==========================================

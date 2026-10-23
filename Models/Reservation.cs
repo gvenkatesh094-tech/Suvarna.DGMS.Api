@@ -53,5 +53,17 @@
         // ==========================================
 
         public string? remarks { get; set; }
+
+        // ==========================================
+        // NEW: ADVANCE COLLECTED WITH THE RESERVATION
+        // (kept as the booking deposit - used at check-in, refunded on cancel)
+        // ==========================================
+
+        public decimal advanceAmount { get; set; }
+        public string? advanceMode { get; set; }
+        public string? advanceRef { get; set; }
+
+        // NEW: SUCCESS POS payment (api/pos-payment) for the advance; the RRN is taken from it
+        public long? posTxnId { get; set; }
     }
 }

@@ -8,11 +8,15 @@ namespace Suvarna.DGMS.Api.Services
     {
         private readonly AuthRepository _repository;
         private readonly JwtHelper _jwtHelper;
+        private readonly PropertyAccessHelper _access;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(AuthRepository repository, JwtHelper jwtHelper)   //DEPENDENCY INJECTION
+        public AuthService(AuthRepository repository, JwtHelper jwtHelper, PropertyAccessHelper access, ILogger<AuthService> logger)   //DEPENDENCY INJECTION
         {
             _repository = repository;
             _jwtHelper = jwtHelper;
+            _access = access;
+            _logger = logger;
         }
 
         public async Task<ApiResponseIntf<LoginResponse>> Login(LoginRequest request)
@@ -90,9 +94,34 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponseIntf<LoginResponse>.Fail(ex.Message, "500");
+                return ApiResponseIntf<LoginResponse>.Fail(SafeMessage(ex, "Login"), "500");
             }
         }
+
+        /// <summary>
+        /// FIX (security): ex.Message of a real error (SQL server / object names, connection details) was sent to the browser.
+        /// A message raised on purpose by a procedure (RAISERROR / THROW 50000+) is still shown; anything else is logged
+        /// and the client gets a reference id, the same as GlobalExceptionMiddleware.
+        /// </summary>
+        private string SafeMessage(Exception ex, string action)
+        {
+            for (Exception? e = ex; e != null; e = e.InnerException)
+            {
+                if (e is Microsoft.Data.SqlClient.SqlException sql)
+                {
+                    foreach (Microsoft.Data.SqlClient.SqlError err in sql.Errors)
+                    {
+                        if (err.Number >= 50000 && !string.IsNullOrWhiteSpace(err.Message)) return err.Message;
+                    }
+                    break;
+                }
+            }
+
+            var errorId = Guid.NewGuid().ToString("N");
+            _logger.LogError(ex, "{Action} failed. Reference Id: {ErrorId}", action, errorId);
+            return $"Unexpected error. Reference Id: {errorId}";
+        }
+
         public async Task<ApiResponseIntf<string>> GetClientName()
         {
             try
@@ -181,6 +210,19 @@ namespace Suvarna.DGMS.Api.Services
                 }
 
                 // ============================================
+                // PROPERTY LEVEL ACCESS
+                // Normal users with property permissions see only the locations
+                // of those properties. Admins / users without permissions: unchanged.
+                // ============================================
+
+                facilities = await ApplyLocationAccess(userId, facilities);
+
+                if (facilities.Count == 0)
+                {
+                    return ApiResponseIntf<List<UserFacilityModel>>.Fail("No location or property access has been given to this user. Please contact the administrator.");
+                }
+
+                // ============================================
                 // SUCCESS
                 // ============================================
 
@@ -188,7 +230,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponseIntf<List<UserFacilityModel>>.Fail(ex.Message, "500");
+                return ApiResponseIntf<List<UserFacilityModel>>.Fail(SafeMessage(ex, "GetUserFacilities"), "500");
             }
         }
         public async Task<ApiResponseIntf<UserSessionResult>> CreateSession(UserSessionRequest request)
@@ -232,6 +274,43 @@ namespace Suvarna.DGMS.Api.Services
                 }
 
                 // =============================
+                // PROPERTY (only when the new login screen sent one;
+                // old clients send nothing and keep the old behaviour)
+                // =============================
+
+                if (request.PropertyId.HasValue && request.PropertyId.Value >= 0)
+                {
+                    long userId = _access.JwtUserId > 0 ? _access.JwtUserId : request.UserId;
+
+                    SessionPropertyResult property;
+
+                    try
+                    {
+                        property = await _repository.SetSessionProperty(
+                            result.SessionId.Value,
+                            userId,
+                            request.PropertyId.Value,
+                            _access.StrictModeFlag,
+                            _access.AdminRoleFlag());
+                    }
+                    catch (Exception ex) when (IsMissingAccessObject(ex))
+                    {
+                        // Database script not installed yet -> continue exactly like before
+                        _logger.LogWarning("Session property not saved (objects missing): {Message}", ex.Message);
+                        return ApiResponseIntf<UserSessionResult>.Success("Session created successfully", result);
+                    }
+
+                    if (!property.Success)
+                    {
+                        return ApiResponseIntf<UserSessionResult>.Fail(property.Message ?? "Unable to select the property", "403");
+                    }
+
+                    result.PropertyId = property.PropertyId;
+                    result.PropertyName = property.PropertyName;
+                    result.PropertyCode = property.PropertyCode;
+                }
+
+                // =============================
                 // SUCCESS
                 // =============================
 
@@ -241,6 +320,154 @@ namespace Suvarna.DGMS.Api.Services
             {
                 return ApiResponseIntf<UserSessionResult>.Fail("Unexpected error occurred");
             }
+        }
+
+        // =====================================================
+        // PROPERTY LEVEL ACCESS
+        // =====================================================
+
+        /// <summary>
+        /// Properties of one location the signed-in user may choose on the login screen.
+        /// If the database script is not installed yet, returns AccessMode = "LEGACY" with no
+        /// properties so the login screen continues with the old (location only) flow.
+        /// </summary>
+        public async Task<ApiResponseIntf<LoginPropertiesResponse>> GetLoginProperties(long userId, long locId)
+        {
+            try
+            {
+                if (userId <= 0)
+                {
+                    return ApiResponseIntf<LoginPropertiesResponse>.Fail("Invalid user id");
+                }
+
+                if (locId <= 0)
+                {
+                    return ApiResponseIntf<LoginPropertiesResponse>.Fail("Invalid location");
+                }
+
+                var (properties, isAdmin, accessMode) = await _repository.GetLoginProperties(
+                    userId, locId, _access.StrictModeFlag, _access.AdminRoleFlag());
+
+                var response = new LoginPropertiesResponse
+                {
+                    LocId = (int)locId,
+                    IsAdmin = isAdmin,
+                    AccessMode = accessMode,
+                    AllowAllProperties = isAdmin && properties.Count > 1,
+                    Properties = properties
+                };
+
+                if (accessMode == "NONE" || (accessMode == "MAP" && properties.Count == 0))
+                {
+                    return ApiResponseIntf<LoginPropertiesResponse>.Fail("No property access has been given to you for this location. Please contact the administrator.", "403");
+                }
+
+                return ApiResponseIntf<LoginPropertiesResponse>.Success("Properties fetched successfully", response);
+            }
+            catch (Exception ex) when (IsMissingAccessObject(ex))
+            {
+                _logger.LogWarning("Property access objects are not installed yet - login continues without property: {Message}", ex.Message);
+
+                return ApiResponseIntf<LoginPropertiesResponse>.Success("Property access is not configured", new LoginPropertiesResponse
+                {
+                    LocId = (int)locId,
+                    AccessMode = "LEGACY"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetLoginProperties failed for user {UserId} location {LocId}", userId, locId);
+                return ApiResponseIntf<LoginPropertiesResponse>.Fail("Unable to load properties", "500");
+            }
+        }
+
+        /// <summary>Changes the property of the current session without logging out.</summary>
+        public async Task<ApiResponseIntf<SessionPropertyResult>> SwitchProperty(string sessionId, int propertyId)
+        {
+            try
+            {
+                if (!long.TryParse(sessionId, out long sid) || sid <= 0)
+                {
+                    return ApiResponseIntf<SessionPropertyResult>.Fail("Session id is missing. Please login again.", "401");
+                }
+
+                long userId = _access.JwtUserId;
+
+                if (userId <= 0)
+                {
+                    return ApiResponseIntf<SessionPropertyResult>.Fail("Invalid user", "401");
+                }
+
+                if (propertyId < 0)
+                {
+                    return ApiResponseIntf<SessionPropertyResult>.Fail("Invalid property");
+                }
+
+                SessionPropertyResult result = await _repository.SetSessionProperty(
+                    sid, userId, propertyId, _access.StrictModeFlag, _access.AdminRoleFlag());
+
+                if (!result.Success)
+                {
+                    return ApiResponseIntf<SessionPropertyResult>.Fail(result.Message ?? "Unable to change property", "403");
+                }
+
+                return ApiResponseIntf<SessionPropertyResult>.Success(result.Message ?? "Property changed successfully", result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SwitchProperty failed for session {SessionId}", sessionId);
+                return ApiResponseIntf<SessionPropertyResult>.Fail("Unable to change property", "500");
+            }
+        }
+
+        /// <summary>
+        /// Keeps only the locations a normal user has property permissions for.
+        /// Never blocks login because of a technical problem: on any error the list is returned unchanged.
+        /// </summary>
+        private async Task<List<UserFacilityModel>> ApplyLocationAccess(long userId, List<UserFacilityModel> facilities)
+        {
+            try
+            {
+                if (_access.IsAdminRole())
+                {
+                    return facilities;
+                }
+
+                UserAccessInfo info = await _repository.GetUserAccessInfo(userId);
+
+                if (info.IsAdmin)
+                {
+                    return facilities;
+                }
+
+                if (info.HasMapping)
+                {
+                    var allowed = new HashSet<long>(info.LocIds.Select(x => (long)x));
+                    return facilities.Where(f => allowed.Contains(f.FacilityId)).ToList();
+                }
+
+                // No permissions given yet
+                return _access.StrictModeFlag == "Y" ? new List<UserFacilityModel>() : facilities;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Location access filter skipped: {Message}", ex.Message);
+                return facilities;
+            }
+        }
+
+        /// <summary>SQL error 2812 = "Could not find stored procedure" (DB script not run yet).</summary>
+        private static bool IsMissingAccessObject(Exception ex)
+        {
+            for (Exception? e = ex; e != null; e = e.InnerException)
+            {
+                if (e is Microsoft.Data.SqlClient.SqlException sql && (sql.Number == 2812 || sql.Number == 208))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public async Task<ApiResponseIntf<List<UserLocationResponse>>> GetUsersByLocation(long locId)
@@ -280,7 +507,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponseIntf<List<UserLocationResponse>>.Fail(ex.Message, "500");
+                return ApiResponseIntf<List<UserLocationResponse>>.Fail(SafeMessage(ex, "GetUsersByLocation"), "500");
             }
         }
 
@@ -390,7 +617,7 @@ namespace Suvarna.DGMS.Api.Services
                 return ApiResponseIntf<
                     LoginResponse>.Fail(
 
-                    ex.Message,
+                    SafeMessage(ex, "RefreshToken"),
 
                     "500");
             }
@@ -424,7 +651,7 @@ namespace Suvarna.DGMS.Api.Services
             }
             catch (Exception ex)
             {
-                return ApiResponseIntf<string>.Fail(ex.Message, "500");
+                return ApiResponseIntf<string>.Fail(SafeMessage(ex, "Logout"), "500");
             }
         }
 

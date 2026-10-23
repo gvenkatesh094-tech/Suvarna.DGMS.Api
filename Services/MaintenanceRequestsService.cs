@@ -28,15 +28,15 @@ namespace Suvarna.DGMS.Api.Services
             int? roomId, DateTime? fromDt, DateTime? toDt, int? closedDays)
         {
             if (!string.IsNullOrWhiteSpace(priority) && !ValidPriorities.Contains(priority.Trim().ToUpperInvariant()))
-                throw new Exception("Invalid priority filter.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid priority filter.");
             if (!string.IsNullOrWhiteSpace(status) && !ValidStatuses.Contains(status.Trim().ToUpperInvariant()))
-                throw new Exception("Invalid status filter.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid status filter.");
             if (!string.IsNullOrWhiteSpace(category) && !ValidCategories.Contains(category.Trim().ToUpperInvariant()))
-                throw new Exception("Invalid category filter.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid category filter.");
             if (fromDt.HasValue && toDt.HasValue && fromDt.Value.Date > toDt.Value.Date)
-                throw new Exception("From date cannot be after To date.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("From date cannot be after To date.");
             if (closedDays.HasValue && (closedDays.Value < 0 || closedDays.Value > 3650))
-                throw new Exception("Invalid closed-days window.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid closed-days window.");
 
             var data = _repo.GetMaintRequests(sessionId, priority, status, category, roomId, fromDt, toDt, closedDays);
 
@@ -53,34 +53,34 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<RaiseMaintRequestResult> RaiseRequest(RaiseMaintRequestPayload p)
         {
-            if (p == null) throw new Exception("Request payload is required.");
-            if (p.roomId <= 0) throw new Exception("Room is required.");
+            if (p == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
+            if (p.roomId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Room is required.");
 
             p.complaintCategory = (p.complaintCategory ?? "").Trim().ToUpperInvariant();
-            if (!ValidCategories.Contains(p.complaintCategory)) throw new Exception("Select a valid category.");
+            if (!ValidCategories.Contains(p.complaintCategory)) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Select a valid category.");
 
             p.description = (p.description ?? "").Trim();
-            if (p.description.Length < 5) throw new Exception("Description must be at least 5 characters.");
-            if (p.description.Length > 2000) throw new Exception("Description cannot exceed 2000 characters.");
+            if (p.description.Length < 5) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Description must be at least 5 characters.");
+            if (p.description.Length > 2000) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Description cannot exceed 2000 characters.");
 
             if (!string.IsNullOrWhiteSpace(p.priority))
             {
                 p.priority = p.priority.Trim().ToUpperInvariant();
-                if (!ValidPriorities.Contains(p.priority)) throw new Exception("Invalid priority.");
+                if (!ValidPriorities.Contains(p.priority)) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid priority.");
             }
 
             p.raisedByType = string.IsNullOrWhiteSpace(p.raisedByType) ? "STAFF" : p.raisedByType.Trim().ToUpperInvariant();
-            if (!ValidRaisedByTypes.Contains(p.raisedByType)) throw new Exception("Invalid 'raised by' type.");
+            if (!ValidRaisedByTypes.Contains(p.raisedByType)) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid 'raised by' type.");
 
             if (!string.IsNullOrWhiteSpace(p.raisedByName) && p.raisedByName.Trim().Length > 100)
-                throw new Exception("Reporter name cannot exceed 100 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Reporter name cannot exceed 100 characters.");
 
             p.blockRoom = (p.blockRoom ?? "N").Trim().ToUpperInvariant();
-            if (p.blockRoom != "Y" && p.blockRoom != "N") throw new Exception("Block-room flag must be Y or N.");
+            if (p.blockRoom != "Y" && p.blockRoom != "N") throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Block-room flag must be Y or N.");
 
             var data = _repo.RaiseRequest(p);
             if (data.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Unable to raise maintenance request." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Unable to raise maintenance request." : data.message);
 
             return ApiResponse<RaiseMaintRequestResult>.Success(data.message, data);
         }
@@ -91,11 +91,11 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<MaintenanceActionResult> AssignRequest(AssignMaintRequestPayload p)
         {
-            if (p == null) throw new Exception("Request payload is required.");
-            if (p.maintReqId <= 0) throw new Exception("A valid maintenance request is required.");
-            if (p.staffId <= 0) throw new Exception("Select a technician.");
+            if (p == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
+            if (p.maintReqId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid maintenance request is required.");
+            if (p.staffId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Select a technician.");
             if (!string.IsNullOrWhiteSpace(p.remarks) && p.remarks.Trim().Length > 500)
-                throw new Exception("Remarks cannot exceed 500 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Remarks cannot exceed 500 characters.");
 
             return Done(_repo.AssignRequest(p), "Unable to assign request.");
         }
@@ -121,14 +121,14 @@ namespace Suvarna.DGMS.Api.Services
             RequireId(p?.maintReqId);
 
             p!.resolutionRemarks = (p.resolutionRemarks ?? "").Trim();
-            if (p.resolutionRemarks.Length < 5) throw new Exception("Resolution notes must be at least 5 characters.");
-            if (p.resolutionRemarks.Length > 4000) throw new Exception("Resolution notes cannot exceed 4000 characters.");
+            if (p.resolutionRemarks.Length < 5) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Resolution notes must be at least 5 characters.");
+            if (p.resolutionRemarks.Length > 4000) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Resolution notes cannot exceed 4000 characters.");
             if (!string.IsNullOrWhiteSpace(p.materialUsed) && p.materialUsed.Trim().Length > 200)
-                throw new Exception("Material used cannot exceed 200 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Material used cannot exceed 200 characters.");
 
-            if (p.materialCost is < 0 or > 9_999_999) throw new Exception("Material cost must be between 0 and 99,99,999.");
-            if (p.labourCost is < 0 or > 9_999_999) throw new Exception("Labour cost must be between 0 and 99,99,999.");
-            if (p.labourHrs is < 0 or > 999) throw new Exception("Labour hours must be between 0 and 999.");
+            if (p.materialCost is < 0 or > 9_999_999) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Material cost must be between 0 and 99,99,999.");
+            if (p.labourCost is < 0 or > 9_999_999) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Labour cost must be between 0 and 99,99,999.");
+            if (p.labourHrs is < 0 or > 999) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Labour hours must be between 0 and 999.");
 
             return Done(_repo.ResolveRequest(p), "Unable to resolve request.");
         }
@@ -139,16 +139,26 @@ namespace Suvarna.DGMS.Api.Services
             return Done(_repo.CloseRequest(p!.sessionId, p.maintReqId), "Unable to close request.");
         }
 
+        // NEW (Round C): cancel a request raised by mistake - only before work starts; frees a blocked room
+        public ApiResponse<MaintenanceActionResult> CancelRequest(CancelMaintRequestPayload p)
+        {
+            RequireId(p?.maintReqId);
+            p!.reason = (p.reason ?? "").Trim();
+            if (p.reason.Length < 5) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Reason must be at least 5 characters.");
+            if (p.reason.Length > 500) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Reason cannot exceed 500 characters.");
+            return Done(_repo.CancelRequest(p), "Unable to cancel request.");
+        }
+
         public ApiResponse<MaintenanceActionResult> SubmitQc(SubmitMaintQcPayload p)
         {
             RequireId(p?.maintReqId);
 
             p!.qcResult = (p.qcResult ?? "").Trim().ToUpperInvariant();
-            if (p.qcResult != "P" && p.qcResult != "F") throw new Exception("QC result must be Pass or Fail.");
+            if (p.qcResult != "P" && p.qcResult != "F") throw new Suvarna.DGMS.Api.Helpers.UserMessageException("QC result must be Pass or Fail.");
             if (p.qcResult == "F" && (p.qcRemarks ?? "").Trim().Length < 5)
-                throw new Exception("Explain what failed (min 5 characters).");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Explain what failed (min 5 characters).");
             if (!string.IsNullOrWhiteSpace(p.qcRemarks) && p.qcRemarks.Trim().Length > 1000)
-                throw new Exception("QC remarks cannot exceed 1000 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("QC remarks cannot exceed 1000 characters.");
 
             return Done(_repo.SubmitQc(p), "Unable to submit QC.");
         }
@@ -182,26 +192,26 @@ namespace Suvarna.DGMS.Api.Services
 
         public ApiResponse<SaveMaintStaffResult> SaveStaff(SaveMaintStaffPayload p)
         {
-            if (p == null) throw new Exception("Request payload is required.");
+            if (p == null) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Request payload is required.");
 
             p.staffName = (p.staffName ?? "").Trim();
             if (p.staffName.Length < 2 || p.staffName.Length > 100)
-                throw new Exception("Technician name must be 2–100 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Technician name must be 2–100 characters.");
 
             if (!string.IsNullOrWhiteSpace(p.mobileNo) && !Regex.IsMatch(p.mobileNo.Trim(), @"^[6-9]\d{9}$"))
-                throw new Exception("Enter a valid 10-digit mobile number.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Enter a valid 10-digit mobile number.");
 
             if (!string.IsNullOrWhiteSpace(p.skillCats))
             {
                 var cats = p.skillCats.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                                       .Select(c => c.ToUpperInvariant()).Distinct().ToList();
-                if (cats.Any(c => !ValidCategories.Contains(c))) throw new Exception("Invalid skill category.");
+                if (cats.Any(c => !ValidCategories.Contains(c))) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Invalid skill category.");
                 p.skillCats = string.Join(",", cats);
             }
 
             var data = _repo.SaveStaff(p);
             if (data.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Unable to save technician." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Unable to save technician." : data.message);
 
             return ApiResponse<SaveMaintStaffResult>.Success(data.message, data);
         }
@@ -212,13 +222,13 @@ namespace Suvarna.DGMS.Api.Services
 
         private static void RequireId(int? id)
         {
-            if (id is null or <= 0) throw new Exception("A valid maintenance request is required.");
+            if (id is null or <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("A valid maintenance request is required.");
         }
 
         private static ApiResponse<MaintenanceActionResult> Done(MaintenanceActionResult r, string fallback)
         {
             if (r.status != "S")
-                throw new Exception(string.IsNullOrWhiteSpace(r.message) ? fallback : r.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(r.message) ? fallback : r.message);
             return ApiResponse<MaintenanceActionResult>.Success(r.message, r);
         }
     }

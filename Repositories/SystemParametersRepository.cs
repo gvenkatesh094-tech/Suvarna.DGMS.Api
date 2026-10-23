@@ -9,8 +9,11 @@ namespace Suvarna.DGMS.Api.Repositories
     {
         private readonly string _conn;
 
-        public SystemParametersRepository(IConfiguration configuration)
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext? _session;   // NEW: lists only the login location
+
+        public SystemParametersRepository(IConfiguration configuration, Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -110,6 +113,9 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             conn.Open();
+            // NEW: only this location (the parameter is skipped while the 06 script is not run)
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", (object?)_session?.SessionId ?? DBNull.Value);
+            Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);
 
             using SqlDataReader reader = cmd.ExecuteReader();
 
@@ -145,7 +151,8 @@ namespace Suvarna.DGMS.Api.Repositories
 
                     modifyBy = reader.SafeGetInt("MODIFY_BY"),
 
-                    modifyDt = reader.SafeGetDateTime("MODIFY_DT")
+                    modifyDt = reader.SafeGetDateTime("MODIFY_DT"),
+                    isUsedBySystem = HasColumn(reader, "IS_USED_BY_SYSTEM") ? reader.SafeGetString("IS_USED_BY_SYSTEM") : null
                 });
             }
 
@@ -176,6 +183,13 @@ namespace Suvarna.DGMS.Api.Repositories
             }
 
             return list;
+        }
+    
+        private static bool HasColumn(System.Data.IDataRecord r, string col)
+        {
+            for (int i = 0; i < r.FieldCount; i++)
+                if (string.Equals(r.GetName(i), col, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
     }
 }

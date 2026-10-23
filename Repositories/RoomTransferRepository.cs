@@ -82,7 +82,9 @@ namespace Suvarna.DGMS.Api.Repositories
                         roomType = GetString(dr, "ROOM_TYPE") ?? "",
                         propertyId = GetInt(dr, "PROPERTY_ID"),
                         dailyRate = GetDecimal(dr, "DAILY_RATE"),
-                        gstPct = GetDecimal(dr, "GST_PCT")
+                        gstPct = GetDecimal(dr, "GST_PCT"),
+                        totalBeds = HasColumn(dr, "TOTAL_BEDS") ? GetInt(dr, "TOTAL_BEDS") : 0,
+                        freeBeds = HasColumn(dr, "FREE_BEDS") ? GetInt(dr, "FREE_BEDS") : 0
                     });
                 }
 
@@ -109,6 +111,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", request.sessionId);
                 cmd.Parameters.AddWithValue("@IP_BOOKING_ID", request.bookingId);
                 cmd.Parameters.AddWithValue("@IP_TARGET_ROOM_ID", request.targetRoomId);
+                cmd.Parameters.AddWithValue("@IP_TARGET_BED_ID", request.targetBedId is > 0 ? (object)request.targetBedId.Value : DBNull.Value);
                 cmd.Parameters.AddWithValue("@IP_TRANSFER_DT", request.transferDate);
                 cmd.Parameters.AddWithValue("@IP_REASON", (object?)request.reason ?? DBNull.Value);
 
@@ -118,6 +121,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.Add(outMessage);
 
                 conn.Open();
+                Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);   // works before 2026-10-19_dgms_fixes.sql is run
                 cmd.ExecuteNonQuery();
 
                 return new TransferResult
@@ -139,6 +143,15 @@ namespace Suvarna.DGMS.Api.Repositories
         private static string? GetString(SqlDataReader dr, string column)
         {
             return dr[column] == DBNull.Value ? null : Convert.ToString(dr[column]);
+        }
+
+        private static bool HasColumn(SqlDataReader dr, string column)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                if (string.Equals(dr.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
         }
 
         private static int GetInt(SqlDataReader dr, string column)

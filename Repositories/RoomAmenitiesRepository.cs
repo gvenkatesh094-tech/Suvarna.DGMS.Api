@@ -9,8 +9,11 @@ namespace Suvarna.DGMS.Api.Repositories
     {
         private readonly string _conn;
 
-        public RoomAmenitiesRepository(IConfiguration configuration)
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext? _session;   // NEW: lists only the login location
+
+        public RoomAmenitiesRepository(IConfiguration configuration, Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
+            _session = session;
             _conn = configuration.GetConnectionString("SqlServer");
         }
 
@@ -119,6 +122,9 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.CommandType = CommandType.StoredProcedure;
 
             conn.Open();
+            // NEW: only this location (the parameter is skipped while the 06 script is not run)
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", (object?)_session?.SessionId ?? DBNull.Value);
+            Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);
 
             using SqlDataReader reader =
                 cmd.ExecuteReader();

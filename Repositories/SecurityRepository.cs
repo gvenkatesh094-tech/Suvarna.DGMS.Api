@@ -79,6 +79,16 @@ namespace Suvarna.DGMS.Api.Repositories
             return new SecBlacklistCheckResult { found = true, matchType = Str(r, "MATCH_TYPE"), fullName = Str(r, "FULL_NM"), reasonCode = Str(r, "REASON_CD"), blacklistNo = Str(r, "BLACKLIST_NO") };
         }
 
+        /// <summary>NEW (Round D): guest at check-in - the number is matched against every ID type; a match logs an incident.</summary>
+        public SecBlacklistCheckResult CheckGuest(SecGuestCheckRequest q)
+        {
+            using var c = new SqlConnection(_conn); using var cmd = Cmd(c, "PR_DGMS_SEC_CHECK_GUEST");
+            cmd.Parameters.AddWithValue("@IP_ID_NO", S(q.idNo)); cmd.Parameters.AddWithValue("@IP_NAME", S(q.name)); c.Open();
+            using var r = cmd.ExecuteReader();
+            if (!r.Read()) return new SecBlacklistCheckResult { found = false };
+            return new SecBlacklistCheckResult { found = true, matchType = Str(r, "MATCH_TYPE"), fullName = Str(r, "FULL_NM"), reasonCode = Str(r, "REASON_CD"), blacklistNo = Str(r, "BLACKLIST_NO") };
+        }
+
         public (string status, string? message, SecIssuePassResult? data) IssuePass(SecIssuePassRequest q)
         {
             using var c = new SqlConnection(_conn); using var cmd = Cmd(c, "PR_DGMS_SEC_ISSUE_PASS");

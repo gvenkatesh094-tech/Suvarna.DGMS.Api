@@ -183,6 +183,14 @@ namespace Suvarna.DGMS.Api.Models
         public int maintReqId { get; set; }
     }
 
+    // NEW (Round C): cancel a request raised by mistake (before work starts)
+    public class CancelMaintRequestPayload
+    {
+        public int sessionId { get; set; }
+        public int maintReqId { get; set; }
+        public string? reason { get; set; }
+    }
+
     public class SubmitMaintQcPayload
     {
         public int sessionId { get; set; }

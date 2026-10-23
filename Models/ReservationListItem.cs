@@ -37,6 +37,12 @@
         public DateTime? expectedCheckoutDt { get; set; }
         public int nights { get; set; }
         public decimal? depositAmount { get; set; }
+
+        // NEW: advance held for the reservation + fields needed to edit it
+        public decimal advanceAmount { get; set; }
+        public int? corpAgreementId { get; set; }
+        public string? corpPoRef { get; set; }
+        public int? patientId { get; set; }
         public string bookingStatus { get; set; } = "";
         public DateTime? reservationDt { get; set; }
     }

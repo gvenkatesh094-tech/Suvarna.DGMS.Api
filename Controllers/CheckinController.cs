@@ -24,7 +24,7 @@ namespace Suvarna.DGMS.Api.Controllers
         // ==========================================
 
         [HttpGet("rooms")]
-        public IActionResult GetRooms([FromQuery] int sessionId, [FromQuery] int? locationId , [FromQuery] int? occCatId , [FromQuery] DateTime checkinDt , [FromQuery] DateTime checkOutDt, [FromQuery] int? bookinId, int? accmTypeId = null)
+        public IActionResult GetRooms([FromQuery] int sessionId, [FromQuery] int? locationId , [FromQuery] int? occCatId , [FromQuery] DateTime checkinDt , [FromQuery] DateTime checkOutDt, [FromQuery(Name = "bookingId")] int? bookinId, [FromQuery] int? accmTypeId = null)   // FIX: UI sends "bookingId" (old name "bookinId" never matched)
         {
             return Ok(_service.GetRooms(sessionId, locationId, occCatId,  checkinDt,  checkOutDt,   bookinId, accmTypeId ));
         }
@@ -40,8 +40,15 @@ namespace Suvarna.DGMS.Api.Controllers
         }
 
         // ==========================================
-        // CONFIRM CHECK-IN
+        // NEW: STAY QUOTE  GET api/checkin/quote?sessionId=&tariffId=&checkinDt=&checkoutDt=
+        // Same calculation as the check-in proc, so the screen shows what will be charged.
         // ==========================================
+
+        [HttpGet("quote")]
+        public IActionResult GetQuote([FromQuery] int sessionId, [FromQuery] int tariffId, [FromQuery] DateTime checkinDt, [FromQuery] DateTime checkoutDt, [FromQuery] int? occCatId = null, [FromQuery] int? corpAgreementId = null)
+        {
+            return Ok(_service.GetStayQuote(sessionId, tariffId, checkinDt, checkoutDt, occCatId, corpAgreementId));
+        }
 
         // ==========================================
         // CONFIRM CHECK-IN

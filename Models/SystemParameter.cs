@@ -28,6 +28,9 @@ namespace Suvarna.DGMS.Api.Models
 
         public string? dataType { get; set; }
 
+        // NEW: 'Y' = this parameter is read by the system (screen shows the others separately)
+        public string? isUsedBySystem { get; set; }
+
         public string? remarks { get; set; }
 
         public string? recordStatus { get; set; }

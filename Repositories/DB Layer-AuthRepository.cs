@@ -590,6 +590,124 @@ namespace Suvarna.DGMS.Api.Repositories
             return response;
         }
 
+        // =====================================================
+        // PROPERTY LEVEL ACCESS
+        // =====================================================
+
+        /// <summary>Admin flag, "has permissions" flag and the mapped location ids of a user.</summary>
+        public async Task<UserAccessInfo> GetUserAccessInfo(long userId)
+        {
+            using SqlConnection connection = new SqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            DynamicParameters parameters = new DynamicParameters();
+
+            parameters.Add("@IP_USER_ID", userId);
+
+            using var grid = await connection.QueryMultipleAsync("DGMS.PR_DGMS_GET_USER_ACCESS_INFO", parameters, commandType: CommandType.StoredProcedure, commandTimeout: 30);
+
+            var head = await grid.ReadFirstOrDefaultAsync<dynamic>();
+            var locIds = (await grid.ReadAsync<int>()).ToList();
+
+            return new UserAccessInfo
+            {
+                IsAdmin = string.Equals((string?)head?.IS_ADMIN, "Y", StringComparison.OrdinalIgnoreCase),
+                HasMapping = string.Equals((string?)head?.HAS_MAPPING, "Y", StringComparison.OrdinalIgnoreCase),
+                LocIds = locIds
+            };
+        }
+
+        /// <summary>Properties of one location the user may log in to.</summary>
+        public async Task<(List<LoginPropertyModel> Properties, bool IsAdmin, string AccessMode)> GetLoginProperties(
+            long userId, long locId, string strictMode, string forceAdmin)
+        {
+            using SqlConnection connection = new SqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            DynamicParameters parameters = new DynamicParameters();
+
+            parameters.Add("@IP_USER_ID", userId);
+
+            parameters.Add("@IP_LOC_ID", locId);
+
+            parameters.Add("@IP_STRICT_MODE", strictMode);
+
+            parameters.Add("@IP_FORCE_ADMIN", forceAdmin);
+
+            var rows = (await connection.QueryAsync<dynamic>("DGMS.PR_DGMS_GET_USER_LOGIN_PROPERTIES", parameters, commandType: CommandType.StoredProcedure, commandTimeout: 30)).ToList();
+
+            var list = rows.Select(r => new LoginPropertyModel
+            {
+                PropertyId = (int)r.PROPERTY_ID,
+                PropertyCd = (string?)r.PROPERTY_CD ?? string.Empty,
+                PropertyNm = (string?)r.PROPERTY_NM ?? string.Empty,
+                PropertyTypeCd = (string?)r.PROPERTY_TYPE_CD,
+                City = (string?)r.CITY,
+                LocId = Convert.ToInt32(r.LOC_ID),
+                IsDefault = string.Equals((string?)r.IS_DEFAULT, "Y", StringComparison.OrdinalIgnoreCase)
+            }).ToList();
+
+            // IS_ADMIN / ACCESS_MODE are repeated on every row; with no rows ask the info SP
+            bool isAdmin;
+            string accessMode;
+
+            if (rows.Count > 0)
+            {
+                isAdmin = string.Equals((string?)rows[0].IS_ADMIN, "Y", StringComparison.OrdinalIgnoreCase);
+                accessMode = (string?)rows[0].ACCESS_MODE ?? "ALL";
+            }
+            else
+            {
+                var info = await GetUserAccessInfo(userId);
+                isAdmin = info.IsAdmin || forceAdmin == "Y";
+                accessMode = isAdmin ? "ALL" : info.HasMapping ? "MAP" : strictMode == "Y" ? "NONE" : "ALL";
+            }
+
+            return (list, isAdmin, accessMode);
+        }
+
+        /// <summary>Saves the property chosen at login / on switch against the HIMS session.</summary>
+        public async Task<SessionPropertyResult> SetSessionProperty(
+            long sessionId, long userId, int propertyId, string strictMode, string forceAdmin)
+        {
+            using SqlConnection connection = new SqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            DynamicParameters parameters = new DynamicParameters();
+
+            parameters.Add("@IP_SESSION_ID", sessionId);
+
+            parameters.Add("@IP_USER_ID", userId);
+
+            parameters.Add("@IP_PROPERTY_ID", propertyId);
+
+            parameters.Add("@IP_STRICT_MODE", strictMode);
+
+            parameters.Add("@IP_FORCE_ADMIN", forceAdmin);
+
+            parameters.Add("@OP_STATUS", dbType: DbType.String, size: 1, direction: ParameterDirection.Output);
+
+            parameters.Add("@OP_MSG", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
+
+            parameters.Add("@OP_PROPERTY_NM", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+
+            parameters.Add("@OP_PROPERTY_CD", dbType: DbType.String, size: 20, direction: ParameterDirection.Output);
+
+            await connection.ExecuteAsync("DGMS.PR_DGMS_SET_SESSION_PROPERTY", parameters, commandType: CommandType.StoredProcedure, commandTimeout: 30);
+
+            return new SessionPropertyResult
+            {
+                Success = parameters.Get<string>("@OP_STATUS") == "S",
+                Message = parameters.Get<string>("@OP_MSG"),
+                PropertyId = propertyId,
+                PropertyName = parameters.Get<string>("@OP_PROPERTY_NM"),
+                PropertyCode = parameters.Get<string>("@OP_PROPERTY_CD")
+            };
+        }
+
         public async Task SaveRefreshToken(long userId, string refreshToken)
         {
             using SqlConnection conn = new SqlConnection(_connectionString);

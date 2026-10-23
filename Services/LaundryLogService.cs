@@ -6,10 +6,14 @@ namespace Suvarna.DGMS.Api.Services
     public class LaundryLogService
     {
         private readonly LaundryLogRepository _repo;
+        private readonly PosPaymentService _pos;          // NEW: POS machine payments
+        private readonly Suvarna.DGMS.Api.Helpers.SessionContext _session;
 
-        public LaundryLogService(LaundryLogRepository repo)
+        public LaundryLogService(LaundryLogRepository repo, PosPaymentService pos, Suvarna.DGMS.Api.Helpers.SessionContext session)
         {
             _repo = repo;
+            _pos = pos;
+            _session = session;
         }
 
         public ApiResponse<List<LaundryLogRow>> GetEntries(int sessionId, string? status, string? type, string? scope)
@@ -29,14 +33,20 @@ namespace Suvarna.DGMS.Api.Services
         {
             if (request.items == null || request.items.Count == 0 || !request.items.Exists(i => !string.IsNullOrWhiteSpace(i.name)))
             {
-                throw new Exception("At least one laundry item is required.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("At least one laundry item is required.");
+            }
+
+            // FIX: a zero / negative quantity was summed as sent and later posted as a credit to the guest
+            if (request.items.Exists(i => !string.IsNullOrWhiteSpace(i.name) && i.qty <= 0))
+            {
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Laundry item quantity must be at least 1.");
             }
 
             var data = _repo.CreateLog(request);
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to log laundry pickup." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to log laundry pickup." : data.message);
             }
 
             return ApiResponse<LaundryActionResult>.Success(data.message, data);
@@ -48,7 +58,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark picked up." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark picked up." : data.message);
             }
 
             return ApiResponse<LaundryActionResult>.Success(data.message, data);
@@ -60,7 +70,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark delivered." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to mark delivered." : data.message);
             }
 
             return ApiResponse<LaundryActionResult>.Success(data.message, data);
@@ -72,7 +82,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to cancel entry." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to cancel entry." : data.message);
             }
 
             return ApiResponse<LaundryActionResult>.Success(data.message, data);
@@ -88,7 +98,7 @@ namespace Suvarna.DGMS.Api.Services
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to reverse charge." : data.message);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to reverse charge." : data.message);
             }
 
             return ApiResponse<LaundryActionResult>.Success(data.message, data);
@@ -100,28 +110,51 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<LaundryReturnPreview> GetReturnPreview(int sessionId, int laundryLogId)
         {
             var data = _repo.GetReturnPreview(sessionId, laundryLogId)
-                ?? throw new Exception("Laundry entry not found.");
+                ?? throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Laundry entry not found.");
 
             return ApiResponse<LaundryReturnPreview>.Success("Return preview fetched successfully.", data);
         }
 
         public ApiResponse<LaundryReturnResult> ReturnWithPayment(LaundryReturnRequest request)
         {
-            if (request.laundryLogId <= 0) throw new Exception("Laundry entry is required.");
-            if (string.IsNullOrWhiteSpace(request.paymentMode)) throw new Exception("Payment mode is required.");
-            if (request.paymentAmount <= 0) throw new Exception("Payment amount is required.");
+            if (request.laundryLogId <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Laundry entry is required.");
+            if (string.IsNullOrWhiteSpace(request.paymentMode)) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Payment mode is required.");
+            if (request.paymentAmount <= 0) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Payment amount is required.");
             if (!string.IsNullOrWhiteSpace(request.paymentReference) && request.paymentReference.Trim().Length > 50)
-                throw new Exception("Reference number cannot exceed 50 characters.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Reference number cannot exceed 50 characters.");
             if (!string.IsNullOrWhiteSpace(request.cardLast4) &&
                 (request.cardLast4.Length != 4 || !request.cardLast4.All(char.IsDigit)))
-                throw new Exception("Card last 4 digits must be exactly 4 numbers.");
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Card last 4 digits must be exactly 4 numbers.");
 
-            var data = _repo.ReturnWithPayment(request);
+            // NEW: card paid on the POS machine -> RRN and card last 4 come from the verified POS payment
+            var sid = _session.Require(request.sessionId);
+            var pos = _pos.ClaimForPayment(sid, request.posTxnId, "LAUNDRY", request.laundryLogId, request.paymentAmount, request.paymentMode);
+            if (pos != null)
+            {
+                request.paymentReference = pos.Rrn;
+                request.cardLast4 = pos.CardLast4;
+                request.upiVpa = null;
+            }
+
+            LaundryReturnResult data;
+            try
+            {
+                data = _repo.ReturnWithPayment(request);
+            }
+            catch
+            {
+                _pos.SafeRelease(sid, pos);
+                throw;
+            }
 
             if (data.status != "S")
             {
-                throw new Exception(string.IsNullOrWhiteSpace(data.message) ? "Failed to return laundry." : data.message);
+                _pos.SafeRelease(sid, pos);
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(string.IsNullOrWhiteSpace(data.message) ? "Failed to return laundry." : data.message);
             }
+
+            var posWarning = _pos.LinkAfterSave(sid, pos, null, null, data.paymentId);
+            if (posWarning != null) data.message = (data.message ?? "") + " | " + posWarning;
 
             return ApiResponse<LaundryReturnResult>.Success(data.message, data);
         }

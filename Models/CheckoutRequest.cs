@@ -43,6 +43,9 @@ namespace Suvarna.DGMS.Api.Models
         public string? upiVpa { get; set; }           // ONLINE, UPI VPA
         public bool laundryAcknowledged { get; set; }
 
+        // NEW: SUCCESS POS payment (api/pos-payment) used for this checkout; RRN / card last 4 are taken from it
+        public long? posTxnId { get; set; }
+
 
     }
 

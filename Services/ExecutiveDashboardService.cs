@@ -42,7 +42,7 @@ namespace Suvarna.DGMS.Api.Services
         public ApiResponse<List<ExecRevenueTrendItem>> GetRevenueTrend(int sessionId, int? days)
         {
             var d = days ?? 7;
-            if (d < 1 || d > 90) throw new Exception("Days must be between 1 and 90.");
+            if (d < 1 || d > 90) throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Days must be between 1 and 90.");
 
             var data = _repo.GetRevenueTrend(sessionId, d);
             return ApiResponse<List<ExecRevenueTrendItem>>.Success("Revenue trend fetched successfully.", data);

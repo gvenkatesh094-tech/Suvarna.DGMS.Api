@@ -143,7 +143,11 @@ namespace Suvarna.DGMS.Api.Repositories
                         balanceAmount = GetDecimal(reader, "BALANCE_AMOUNT"),
                         billId = GetInt(reader, "BILL_ID"),
                         billNo = GetString(reader, "BILL_NO"),
-                        billStatus = GetString(reader, "BILL_STATUS")
+                        billStatus = GetString(reader, "BILL_STATUS"),
+                        // NEW (04 script): read only when the column exists, so the API works before and after the script
+                        excessPaidRefund = HasColumn(reader, "EXCESS_PAID_REFUND") ? GetDecimal(reader, "EXCESS_PAID_REFUND") : 0,
+                        corpAgreementId = HasColumn(reader, "CORP_AGREEMENT_ID") && reader["CORP_AGREEMENT_ID"] != DBNull.Value
+                            ? Convert.ToInt32(reader["CORP_AGREEMENT_ID"]) : null
                     };
                 }
 
@@ -247,6 +251,11 @@ namespace Suvarna.DGMS.Api.Repositories
             // NEW: staff acknowledged laundry that is still not delivered
             cmd.Parameters.AddWithValue("@IP_LAUNDRY_ACK", request.laundryAcknowledged ? "Y" : "N");
 
+            // NEW: checkout checklist + remarks are saved on the booking (were collected on screen but never sent)
+            cmd.Parameters.AddWithValue("@IP_ROOM_INSPECTED", request.roomInspected ? "Y" : "N");
+            cmd.Parameters.AddWithValue("@IP_SIGNATURE_OBTAINED", request.signatureObtained ? "Y" : "N");
+            cmd.Parameters.AddWithValue("@IP_REMARKS", string.IsNullOrWhiteSpace(request.remarks) ? DBNull.Value : request.remarks.Trim());
+
             SqlParameter outBillId = new SqlParameter("@OUT_BILL_ID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             SqlParameter outGross = new SqlParameter("@OUT_FINAL_GROSS", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             SqlParameter outRefund = new SqlParameter("@OUT_DEPOSIT_REFUND", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
@@ -254,7 +263,10 @@ namespace Suvarna.DGMS.Api.Repositories
             SqlParameter outPenalty = new SqlParameter("@OUT_PENALTY_AMT", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
             SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
             SqlParameter outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+            // NEW: early checkout - room rent paid at check-in for days not used is refunded
+            SqlParameter outExcess = new SqlParameter("@OUT_EXCESS_REFUND", SqlDbType.Decimal) { Precision = 18, Scale = 2, Direction = ParameterDirection.Output };
 
+            cmd.Parameters.Add(outExcess);
             cmd.Parameters.Add(outBillId);
             cmd.Parameters.Add(outGross);
             cmd.Parameters.Add(outRefund);
@@ -264,6 +276,7 @@ namespace Suvarna.DGMS.Api.Repositories
             cmd.Parameters.Add(outMessage);
 
             con.Open();
+            Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);   // works with the old procedure too (04 not run yet)
             cmd.ExecuteNonQuery();
 
             result.status = Convert.ToString(outStatus.Value) ?? "";
@@ -273,6 +286,7 @@ namespace Suvarna.DGMS.Api.Repositories
             result.depositRefund = outRefund.Value == DBNull.Value ? 0 : Convert.ToDecimal(outRefund.Value);
             result.netPayable = outNet.Value == DBNull.Value ? 0 : Convert.ToDecimal(outNet.Value);
             result.penaltyAmount = outPenalty.Value == DBNull.Value ? 0 : Convert.ToDecimal(outPenalty.Value);
+            result.excessRefund = outExcess.Value == DBNull.Value ? 0 : Convert.ToDecimal(outExcess.Value);
             result.bookingId = request.bookingId;
             result.checkoutDate = request.checkoutDt;
             result.paymentMode = request.paymentMode ?? "";
@@ -294,6 +308,13 @@ namespace Suvarna.DGMS.Api.Repositories
 
         private static int GetInt(SqlDataReader r, string col) =>
             r[col] == DBNull.Value ? 0 : Convert.ToInt32(r[col]);
+
+        private static bool HasColumn(SqlDataReader r, string col)
+        {
+            for (int i = 0; i < r.FieldCount; i++)
+                if (string.Equals(r.GetName(i), col, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         private static decimal GetDecimal(SqlDataReader r, string col) =>
             r[col] == DBNull.Value ? 0 : Convert.ToDecimal(r[col]);

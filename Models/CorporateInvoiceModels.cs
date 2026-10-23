@@ -12,6 +12,12 @@ namespace Suvarna.DGMS.Api.Models
         public decimal netPayableAmt { get; set; }
         public DateTime? dueDt { get; set; }
         public string status { get; set; } = "";
+
+        // NEW (Round B)
+        public DateTime? paymentDt { get; set; }
+        public string? paymentRef { get; set; }
+        public string isOverdue { get; set; } = "N";
+        public int agreementId { get; set; }
     }
 
     public class CorpAgreementLookup
@@ -46,6 +52,12 @@ namespace Suvarna.DGMS.Api.Models
         public string roomNo { get; set; } = "";
         public DateTime billDt { get; set; }
         public decimal totalGrossAmt { get; set; }
+
+        // NEW (Round B)
+        public string? gstInvoiceNo { get; set; }
+        public DateTime? checkoutDt { get; set; }
+        public decimal baseAmt { get; set; }
+        public decimal gstAmt { get; set; }
     }
 
     public class CorpInvoiceDetail
@@ -64,6 +76,41 @@ namespace Suvarna.DGMS.Api.Models
         public decimal netPayableAmt { get; set; }
         public DateTime dueDt { get; set; }
         public string status { get; set; } = "";
+
+        // NEW (Round B)
+        public string? corpAddress { get; set; }
+        public DateTime? invoiceDt { get; set; }
+        public DateTime? paymentDt { get; set; }
+        public string? paymentRef { get; set; }
+        public string? remarks { get; set; }
+
         public List<CorpInvoiceBookingLine> bookings { get; set; } = new();
+    }
+
+    // NEW (Round B): company payment of a corporate invoice (amount received + TDS = invoice amount)
+    public class CorpInvoicePaymentRequest
+    {
+        public int sessionId { get; set; }
+        public int invoiceId { get; set; }
+        public decimal amount { get; set; }
+        public decimal tdsAmount { get; set; }
+        public string paymentMode { get; set; } = "BANK_TRANSFER";
+        public string? paymentRef { get; set; }
+        public DateTime? paymentDt { get; set; }
+        public string? remarks { get; set; }
+    }
+
+    // NEW (Round B)
+    public class CorpInvoiceCancelRequest
+    {
+        public int sessionId { get; set; }
+        public int invoiceId { get; set; }
+        public string? reason { get; set; }
+    }
+
+    public class CorpInvoiceActionResult
+    {
+        public string status { get; set; } = "";
+        public string message { get; set; } = "";
     }
 }

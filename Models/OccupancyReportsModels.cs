@@ -23,9 +23,12 @@ namespace Suvarna.DGMS.Api.Models
         public string accmTypeName { get; set; } = "";
         public int totalRooms { get; set; }
         public int occupiedRooms { get; set; }
-        public decimal occPct { get; set; }
-        public decimal adr { get; set; }
-        public decimal revPar { get; set; }
+        public decimal occPct { get; set; }           // right now
+        public decimal adr { get; set; }              // room revenue / room-nights billed (period)
+        public decimal revPar { get; set; }           // room revenue / (rooms x days of the period)
+        public int roomNights { get; set; }           // NEW: occupied room-nights in the period
+        public decimal periodOccPct { get; set; }     // NEW: occupancy % over the period
+        public decimal accmRevenue { get; set; }      // NEW: room revenue (excl. GST) in the period
     }
 
     // ==========================================
