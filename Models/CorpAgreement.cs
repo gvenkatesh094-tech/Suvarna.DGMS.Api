@@ -17,6 +17,10 @@
 
         public int roomAllocate { get; set; }
 
+        // NEW 02-Nov: what the company pays at check-out. ALL = room + services (default), ROOM_ONLY = room only
+        // (the guest pays services / penalty). null = leave as it is.
+        public string? corpBillingScope { get; set; }
+
         public string AgreementNo { get; set; }
 
         public string CorpNm { get; set; }

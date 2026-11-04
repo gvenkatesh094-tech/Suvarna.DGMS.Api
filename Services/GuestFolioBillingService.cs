@@ -21,9 +21,9 @@ namespace Suvarna.DGMS.Api.Services
         // GET BOOKINGS
         // ==========================================
 
-        public ApiResponse<List<BillingBookingLookup>> GetBookings(int sessionId, int? propertyId, bool includeCheckedOut = false)
+        public ApiResponse<List<BillingBookingLookup>> GetBookings(int sessionId, int? propertyId, bool includeCheckedOut = false, bool includeSettled = false)
         {
-            var data = _repo.GetBookings(sessionId, propertyId, includeCheckedOut);
+            var data = _repo.GetBookings(sessionId, propertyId, includeCheckedOut, includeSettled);
 
             return ApiResponse<List<BillingBookingLookup>>.Success(
                 "Guest list fetched successfully.",
@@ -162,6 +162,23 @@ namespace Suvarna.DGMS.Api.Services
             }
 
             return ApiResponse<InvoiceResult>.Success(data.message, data);
+        }
+
+        // ==========================================
+        // NEW 04-Nov: PAYMENT RECEIPT
+        // ==========================================
+
+        public ApiResponse<FolioReceipt?> GetReceipt(int sessionId, int paymentId)
+        {
+            if (paymentId <= 0)
+                throw new UserMessageException("Receipt number is required.");
+
+            var data = _repo.GetReceipt(sessionId, paymentId);
+
+            if (data == null)
+                return ApiResponse<FolioReceipt?>.Fail("Receipt not found.", "404");
+
+            return ApiResponse<FolioReceipt?>.Success("Receipt fetched successfully.", data);
         }
 
         // ==========================================

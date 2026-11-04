@@ -144,6 +144,15 @@ namespace Suvarna.DGMS.Api.Models
 
         // NEW: corporate booking (used to offer "Bill to company")
         public int? corpAgreementId { get; set; }
+
+        // NEW 02-Nov: bill to company. GUEST / CORPORATE (from the bill), what the company pays
+        // (ALL = room + services, ROOM_ONLY = room only), the guest's part and the company's part.
+        public string billToType { get; set; } = "GUEST";
+        public string? corpBillingScope { get; set; }
+        public string? agreementNo { get; set; }
+        public string? corpPoRef { get; set; }
+        public decimal guestShareAmount { get; set; }
+        public decimal corpBillAmount { get; set; }
         public decimal serviceGstAmount { get; set; }
 
         //=========================================

@@ -61,6 +61,19 @@ namespace Suvarna.DGMS.Api.Controllers
         }
 
         //=========================================================
+        // NEW (28-Oct): did the room go to housekeeping, room status,
+        // HK task. bookingId = one booking (receipt); none = today's check-outs.
+        //=========================================================
+
+        [HttpGet("hk-status")]
+        public IActionResult GetCheckoutHkStatus(
+            [FromQuery] int sessionId,
+            [FromQuery] int? bookingId = null)
+        {
+            return Ok(_service.GetCheckoutHkStatus(sessionId, bookingId));
+        }
+
+        //=========================================================
         // CONFIRM CHECKOUT
         //=========================================================
 

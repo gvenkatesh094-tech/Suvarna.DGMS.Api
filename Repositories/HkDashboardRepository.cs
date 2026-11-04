@@ -65,7 +65,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         photoUrl = GetString(dr, "photoUrl"),
 
                         photoNotes = GetString(dr, "photoNotes")
-                    });
+                    }.WithSla(dr));
                 }
                 return list;
             }
@@ -249,7 +249,12 @@ namespace Suvarna.DGMS.Api.Repositories
                         itemNm = GetString(dr, "itemNm") ?? "",
                         isComplete = GetString(dr, "isComplete") ?? "N",
                         completeDt = GetNullableDateTime(dr, "completeDt"),
-                        photoUrl = GetString(dr, "photoUrl")
+                        photoUrl = GetString(dr, "photoUrl"),
+                        // 28-Oct: template details (old SQL without these columns -> defaults)
+                        isMandatory = HkReader.Str(dr, "isMandatory") ?? "Y",
+                        photoRequired = HkReader.Str(dr, "photoRequired") ?? "Y",
+                        itemCategory = HkReader.Str(dr, "itemCategory"),
+                        instructions = HkReader.Str(dr, "instructions")
                     });
                 }
                 return list;
@@ -491,7 +496,7 @@ namespace Suvarna.DGMS.Api.Repositories
                         photoUrl = GetString(dr, "photoUrl"),
 
                         photoNotes = GetString(dr, "photoNotes")
-                    });
+                    }.WithSla(dr));
                 }
 
                 return list;
@@ -822,6 +827,43 @@ namespace Suvarna.DGMS.Api.Repositories
         private static DateTime? GetNullableDateTime(SqlDataReader dr, string column)
         {
             return dr[column] == DBNull.Value ? null : Convert.ToDateTime(dr[column]);
+        }
+    }
+
+    // 28-Oct: reads the SLA columns added by the 28-Oct SQL. Columns that are not there
+    // (SQL not run yet) are skipped, so the screens keep working with the old values.
+    internal static class HkReader
+    {
+        public static bool Has(SqlDataReader dr, string column)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                if (string.Equals(dr.GetName(i), column, StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
+
+        public static string? Str(SqlDataReader dr, string column)
+        {
+            return Has(dr, column) && dr[column] != DBNull.Value ? Convert.ToString(dr[column]) : null;
+        }
+
+        public static HkTask WithSla(this HkTask t, SqlDataReader dr)
+        {
+            if (!Has(dr, "slaState")) return t;
+
+            t.slaFromServer = true;
+            t.slaStartDt = dr["slaStartDt"] == DBNull.Value ? null : Convert.ToDateTime(dr["slaStartDt"]);
+            t.slaClockFrom = Str(dr, "slaClockFrom") ?? "ASSIGNED";
+            t.slaRunning = Str(dr, "slaRunning") ?? "Y";
+            t.slaElapsedSec = dr["slaElapsedSec"] == DBNull.Value ? 0 : Convert.ToInt64(dr["slaElapsedSec"]);
+            t.slaPct = dr["slaPct"] == DBNull.Value ? 0 : Convert.ToInt32(dr["slaPct"]);
+            t.slaState = Str(dr, "slaState") ?? "OK";
+            t.slaWarnPct = dr["slaWarnPct"] == DBNull.Value ? 70 : Convert.ToInt32(dr["slaWarnPct"]);
+            t.slaCriticalPct = dr["slaCriticalPct"] == DBNull.Value ? 90 : Convert.ToInt32(dr["slaCriticalPct"]);
+            t.checklistTemplate = Str(dr, "checklistTemplate");
+            t.roomTypeName = Str(dr, "roomTypeName");
+            return t;
         }
     }
 }

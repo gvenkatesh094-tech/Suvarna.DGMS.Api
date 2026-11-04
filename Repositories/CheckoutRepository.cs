@@ -147,7 +147,14 @@ namespace Suvarna.DGMS.Api.Repositories
                         // NEW (04 script): read only when the column exists, so the API works before and after the script
                         excessPaidRefund = HasColumn(reader, "EXCESS_PAID_REFUND") ? GetDecimal(reader, "EXCESS_PAID_REFUND") : 0,
                         corpAgreementId = HasColumn(reader, "CORP_AGREEMENT_ID") && reader["CORP_AGREEMENT_ID"] != DBNull.Value
-                            ? Convert.ToInt32(reader["CORP_AGREEMENT_ID"]) : null
+                            ? Convert.ToInt32(reader["CORP_AGREEMENT_ID"]) : null,
+                        // NEW 02-Nov (2026-11-02 script): bill to company
+                        billToType = HasColumn(reader, "BILL_TO_TYPE") ? (GetNullableString(reader, "BILL_TO_TYPE") ?? "GUEST") : "GUEST",
+                        corpBillingScope = HasColumn(reader, "CORP_BILLING_SCOPE") ? GetNullableString(reader, "CORP_BILLING_SCOPE") : null,
+                        agreementNo = HasColumn(reader, "AGREEMENT_NO") ? GetNullableString(reader, "AGREEMENT_NO") : null,
+                        corpPoRef = HasColumn(reader, "CORP_PO_REF") ? GetNullableString(reader, "CORP_PO_REF") : null,
+                        guestShareAmount = HasColumn(reader, "GUEST_SHARE_AMOUNT") ? GetDecimal(reader, "GUEST_SHARE_AMOUNT") : 0,
+                        corpBillAmount = HasColumn(reader, "CORP_BILL_AMOUNT") ? GetDecimal(reader, "CORP_BILL_AMOUNT") : 0
                     };
                 }
 
@@ -296,6 +303,55 @@ namespace Suvarna.DGMS.Api.Repositories
         }
 
         //=========================================================
+        // NEW (28-Oct): CHECKOUT -> HOUSEKEEPING STATUS
+        // bookingId given = that booking; null = today's check-outs
+        //=========================================================
+
+        public List<CheckoutHkStatus> GetCheckoutHkStatus(int sessionId, int? bookingId)
+        {
+            List<CheckoutHkStatus> list = new List<CheckoutHkStatus>();
+
+            using SqlConnection con = new SqlConnection(_conn);
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_CHECKOUT_HK_STATUS", con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+            cmd.Parameters.AddWithValue("@IP_BOOKING_ID", bookingId.HasValue && bookingId.Value > 0 ? bookingId.Value : DBNull.Value);
+
+            con.Open();
+            using SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                list.Add(new CheckoutHkStatus
+                {
+                    bookingId = GetInt(reader, "BOOKING_ID"),
+                    bookingNo = GetString(reader, "BOOKING_NO"),
+                    guestName = GetString(reader, "GUEST_NM"),
+                    roomId = GetInt(reader, "ROOM_ID"),
+                    roomNo = GetString(reader, "ROOM_NO"),
+                    roomName = GetString(reader, "ROOM_NM"),
+                    roomStatus = GetString(reader, "ROOM_STATUS_CD"),
+                    bedNo = GetNullableString(reader, "BED_NO"),
+                    bedStatus = GetNullableString(reader, "BED_STATUS_CD"),
+                    otherGuestsInRoom = GetInt(reader, "OTHER_GUESTS_IN_ROOM"),
+                    checkoutDate = GetNullableDate(reader, "CHECKOUT_DT"),
+                    hkTaskId = reader["HK_TASK_ID"] == DBNull.Value ? null : Convert.ToInt32(reader["HK_TASK_ID"]),
+                    hkTaskNo = GetNullableString(reader, "HK_TASK_NO"),
+                    hkTaskStatus = GetNullableString(reader, "HK_TASK_STATUS"),
+                    hkPriority = GetNullableString(reader, "HK_PRIORITY"),
+                    hkStaffName = GetNullableString(reader, "HK_STAFF_NAME"),
+                    slaMinutes = reader["SLA_MINUTES"] == DBNull.Value ? null : Convert.ToInt32(reader["SLA_MINUTES"]),
+                    hkTriggeredDate = GetNullableDate(reader, "HK_TRIGGERED_DT"),
+                    hkSlaDueDate = GetNullableDate(reader, "HK_SLA_DUE_DT"),
+                    slaBreached = GetString(reader, "SLA_BREACHED") == "Y"
+                });
+            }
+
+            return list;
+        }
+
+        //=========================================================
         // HELPERS — null-safe reads (a NULL in any numeric column used
         // to crash the whole screen with InvalidCastException)
         //=========================================================
@@ -305,6 +361,9 @@ namespace Suvarna.DGMS.Api.Repositories
 
         private static string? GetNullableString(SqlDataReader r, string col) =>
             r[col] == DBNull.Value ? null : Convert.ToString(r[col]);
+
+        private static DateTime? GetNullableDate(SqlDataReader r, string col) =>
+            r[col] == DBNull.Value ? null : Convert.ToDateTime(r[col]);
 
         private static int GetInt(SqlDataReader r, string col) =>
             r[col] == DBNull.Value ? 0 : Convert.ToInt32(r[col]);

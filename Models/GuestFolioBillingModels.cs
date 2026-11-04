@@ -15,6 +15,7 @@ namespace Suvarna.DGMS.Api.Models
         public string bookingStatus { get; set; } = "CHECKEDIN";
         public string? gstInvoiceNo { get; set; }
         public decimal balanceAmt { get; set; }
+        public string? billStatus { get; set; }   // 28-Oct: OPEN / PARTIALLY_SETTLED / SETTLED / TRANSFERRED
     }
 
     // -----------------------------------------------------------------
@@ -53,6 +54,80 @@ namespace Suvarna.DGMS.Api.Models
 
         // NEW (Round B): ACCOMMODATION / SERVICE / PENALTY - only SERVICE lines can be cancelled
         public string chargeType { get; set; } = "SERVICE";
+
+        // NEW 04-Nov: who posted / paid / cancelled the line, and when (null until the 04-Nov SQL is run)
+        public DateTime? postedDt { get; set; }
+        public string? postedByNm { get; set; }
+        public decimal paidAmt { get; set; }
+        public string? payStatus { get; set; }          // PAID / PART_PAID / UNPAID / COMPANY / CANCELLED
+        public int? paymentId { get; set; }             // receipt PAY-<id>
+        public DateTime? paidDt { get; set; }
+        public string? paidByNm { get; set; }
+        public string? paymentMode { get; set; }
+        public DateTime? cancelledDt { get; set; }
+        public string? cancelledByNm { get; set; }
+        public string? cancelReason { get; set; }
+    }
+
+    // NEW 04-Nov: one payment (receipt) of the stay
+    public class BillingPaymentLine
+    {
+        public int paymentId { get; set; }
+        public string receiptNo { get; set; } = "";
+        public DateTime? paymentDt { get; set; }
+        public DateTime? createDt { get; set; }
+        public string paymentMode { get; set; } = "";
+        public decimal amount { get; set; }
+        public string? paymentRef { get; set; }
+        public string? status { get; set; }
+        public string? remarks { get; set; }
+        public string? collectedByNm { get; set; }
+        public int servicesPaid { get; set; }
+    }
+
+    // NEW 04-Nov: payment receipt (print / reprint) - header + lines
+    public class FolioReceipt
+    {
+        public int paymentId { get; set; }
+        public string receiptNo { get; set; } = "";
+        public DateTime? paymentDt { get; set; }
+        public string paymentMode { get; set; } = "";
+        public decimal amount { get; set; }
+        public string? paymentRef { get; set; }
+        public string? paymentStatus { get; set; }
+        public string? remarks { get; set; }
+        public string? collectedByNm { get; set; }
+        public string bookingNo { get; set; } = "";
+        public string guestNm { get; set; } = "";
+        public string? mobileNo { get; set; }
+        public string? roomNo { get; set; }
+        public DateTime? checkinDt { get; set; }
+        public string? billNo { get; set; }
+        public decimal billTotalAmt { get; set; }
+        public decimal paidTillAmt { get; set; }
+        public decimal balanceNowAmt { get; set; }
+        public string billToType { get; set; } = "GUEST";
+        public string? corpNm { get; set; }
+        public string? propertyNm { get; set; }
+        public string? propertyAddress { get; set; }
+        public string? propertyPhone { get; set; }
+        public string? propertyGstin { get; set; }
+        public List<FolioReceiptLine> lines { get; set; } = new();
+    }
+
+    public class FolioReceiptLine
+    {
+        public int chargeId { get; set; }
+        public DateTime? chargeDt { get; set; }
+        public string description { get; set; } = "";
+        public string? sacCode { get; set; }
+        public decimal qty { get; set; }
+        public decimal unitRate { get; set; }
+        public decimal baseAmt { get; set; }
+        public decimal gstPct { get; set; }
+        public decimal gstAmt { get; set; }
+        public decimal lineAmt { get; set; }
+        public decimal paidAmt { get; set; }
     }
 
     // -----------------------------------------------------------------
@@ -104,8 +179,13 @@ namespace Suvarna.DGMS.Api.Models
         public string billToType { get; set; } = "GUEST";
         public string? corpNm { get; set; }
         public int? gstInvoiceId { get; set; }
+        // NEW 02-Nov: company stay split (null when the 02-Nov SQL is not run yet)
+        public string? corpBillingScope { get; set; }
+        public decimal? guestDueAmt { get; set; }
+        public decimal? corpDueAmt { get; set; }
 
         public List<BillingChargeLine> chargeLines { get; set; } = new();
+        public List<BillingPaymentLine> payments { get; set; } = new();   // NEW 04-Nov
     }
 
     // -----------------------------------------------------------------
@@ -255,4 +335,4 @@ namespace Suvarna.DGMS.Api.Models
         public string status { get; set; } = "";
         public string message { get; set; } = "";
     }
-}
+}

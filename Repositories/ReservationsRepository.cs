@@ -368,6 +368,68 @@ namespace Suvarna.DGMS.Api.Repositories
         // COMMON PARAMETER HELPER
         // ==========================================
 
+        // ==========================================
+        // 03-Nov: RETURNING GUEST + DUPLICATE CHECK BY MOBILE
+        // ==========================================
+
+        public ReservationGuestCheck GetGuestCheck(int sessionId, string mobileNo, DateTime? checkinDt, DateTime? checkoutDt, int bookingId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_connectionString);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_RESERVATION_GUEST_CHECK", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                AddParameter(cmd, "@IP_SESSION_ID", sessionId);
+                AddParameter(cmd, "@IP_MOBILE_NO", mobileNo);
+                AddParameter(cmd, "@IP_CHECKIN_DT", checkinDt);
+                AddParameter(cmd, "@IP_CHECKOUT_DT", checkoutDt);
+                AddParameter(cmd, "@IP_BOOKING_ID", bookingId);
+                conn.Open();
+
+                var result = new ReservationGuestCheck();
+                using SqlDataReader reader = cmd.ExecuteReader();
+
+                // 1: last stay of this mobile (0 or 1 row)
+                if (reader.Read())
+                {
+                    result.lastGuest = new ReturningGuest
+                    {
+                        guestName = reader.SafeGetString("guestName"),
+                        genderId = reader["genderId"] == DBNull.Value ? null : Convert.ToInt32(reader["genderId"]),
+                        genderCd = reader["genderCd"] == DBNull.Value ? null : reader["genderCd"].ToString(),
+                        email = reader["email"] == DBNull.Value ? null : reader["email"].ToString(),
+                        address = reader["address"] == DBNull.Value ? null : reader["address"].ToString(),
+                        lastStayDt = reader.SafeGetDateTime("lastStayDt"),
+                        stayCount = reader.SafeGetInt("stayCount")
+                    };
+                }
+
+                // 2: reservations / stays of this mobile overlapping the dates
+                if (reader.NextResult())
+                {
+                    while (reader.Read())
+                    {
+                        result.overlapping.Add(new OverlappingBooking
+                        {
+                            bookingId = reader.SafeGetInt("bookingId"),
+                            bookingNo = reader.SafeGetString("bookingNo"),
+                            bookingStatus = reader.SafeGetString("bookingStatus"),
+                            guestName = reader.SafeGetString("guestName"),
+                            accmTypeName = reader["accmTypeName"] == DBNull.Value ? null : reader["accmTypeName"].ToString(),
+                            checkinDt = reader.SafeGetDateTime("checkinDt"),
+                            checkoutDt = reader.SafeGetDateTime("checkoutDt")
+                        });
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error while checking the guest mobile: {ex.Message}", ex);
+            }
+        }
+
         private static void AddParameter(
             SqlCommand cmd,
             string parameterName,
@@ -379,4 +441,4 @@ namespace Suvarna.DGMS.Api.Repositories
             );
         }
     }
-}
+}

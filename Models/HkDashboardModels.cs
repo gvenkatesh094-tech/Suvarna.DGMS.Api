@@ -32,8 +32,20 @@
         public int checklistDone { get; set; }
         public string? photoUrl { get; set; }
         public string? photoNotes { get; set; }
-      
-        
+
+        // 28-Oct: SLA computed by the database (DGMS.FN_DGMS_HK_SLA) - same rule on every screen.
+        // The screen only adds the seconds passed since it loaded the list.
+        public DateTime? slaStartDt { get; set; }
+        public string slaClockFrom { get; set; } = "ASSIGNED";   // ASSIGNED / TRIGGERED
+        public string slaRunning { get; set; } = "Y";            // N = frozen at "Mark Room Cleaned"
+        public long slaElapsedSec { get; set; }
+        public int slaPct { get; set; }
+        public string slaState { get; set; } = "OK";             // OK / WARN / CRITICAL / BREACHED
+        public int slaWarnPct { get; set; } = 70;
+        public int slaCriticalPct { get; set; } = 90;
+        public string? checklistTemplate { get; set; }
+        public string? roomTypeName { get; set; }
+        public bool slaFromServer { get; set; }                  // false = SQL of 28-Oct not run yet
     }
 
     public class HkChecklistItem
@@ -45,6 +57,12 @@
         public string isComplete { get; set; } = "N";
         public DateTime? completeDt { get; set; }
         public string? photoUrl { get; set; }
+
+        // 28-Oct: from the checklist template
+        public string isMandatory { get; set; } = "Y";
+        public string photoRequired { get; set; } = "Y";
+        public string? itemCategory { get; set; }
+        public string? instructions { get; set; }
     }
 
     public class HkRoom

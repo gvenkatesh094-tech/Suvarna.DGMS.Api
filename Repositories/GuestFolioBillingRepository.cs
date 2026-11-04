@@ -17,7 +17,7 @@ namespace Suvarna.DGMS.Api.Repositories
         // GET BOOKINGS (Select Guest dropdown)
         // ==========================================
 
-        public List<BillingBookingLookup> GetBookings(int sessionId, int? propertyId, bool includeCheckedOut = false)
+        public List<BillingBookingLookup> GetBookings(int sessionId, int? propertyId, bool includeCheckedOut = false, bool includeSettled = false)
         {
             List<BillingBookingLookup> list = new();
 
@@ -29,6 +29,7 @@ namespace Suvarna.DGMS.Api.Repositories
                 cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
                 cmd.Parameters.AddWithValue("@IP_PROPERTY_ID", (object?)propertyId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IP_INCLUDE_CHECKEDOUT", includeCheckedOut ? "Y" : "N");   // NEW (Round B)
+                cmd.Parameters.AddWithValue("@IP_INCLUDE_SETTLED", includeSettled ? "Y" : "N");         // 28-Oct: paid check-outs only on request
                 Suvarna.DGMS.Api.Helpers.ProcParameterFilter.RemoveUnknown(cmd);                          // works before 07 is run
                 conn.Open();
 
@@ -44,7 +45,8 @@ namespace Suvarna.DGMS.Api.Repositories
                         propertyId = GetInt(dr, "PROPERTY_ID"),
                         bookingStatus = Has(dr, "BOOKING_STATUS") ? (GetString(dr, "BOOKING_STATUS") ?? "CHECKEDIN") : "CHECKEDIN",
                         gstInvoiceNo = Has(dr, "GST_INVOICE_NO") ? GetString(dr, "GST_INVOICE_NO") : null,
-                        balanceAmt = Has(dr, "BALANCE_AMT") ? GetDecimal(dr, "BALANCE_AMT") : 0
+                        balanceAmt = Has(dr, "BALANCE_AMT") ? GetDecimal(dr, "BALANCE_AMT") : 0,
+                        billStatus = Has(dr, "BILL_STATUS") ? GetString(dr, "BILL_STATUS") : null    // 28-Oct
                     });
                 }
 
@@ -164,7 +166,11 @@ namespace Suvarna.DGMS.Api.Repositories
                     discountAmt = Has(dr, "DISCOUNT_AMT") ? GetDecimal(dr, "DISCOUNT_AMT") : 0,
                     billToType = Has(dr, "BILL_TO_TYPE") ? (GetString(dr, "BILL_TO_TYPE") ?? "GUEST") : "GUEST",
                     corpNm = Has(dr, "CORP_NM") ? GetString(dr, "CORP_NM") : null,
-                    gstInvoiceId = Has(dr, "GST_INVOICE_ID") ? GetNullableInt(dr, "GST_INVOICE_ID") : null
+                    gstInvoiceId = Has(dr, "GST_INVOICE_ID") ? GetNullableInt(dr, "GST_INVOICE_ID") : null,
+                    // NEW 02-Nov
+                    corpBillingScope = Has(dr, "CORP_BILLING_SCOPE") ? GetString(dr, "CORP_BILLING_SCOPE") : null,
+                    guestDueAmt = Has(dr, "GUEST_DUE_AMT") ? GetDecimal(dr, "GUEST_DUE_AMT") : null,
+                    corpDueAmt = Has(dr, "CORP_DUE_AMT") ? GetDecimal(dr, "CORP_DUE_AMT") : null
                 };
 
                 // Result Set 2 : charge lines
@@ -185,7 +191,41 @@ namespace Suvarna.DGMS.Api.Repositories
                             // NEW — requires one extra property on the
                             // BillingChargeLine model: `string chargeSource`.
                             chargeSource = GetString(dr, "CHARGE_SOURCE") ?? "MANUAL",
-                            chargeType = Has(dr, "CHARGE_TYPE") ? (GetString(dr, "CHARGE_TYPE") ?? "SERVICE") : "SERVICE"
+                            chargeType = Has(dr, "CHARGE_TYPE") ? (GetString(dr, "CHARGE_TYPE") ?? "SERVICE") : "SERVICE",
+                            // NEW 04-Nov: audit (read only when the 04-Nov SQL is run)
+                            postedDt = Has(dr, "POSTED_DT") ? GetNullableDateTime(dr, "POSTED_DT") : null,
+                            postedByNm = Has(dr, "POSTED_BY_NM") ? GetString(dr, "POSTED_BY_NM") : null,
+                            paidAmt = Has(dr, "PAID_AMT") ? GetDecimal(dr, "PAID_AMT") : 0,
+                            payStatus = Has(dr, "PAY_STATUS") ? GetString(dr, "PAY_STATUS") : null,
+                            paymentId = Has(dr, "PAYMENT_ID") ? GetNullableInt(dr, "PAYMENT_ID") : null,
+                            paidDt = Has(dr, "PAID_DT") ? GetNullableDateTime(dr, "PAID_DT") : null,
+                            paidByNm = Has(dr, "PAID_BY_NM") ? GetString(dr, "PAID_BY_NM") : null,
+                            paymentMode = Has(dr, "PAYMENT_MODE") ? GetString(dr, "PAYMENT_MODE") : null,
+                            cancelledDt = Has(dr, "CANCELLED_DT") ? GetNullableDateTime(dr, "CANCELLED_DT") : null,
+                            cancelledByNm = Has(dr, "CANCELLED_BY_NM") ? GetString(dr, "CANCELLED_BY_NM") : null,
+                            cancelReason = Has(dr, "CANCEL_REASON") ? GetString(dr, "CANCEL_REASON") : null
+                        });
+                    }
+                }
+
+                // NEW 04-Nov: Result Set 3 : payments (receipts) of the stay
+                if (dr.NextResult())
+                {
+                    while (dr.Read())
+                    {
+                        folio.payments.Add(new BillingPaymentLine
+                        {
+                            paymentId = GetInt(dr, "PAYMENT_ID"),
+                            receiptNo = GetString(dr, "RECEIPT_NO") ?? "",
+                            paymentDt = GetNullableDateTime(dr, "PAYMENT_DT"),
+                            createDt = GetNullableDateTime(dr, "CREATE_DT"),
+                            paymentMode = GetString(dr, "PAYMENT_MODE") ?? "",
+                            amount = GetDecimal(dr, "AMOUNT_PAID"),
+                            paymentRef = GetString(dr, "PAYMENT_REF"),
+                            status = GetString(dr, "STATUS"),
+                            remarks = GetString(dr, "REMARKS"),
+                            collectedByNm = GetString(dr, "COLLECTED_BY_NM"),
+                            servicesPaid = GetInt(dr, "SERVICES_PAID")
                         });
                     }
                 }
@@ -538,6 +578,81 @@ namespace Suvarna.DGMS.Api.Repositories
         // ==========================================
 
         /// <summary>NEW: true when the result set has this column (screens keep working before the DB script is run).</summary>
+        // ==========================================
+        // NEW 04-Nov: PAYMENT RECEIPT (print / reprint)
+        // ==========================================
+
+        public FolioReceipt? GetReceipt(int sessionId, int paymentId)
+        {
+            try
+            {
+                using SqlConnection conn = new SqlConnection(_conn);
+                using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_GET_FOLIO_RECEIPT", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@IP_SESSION_ID", sessionId);
+                cmd.Parameters.AddWithValue("@IP_PAYMENT_ID", paymentId);
+                conn.Open();
+
+                using SqlDataReader dr = cmd.ExecuteReader();
+                if (!dr.Read()) return null;
+
+                var rc = new FolioReceipt
+                {
+                    paymentId = GetInt(dr, "PAYMENT_ID"),
+                    receiptNo = GetString(dr, "RECEIPT_NO") ?? "",
+                    paymentDt = GetNullableDateTime(dr, "PAYMENT_DT"),
+                    paymentMode = GetString(dr, "PAYMENT_MODE") ?? "",
+                    amount = GetDecimal(dr, "AMOUNT_PAID"),
+                    paymentRef = GetString(dr, "PAYMENT_REF"),
+                    paymentStatus = GetString(dr, "PAYMENT_STATUS"),
+                    remarks = GetString(dr, "REMARKS"),
+                    collectedByNm = GetString(dr, "COLLECTED_BY_NM"),
+                    bookingNo = GetString(dr, "BOOKING_NO") ?? "",
+                    guestNm = GetString(dr, "GUEST_NM") ?? "",
+                    mobileNo = GetString(dr, "MOBILE_NO"),
+                    roomNo = GetString(dr, "ROOM_NO"),
+                    checkinDt = GetNullableDateTime(dr, "CHECKIN_DT"),
+                    billNo = GetString(dr, "BILL_NO"),
+                    billTotalAmt = GetDecimal(dr, "BILL_TOTAL_AMT"),
+                    paidTillAmt = GetDecimal(dr, "PAID_TILL_AMT"),
+                    balanceNowAmt = GetDecimal(dr, "BALANCE_NOW_AMT"),
+                    billToType = GetString(dr, "BILL_TO_TYPE") ?? "GUEST",
+                    corpNm = GetString(dr, "CORP_NM"),
+                    propertyNm = GetString(dr, "PROPERTY_NM"),
+                    propertyAddress = GetString(dr, "PROPERTY_ADDRESS"),
+                    propertyPhone = GetString(dr, "PROPERTY_PHONE"),
+                    propertyGstin = GetString(dr, "PROPERTY_GSTIN")
+                };
+
+                if (dr.NextResult())
+                {
+                    while (dr.Read())
+                    {
+                        rc.lines.Add(new FolioReceiptLine
+                        {
+                            chargeId = GetInt(dr, "CHARGE_ID"),
+                            chargeDt = GetNullableDateTime(dr, "CHARGE_DT"),
+                            description = GetString(dr, "DESCRIPTION") ?? "",
+                            sacCode = GetString(dr, "SAC_CODE"),
+                            qty = GetDecimal(dr, "QTY"),
+                            unitRate = GetDecimal(dr, "UNIT_RATE"),
+                            baseAmt = GetDecimal(dr, "BASE_AMT"),
+                            gstPct = GetDecimal(dr, "GST_PCT"),
+                            gstAmt = GetDecimal(dr, "GST_AMT"),
+                            lineAmt = GetDecimal(dr, "LINE_AMT"),
+                            paidAmt = GetDecimal(dr, "PAID_AMT")
+                        });
+                    }
+                }
+
+                return rc;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error while fetching the payment receipt.", ex);
+            }
+        }
+
         private static bool Has(SqlDataReader dr, string column)
         {
             for (int i = 0; i < dr.FieldCount; i++)

@@ -22,10 +22,12 @@ namespace Suvarna.DGMS.Api.Controllers
         // ==========================================
 
         // includeCheckedOut=true (NEW, Round B): guests checked out in the last 60 days are listed too
+        // 28-Oct: ...but only while their bill still has a balance. includeSettled=true lists the
+        // paid ones as well (GST invoice reprint).
         [HttpGet("bookings")]
-        public IActionResult GetBookings([FromQuery] int sessionId, [FromQuery] int? propertyId = null, [FromQuery] bool includeCheckedOut = false)
+        public IActionResult GetBookings([FromQuery] int sessionId, [FromQuery] int? propertyId = null, [FromQuery] bool includeCheckedOut = false, [FromQuery] bool includeSettled = false)
         {
-            return Ok(_service.GetBookings(sessionId, propertyId, includeCheckedOut));
+            return Ok(_service.GetBookings(sessionId, propertyId, includeCheckedOut, includeSettled));
         }
 
         // ==========================================
@@ -102,6 +104,16 @@ namespace Suvarna.DGMS.Api.Controllers
         public IActionResult GenerateInvoice([FromBody] GenerateInvoiceRequest request)
         {
             return Ok(_service.GenerateInvoice(request));
+        }
+
+        // ==========================================
+        // NEW 04-Nov: payment receipt - GET api/guestfolio/receipt/{paymentId}?sessionId=
+        // ==========================================
+
+        [HttpGet("receipt/{paymentId:int}")]
+        public IActionResult GetReceipt(int paymentId, [FromQuery] int sessionId)
+        {
+            return Ok(_service.GetReceipt(sessionId, paymentId));
         }
 
         // ==========================================

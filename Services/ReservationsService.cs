@@ -110,6 +110,17 @@ namespace Suvarna.DGMS.Api.Services
             return ApiResponse<ReservationCancelResult>.Success(data.message, data);
         }
 
+        // 03-Nov: returning guest + duplicate reservation check for the New Reservation form
+        public ApiResponse<ReservationGuestCheck> GetGuestCheck(int sessionId, string mobileNo, DateTime? checkinDt, DateTime? checkoutDt, int bookingId)
+        {
+            var mobile = (mobileNo ?? "").Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(mobile, "^[0-9]{10}$"))
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException("Enter a valid 10-digit mobile number.");
+
+            var data = _repo.GetGuestCheck(sessionId, mobile, checkinDt, checkoutDt, bookingId);
+            return ApiResponse<ReservationGuestCheck>.Success("Guest check done.", data);
+        }
+
         public ApiResponse<MarkNoShowResult> MarkNoShowReservations(int sessionId, int? graceHours)
         {
             var data = _repo.MarkNoShowReservations(sessionId, graceHours);
@@ -122,4 +133,4 @@ namespace Suvarna.DGMS.Api.Services
             return ApiResponse<MarkNoShowResult>.Success(data.message, data);
         }
     }
-}
+}

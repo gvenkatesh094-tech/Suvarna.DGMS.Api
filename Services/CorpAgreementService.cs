@@ -62,6 +62,8 @@ namespace Suvarna.DGMS.Api.Services
                     ContactPhone = row["CONTACT_PHONE"].ToString(),
                     propertyName = row["PROPERTY_NM"].ToString(),
                     roomAllocate = Convert.ToInt32(row["ROOM_ALLOCATE"] == DBNull.Value ? 0 : row["ROOM_ALLOCATE"]),
+                    // NEW 02-Nov (2026-11-02 script); "ALL" before the script is run
+                    corpBillingScope = Col(dt, row, "CORP_BILLING_SCOPE")?.ToString() ?? "ALL",
 
                     // NEW (05 script): the edit screen needs these, otherwise saving an edit wiped them
                     propertyId = Col(dt, row, "PROPERTY_ID") is object p ? Convert.ToInt32(p) : 0,

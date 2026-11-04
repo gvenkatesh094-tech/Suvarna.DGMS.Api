@@ -37,6 +37,16 @@ namespace Suvarna.DGMS.Api.Services
         }
 
         //====================================================
+        // NEW (28-Oct): CHECKOUT -> HOUSEKEEPING STATUS
+        //====================================================
+
+        public ApiResponse<List<CheckoutHkStatus>> GetCheckoutHkStatus(int sessionId, int? bookingId)
+        {
+            var data = _repo.GetCheckoutHkStatus(sessionId, bookingId);
+            return ApiResponse<List<CheckoutHkStatus>>.Success("Housekeeping status fetched successfully.", data);
+        }
+
+        //====================================================
         // PREPARE CHECKOUT
         //====================================================
 

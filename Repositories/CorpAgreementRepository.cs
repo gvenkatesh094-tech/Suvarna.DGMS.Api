@@ -95,7 +95,48 @@ namespace Suvarna.DGMS.Api.Repositories
                 throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
                     string.IsNullOrWhiteSpace(msg) ? "Corporate agreement could not be saved." : msg);
 
+            // NEW 02-Nov: "Company pays" (room + services / room only) is saved by its own small procedure,
+            // so PR_IUD_CORP_AGREEMENT did not have to change.
+            int agreementId = mode == "U"
+                ? agreement.CorpAgreementMastId
+                : (outAgreementId.Value == DBNull.Value ? 0 : Convert.ToInt32(outAgreementId.Value));
+
+            if (agreementId > 0 && !string.IsNullOrWhiteSpace(agreement.corpBillingScope))
+                SaveBillingScope(conn, agreement.sessionId, agreementId, agreement.corpBillingScope!);
+
             return msg;
+        }
+
+        private void SaveBillingScope(SqlConnection conn, int sessionId, int agreementId, string scope)
+        {
+            using SqlCommand cmd = new SqlCommand("DGMS.PR_DGMS_SET_CORP_BILLING_SCOPE", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@IP_SESSION_ID", _session.Require(sessionId));
+            cmd.Parameters.AddWithValue("@IP_AGREEMENT_ID", agreementId);
+            cmd.Parameters.AddWithValue("@IP_SCOPE", scope.Trim().ToUpperInvariant());
+
+            SqlParameter outStatus = new SqlParameter("@OUT_STATUS", SqlDbType.Char, 1) { Direction = ParameterDirection.Output };
+            SqlParameter outMessage = new SqlParameter("@OUT_MESSAGE", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(outStatus);
+            cmd.Parameters.Add(outMessage);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex) when (ex.Number == 2812)
+            {
+                // 2026-11-02 SQL script not run yet: the agreement itself is saved, the option keeps its default (room + services)
+                return;
+            }
+
+            string status = outStatus.Value == DBNull.Value ? string.Empty : Convert.ToString(outStatus.Value) ?? string.Empty;
+            if (status != "S")
+            {
+                string msg = outMessage.Value == DBNull.Value ? string.Empty : Convert.ToString(outMessage.Value) ?? string.Empty;
+                throw new Suvarna.DGMS.Api.Helpers.UserMessageException(
+                    "Agreement saved, but 'Company pays' was not saved: " + (string.IsNullOrWhiteSpace(msg) ? "unknown error" : msg));
+            }
         }
         #region Get All corps
         public DataTable GetAll()

@@ -77,10 +77,18 @@ namespace Suvarna.DGMS.Api.Controllers
             return Ok(_service.CancelReservation(request));
         }
 
+        // 03-Nov: GET api/reservations/guest-check - last stay of the mobile (to fill the form)
+        // and its reservations / stays that overlap the dates (duplicate warning)
+        [HttpGet("guest-check")]
+        public IActionResult GuestCheck([FromQuery] int sessionId, [FromQuery] string mobileNo, [FromQuery] DateTime? checkinDt, [FromQuery] DateTime? checkoutDt, [FromQuery] int bookingId = 0)
+        {
+            return Ok(_service.GetGuestCheck(sessionId, mobileNo, checkinDt, checkoutDt, bookingId));
+        }
+
         [HttpPost("mark-noshow")]
         public IActionResult MarkNoShow([FromQuery] int sessionId, [FromQuery] int? graceHours = null)
         {
             return Ok(_service.MarkNoShowReservations(sessionId, graceHours));
         }
     }
-}
+}

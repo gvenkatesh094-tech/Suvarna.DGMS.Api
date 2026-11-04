@@ -18,6 +18,18 @@ namespace Suvarna.DGMS.Api.Models
         public string? paymentRef { get; set; }
         public string isOverdue { get; set; } = "N";
         public int agreementId { get; set; }
+
+        // NEW 04-Nov: audit - who created / collected / cancelled, and when (null until the 04-Nov SQL is run)
+        public DateTime? createdDt { get; set; }
+        public string? createdByNm { get; set; }
+        public DateTime? paidEntryDt { get; set; }      // when the payment was entered
+        public string? paidByNm { get; set; }
+        public decimal? paidAmt { get; set; }
+        public decimal? tdsAmt { get; set; }
+        public string? paymentMode { get; set; }
+        public DateTime? cancelledDt { get; set; }
+        public string? cancelledByNm { get; set; }
+        public string? cancelReason { get; set; }
     }
 
     public class CorpAgreementLookup
@@ -58,6 +70,11 @@ namespace Suvarna.DGMS.Api.Models
         public DateTime? checkoutDt { get; set; }
         public decimal baseAmt { get; set; }
         public decimal gstAmt { get; set; }
+
+        // NEW 02-Nov: what the stay was made of (incl. GST)
+        public decimal roomGrossAmt { get; set; }
+        public decimal serviceGrossAmt { get; set; }
+        public decimal penaltyAmt { get; set; }
     }
 
     public class CorpInvoiceDetail
@@ -83,6 +100,24 @@ namespace Suvarna.DGMS.Api.Models
         public DateTime? paymentDt { get; set; }
         public string? paymentRef { get; set; }
         public string? remarks { get; set; }
+
+        // NEW 04-Nov: audit - who created / collected / cancelled, and when (null until the 04-Nov SQL is run)
+        public DateTime? createdDt { get; set; }
+        public string? createdByNm { get; set; }
+        public DateTime? paidEntryDt { get; set; }      // when the payment was entered
+        public string? paidByNm { get; set; }
+        public decimal? paidAmt { get; set; }
+        public decimal? tdsAmt { get; set; }
+        public string? paymentMode { get; set; }
+        public DateTime? cancelledDt { get; set; }
+        public string? cancelledByNm { get; set; }
+        public string? cancelReason { get; set; }
+        // NEW 04-Nov: payment receipt
+        public string? receiptNo { get; set; }
+        public string? propertyNm { get; set; }
+        public string? propertyAddress { get; set; }
+        public string? propertyGstin { get; set; }
+        public string? propertyPhone { get; set; }
 
         public List<CorpInvoiceBookingLine> bookings { get; set; } = new();
     }

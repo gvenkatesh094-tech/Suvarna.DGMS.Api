@@ -48,7 +48,18 @@ namespace Suvarna.DGMS.Api.Repositories
                         paymentDt = Has(dr, "PAYMENT_DT") ? GetNullableDateTime(dr, "PAYMENT_DT") : null,
                         paymentRef = Has(dr, "PAYMENT_REF") ? GetString(dr, "PAYMENT_REF") : null,
                         isOverdue = Has(dr, "IS_OVERDUE") ? (GetString(dr, "IS_OVERDUE") ?? "N") : "N",
-                        agreementId = Has(dr, "AGREEMENT_ID") ? GetInt(dr, "AGREEMENT_ID") : 0
+                        agreementId = Has(dr, "AGREEMENT_ID") ? GetInt(dr, "AGREEMENT_ID") : 0,
+                        // NEW 04-Nov: audit
+                        createdDt = Has(dr, "CREATED_DT") ? GetNullableDateTime(dr, "CREATED_DT") : null,
+                        createdByNm = Has(dr, "CREATED_BY_NM") ? GetString(dr, "CREATED_BY_NM") : null,
+                        paidEntryDt = Has(dr, "PAID_ENTRY_DT") ? GetNullableDateTime(dr, "PAID_ENTRY_DT") : null,
+                        paidByNm = Has(dr, "PAID_BY_NM") ? GetString(dr, "PAID_BY_NM") : null,
+                        paidAmt = Has(dr, "PAID_AMT") ? NullableDecimal(dr, "PAID_AMT") : null,
+                        tdsAmt = Has(dr, "TDS_AMT") ? NullableDecimal(dr, "TDS_AMT") : null,
+                        paymentMode = Has(dr, "PAYMENT_MODE") ? GetString(dr, "PAYMENT_MODE") : null,
+                        cancelledDt = Has(dr, "CANCELLED_DT") ? GetNullableDateTime(dr, "CANCELLED_DT") : null,
+                        cancelledByNm = Has(dr, "CANCELLED_BY_NM") ? GetString(dr, "CANCELLED_BY_NM") : null,
+                        cancelReason = Has(dr, "CANCEL_REASON") ? GetString(dr, "CANCEL_REASON") : null
                     });
                 }
 
@@ -183,7 +194,23 @@ namespace Suvarna.DGMS.Api.Repositories
                     invoiceDt = Has(dr, "CORP_INVOICE_DT") ? GetNullableDateTime(dr, "CORP_INVOICE_DT") : null,
                     paymentDt = Has(dr, "PAYMENT_DT") ? GetNullableDateTime(dr, "PAYMENT_DT") : null,
                     paymentRef = Has(dr, "PAYMENT_REF") ? GetString(dr, "PAYMENT_REF") : null,
-                    remarks = Has(dr, "REMARKS") ? GetString(dr, "REMARKS") : null
+                    remarks = Has(dr, "REMARKS") ? GetString(dr, "REMARKS") : null,
+                    // NEW 04-Nov: audit
+                    createdDt = Has(dr, "CREATED_DT") ? GetNullableDateTime(dr, "CREATED_DT") : null,
+                    createdByNm = Has(dr, "CREATED_BY_NM") ? GetString(dr, "CREATED_BY_NM") : null,
+                    paidEntryDt = Has(dr, "PAID_ENTRY_DT") ? GetNullableDateTime(dr, "PAID_ENTRY_DT") : null,
+                    paidByNm = Has(dr, "PAID_BY_NM") ? GetString(dr, "PAID_BY_NM") : null,
+                    paidAmt = Has(dr, "PAID_AMT") ? NullableDecimal(dr, "PAID_AMT") : null,
+                    tdsAmt = Has(dr, "TDS_AMT") ? NullableDecimal(dr, "TDS_AMT") : null,
+                    paymentMode = Has(dr, "PAYMENT_MODE") ? GetString(dr, "PAYMENT_MODE") : null,
+                    cancelledDt = Has(dr, "CANCELLED_DT") ? GetNullableDateTime(dr, "CANCELLED_DT") : null,
+                    cancelledByNm = Has(dr, "CANCELLED_BY_NM") ? GetString(dr, "CANCELLED_BY_NM") : null,
+                    cancelReason = Has(dr, "CANCEL_REASON") ? GetString(dr, "CANCEL_REASON") : null,
+                    receiptNo = Has(dr, "RECEIPT_NO") ? GetString(dr, "RECEIPT_NO") : null,
+                    propertyNm = Has(dr, "PROPERTY_NM") ? GetString(dr, "PROPERTY_NM") : null,
+                    propertyAddress = Has(dr, "PROPERTY_ADDRESS") ? GetString(dr, "PROPERTY_ADDRESS") : null,
+                    propertyGstin = Has(dr, "PROPERTY_GSTIN") ? GetString(dr, "PROPERTY_GSTIN") : null,
+                    propertyPhone = Has(dr, "PROPERTY_PHONE") ? GetString(dr, "PROPERTY_PHONE") : null
                 };
 
                 if (dr.NextResult())
@@ -200,7 +227,11 @@ namespace Suvarna.DGMS.Api.Repositories
                             gstInvoiceNo = Has(dr, "GST_INVOICE_NO") ? GetString(dr, "GST_INVOICE_NO") : null,
                             checkoutDt = Has(dr, "CHECKOUT_DT") ? GetNullableDateTime(dr, "CHECKOUT_DT") : null,
                             baseAmt = Has(dr, "BASE_AMT") ? GetDecimal(dr, "BASE_AMT") : 0,
-                            gstAmt = Has(dr, "GST_AMT") ? GetDecimal(dr, "GST_AMT") : 0
+                            gstAmt = Has(dr, "GST_AMT") ? GetDecimal(dr, "GST_AMT") : 0,
+                            // NEW 02-Nov: room / services / penalty of the stay
+                            roomGrossAmt = Has(dr, "ROOM_GROSS_AMT") ? GetDecimal(dr, "ROOM_GROSS_AMT") : 0,
+                            serviceGrossAmt = Has(dr, "SERVICE_GROSS_AMT") ? GetDecimal(dr, "SERVICE_GROSS_AMT") : 0,
+                            penaltyAmt = Has(dr, "PENALTY_AMT") ? GetDecimal(dr, "PENALTY_AMT") : 0
                         });
                     }
                 }
@@ -276,6 +307,13 @@ namespace Suvarna.DGMS.Api.Repositories
         // ==========================================
         // COMMON HELPERS
         // ==========================================
+
+        // NEW 04-Nov
+        private static decimal? NullableDecimal(SqlDataReader dr, string column)
+        {
+            object v = dr[column];
+            return v == DBNull.Value ? null : Convert.ToDecimal(v);
+        }
 
         private static bool Has(SqlDataReader dr, string column)
         {

@@ -169,6 +169,9 @@ builder.Services.AddScoped<UserAccessRepository>();          // property level a
 builder.Services.AddScoped<RefundManagementRepository>();    // FIX: was not registered -> Refund Management screen failed with 500
 builder.Services.AddScoped<RoomAssetsRepository>();          // FIX: was not registered -> Room Assets screen failed with 500
 builder.Services.AddScoped<PosPaymentRepository>();         // NEW: PayLink POS payments (any POS provider PayLink supports)
+builder.Services.AddScoped<AlertsRepository>();             // NEW 28-Oct: unified user alerts (header bell + Alerts screen)
+builder.Services.AddScoped<ReceiptsRepository>();           // NEW 04-Nov: standard receipts (print log + header)
+builder.Services.AddScoped<HkChecklistMasterRepository>();  // NEW 28-Oct: HK checklist master (HK checklist thread)
 
 #endregion
 
@@ -218,6 +221,9 @@ builder.Services.AddScoped<ReceptionDashboardService>();
 builder.Services.AddScoped<UserAccessService>();             // property level access
 builder.Services.AddScoped<RefundManagementService>();       // FIX: was not registered
 builder.Services.AddScoped<RoomAssetsService>();             // FIX: was not registered
+builder.Services.AddScoped<AlertsService>();                // NEW 28-Oct: unified user alerts
+builder.Services.AddScoped<ReceiptsService>();              // NEW 04-Nov: standard receipts
+builder.Services.AddScoped<HkChecklistMasterService>();     // NEW 28-Oct: HK checklist master (HK checklist thread)
 
 // NEW: PayLink POS. Credentials stay on the server (System Parameters DGMS_PAYLINK_*, never sent to the browser).
 builder.Services.AddScoped<PayLinkSettings>();   // 23-Oct: settings from System Parameters (DGMS_PAYLINK_*), not appsettings
@@ -325,8 +331,9 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Swagger: on by default (as before). Set "Swagger": { "Enabled": false } in the production appsettings to hide it.
-if (builder.Configuration.GetValue("Swagger:Enabled", true))
+// Swagger: CHANGED (26-Oct) - off on the production server (it lists every API to anyone who opens /swagger).
+// To open it there for testing, set "Swagger": { "Enabled": true } in appsettings.
+if (builder.Configuration.GetValue("Swagger:Enabled", app.Environment.IsDevelopment()))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
